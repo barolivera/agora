@@ -6,12 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "SEED_PRIVATE_KEY=your_key_here tsx scripts/seed-events.ts"
   },
   "dependencies": {
+    "@arkiv-network/sdk": "^0.6.0",
+    "@rainbow-me/rainbowkit": "^2.2.10",
     "next": "16.1.6",
+    "rainbowkit": "^0.0.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "viem": "^2.46.3",
+    "wagmi": "^2.19.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -21,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
