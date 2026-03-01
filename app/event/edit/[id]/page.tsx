@@ -103,7 +103,7 @@ export default function EditEventPage() {
   if (loadError) {
     return (
       <main className="max-w-lg mx-auto py-24 px-6 text-center">
-        <p className="text-warm-gray font-[family-name:var(--font-fraunces)] text-lg mb-2">
+        <p className="text-warm-gray font-[family-name:var(--font-kode-mono)] text-lg mb-2">
           Event not found
         </p>
         <p className="text-sm text-warm-gray/70">{loadError}</p>
@@ -114,7 +114,7 @@ export default function EditEventPage() {
   if (!isConnected || !address) {
     return (
       <main className="max-w-lg mx-auto py-24 px-6 text-center">
-        <p className="text-xl font-[family-name:var(--font-fraunces)] text-ink mb-2">
+        <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           Connect your wallet to continue
         </p>
         <p className="text-sm text-warm-gray">
@@ -127,7 +127,7 @@ export default function EditEventPage() {
   if (organizer && address.toLowerCase() !== organizer.toLowerCase()) {
     return (
       <main className="max-w-lg mx-auto py-24 px-6 text-center">
-        <p className="text-xl font-[family-name:var(--font-fraunces)] text-ink mb-2">
+        <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           You don&apos;t have permission to edit this event
         </p>
         <p className="text-sm text-warm-gray mt-2">
@@ -182,7 +182,7 @@ export default function EditEventPage() {
         payload: jsonToPayload(payload),
         contentType: 'application/json',
         attributes,
-        expiresIn: secondsUntilExpiry(eventExpiresAt(date)),
+        expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(date))),
       });
 
       router.push(`/event/${id}`);
@@ -196,7 +196,7 @@ export default function EditEventPage() {
   return (
     <div className="min-h-screen bg-cream">
       <div className="max-w-2xl mx-auto px-6 py-14">
-        <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-fraunces)] mb-2">
+        <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
           Edit event
         </h1>
         <p className="text-warm-gray mb-10">

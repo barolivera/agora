@@ -71,10 +71,9 @@ export function eventExpiresAt(eventDate: string): Date {
 }
 
 export function secondsUntilExpiry(expiryDate: Date): number {
-  return Math.max(
-    Math.floor((expiryDate.getTime() - Date.now()) / 1000),
-    86400
-  )
+  const ms = expiryDate.getTime();
+  if (!isFinite(ms)) return 86400;
+  return Math.max(Math.floor((ms - Date.now()) / 1000), 86400);
 }
 
 export function formatExpiryDate(date: Date): string {

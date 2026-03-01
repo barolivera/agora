@@ -112,7 +112,7 @@ function PreviewCard({
         {/* Date chip */}
         {parsedDate ? (
           <div className="relative flex flex-col items-center bg-cream/90 backdrop-blur-sm px-3 py-1.5 min-w-[3.25rem]">
-            <span className="text-2xl font-bold leading-none text-ink font-[family-name:var(--font-fraunces)]">
+            <span className="text-2xl font-bold leading-none text-ink font-[family-name:var(--font-kode-mono)]">
               {parsedDate.day}
             </span>
             <span className="text-[9px] font-bold tracking-widest text-warm-gray uppercase mt-0.5">
@@ -138,7 +138,7 @@ function PreviewCard({
 
       {/* Body */}
       <div className="flex flex-col gap-3 p-4">
-        <h3 className="font-semibold leading-snug font-[family-name:var(--font-fraunces)] min-h-[1.4em]">
+        <h3 className="font-semibold leading-snug font-[family-name:var(--font-kode-mono)] min-h-[1.4em]">
           {title.trim() ? (
             <span className="text-ink">{title}</span>
           ) : (
@@ -206,7 +206,7 @@ export default function CreateEventPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18-3a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6m18 0V5.25A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25V6" />
           </svg>
         </div>
-        <p className="text-xl font-[family-name:var(--font-fraunces)] text-ink mb-2">
+        <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           Connect your wallet to continue
         </p>
         <p className="text-sm text-warm-gray">
@@ -268,7 +268,7 @@ export default function CreateEventPage() {
         payload: jsonToPayload(payload),
         contentType: 'application/json',
         attributes,
-        expiresIn: secondsUntilExpiry(expiryDate),
+        expiresIn: Math.floor(secondsUntilExpiry(expiryDate)),
       });
 
       router.push(`/event/${entityKey}`);
@@ -286,7 +286,7 @@ export default function CreateEventPage() {
 
           {/* ── Left: form ────────────────────────────────── */}
           <div>
-            <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-fraunces)] mb-2">
+            <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
               Create your event
             </h1>
             <p className="text-warm-gray mb-10">

@@ -244,7 +244,7 @@ export default function EventPageClient() {
           { key: 'type', value: 'rsvp' },
           { key: 'eventId', value: id },
         ],
-        expiresIn: secondsUntilExpiry(eventExpiresAt(event.date)),
+        expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
       });
 
       await fetchAttendees();
@@ -284,7 +284,7 @@ export default function EventPageClient() {
           { key: 'type', value: 'waitlist' },
           { key: 'eventId', value: id },
         ],
-        expiresIn: secondsUntilExpiry(eventExpiresAt(event.date)),
+        expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
       });
 
       await fetchWaitlist();
@@ -452,7 +452,7 @@ export default function EventPageClient() {
         payload: jsonToPayload(payload),
         contentType: 'application/json',
         attributes,
-        expiresIn: secondsUntilExpiry(eventExpiresAt(event.date)),
+        expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
       });
 
       // 2. Propagate cancellation to all child RSVPs — maintains referential
@@ -474,7 +474,7 @@ export default function EventPageClient() {
             { key: 'eventId', value: rsvp.eventId },
             { key: 'status', value: 'cancelled' },
           ],
-          expiresIn: secondsUntilExpiry(eventExpiresAt(event.date)),
+          expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
         });
       }
 
@@ -495,7 +495,7 @@ export default function EventPageClient() {
             { key: 'eventId', value: entry.eventId },
             { key: 'status', value: 'cancelled' },
           ],
-          expiresIn: secondsUntilExpiry(eventExpiresAt(event.date)),
+          expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
         });
       }
 
@@ -522,7 +522,7 @@ export default function EventPageClient() {
     return (
       <main className="max-w-2xl mx-auto py-20 px-6 text-center">
         <p className="text-3xl mb-4">🏛️</p>
-        <p className="text-warm-gray font-[family-name:var(--font-fraunces)] text-lg mb-2">
+        <p className="text-warm-gray font-[family-name:var(--font-kode-mono)] text-lg mb-2">
           Event not found
         </p>
         {error && <p className="text-sm text-warm-gray/70">{error}</p>}
@@ -577,7 +577,7 @@ export default function EventPageClient() {
           <div>
             <StatusBadge status={displayStatus} />
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-cream max-w-2xl leading-tight font-[family-name:var(--font-fraunces)] drop-shadow-sm">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-cream max-w-2xl leading-tight font-[family-name:var(--font-kode-mono)] drop-shadow-sm">
             {event?.title || 'Untitled Event'}
           </h1>
 
@@ -673,7 +673,7 @@ export default function EventPageClient() {
           <div>
             {event?.description ? (
               <>
-                <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-fraunces)]">
+                <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-kode-mono)]">
                   About this event
                 </h2>
                 <p className="text-ink leading-relaxed whitespace-pre-wrap">
@@ -694,7 +694,7 @@ export default function EventPageClient() {
             {/* ── Organizer Controls ────────────────────────── */}
             {isOrganizer && (
               <div className="mt-10 pt-8 border-t border-warm-gray/30">
-                <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-fraunces)]">
+                <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-kode-mono)]">
                   Organizer Controls
                 </h2>
 
@@ -880,7 +880,7 @@ export default function EventPageClient() {
               {/* Count + capacity bar */}
               <div>
                 <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl font-bold text-ink font-[family-name:var(--font-fraunces)]">
+                  <span className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
                     {rsvps?.length ?? 0}
                   </span>
                   {(event?.capacity ?? 0) > 0 ? (

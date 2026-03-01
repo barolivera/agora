@@ -14,7 +14,7 @@ export function Navbar() {
         <div className="flex items-center gap-8">
           <Link
             href="/"
-            className="text-2xl font-bold text-orange font-[family-name:var(--font-fraunces)] tracking-tight"
+            className="text-2xl font-bold text-orange font-[family-name:var(--font-kode-mono)] tracking-tight"
           >
             Agora
           </Link>
@@ -27,17 +27,6 @@ export function Navbar() {
             >
               Events
             </Link>
-            <div className="relative group">
-              <Link
-                href="/my-events"
-                className="text-sm text-cream/60 hover:text-cream transition-colors"
-              >
-                My Events
-              </Link>
-              <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 whitespace-nowrap rounded-none bg-ink border border-warm-gray/30 px-2 py-1 text-xs text-warm-gray opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                Events you created
-              </span>
-            </div>
             <Link
               href="/community"
               className="text-sm text-cream/60 hover:text-cream transition-colors"
@@ -132,13 +121,6 @@ export function Navbar() {
             className="px-6 py-4 text-sm text-cream/60 hover:text-cream hover:bg-white/5 transition-colors border-b border-warm-gray/10"
           >
             Events
-          </Link>
-          <Link
-            href="/my-events"
-            onClick={() => setMenuOpen(false)}
-            className="px-6 py-4 text-sm text-cream/60 hover:text-cream hover:bg-white/5 transition-colors border-b border-warm-gray/10"
-          >
-            My Events
           </Link>
           <Link
             href="/community"

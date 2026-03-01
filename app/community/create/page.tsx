@@ -59,7 +59,7 @@ function CreateCommunityForm() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18-3a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6m18 0V5.25A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25V6" />
           </svg>
         </div>
-        <p className="text-xl font-[family-name:var(--font-fraunces)] text-ink mb-2">
+        <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           Connect your wallet to continue
         </p>
         <p className="text-sm text-warm-gray">
@@ -121,7 +121,7 @@ function CreateCommunityForm() {
   return (
     <div className="min-h-screen bg-cream">
       <div className="max-w-xl mx-auto px-6 py-14">
-        <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-fraunces)] mb-2">
+        <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
           Create a community
         </h1>
         <p className="text-warm-gray mb-10">

@@ -116,7 +116,7 @@ export default function MyEventsPage() {
   return (
     <main className="max-w-3xl mx-auto py-12 px-4">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-ink font-[family-name:var(--font-fraunces)]">
+        <h1 className="text-2xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
           My Events
         </h1>
         <Link
@@ -173,7 +173,7 @@ export default function MyEventsPage() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <h2 className="font-semibold text-ink truncate font-[family-name:var(--font-fraunces)]">
+                      <h2 className="font-semibold text-ink truncate font-[family-name:var(--font-kode-mono)]">
                         {event.title}
                       </h2>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-warm-gray">

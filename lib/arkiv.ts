@@ -201,6 +201,23 @@ export function parseWaitlist(entity: Entity): ArkivWaitlist {
   };
 }
 
+export type ArkivSubscription = {
+  entityKey: string;
+  communitySlug: string;
+  subscriber: string;
+  subscribedAt: string;
+};
+
+export function parseSubscription(entity: Entity): ArkivSubscription {
+  const data = entity.toJson();
+  return {
+    entityKey: entity.key ?? '',
+    communitySlug: data?.communitySlug ?? '',
+    subscriber: data?.subscriber ?? '',
+    subscribedAt: data?.subscribedAt ?? '',
+  };
+}
+
 export type ArkivProfile = {
   entityKey: string;
   address: string;

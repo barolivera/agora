@@ -8,6 +8,7 @@ import {
   type ArkivEvent,
   type ArkivCommunity,
 } from '@/lib/arkiv';
+import SubscribeButton from './SubscribeButton';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -73,7 +74,7 @@ function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
         {parsedDate ? (
           <div className="mb-auto">
             <div
-              className="text-7xl font-bold leading-none font-[family-name:var(--font-fraunces)]"
+              className="text-7xl font-bold leading-none font-[family-name:var(--font-kode-mono)]"
               style={{ opacity: 0.88 }}
             >
               {parsedDate.day}
@@ -85,7 +86,7 @@ function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
         ) : (
           <div className="mb-auto" />
         )}
-        <h3 className="text-xl font-bold leading-snug font-[family-name:var(--font-fraunces)] mt-6 line-clamp-3">
+        <h3 className="text-xl font-bold leading-snug font-[family-name:var(--font-kode-mono)] mt-6 line-clamp-3">
           {event?.title || 'Untitled Event'}
         </h3>
       </div>
@@ -123,11 +124,13 @@ function ProfileHeader({
   name,
   eventCount,
   totalAttendees,
+  subscriberCount,
 }: {
   profile: ArkivCommunity;
   name: string;
   eventCount: number;
   totalAttendees: number;
+  subscriberCount: number;
 }) {
   const displayName = profile.name || deslugify(name);
   const firstLetter = displayName.charAt(0).toUpperCase();
@@ -157,7 +160,7 @@ function ProfileHeader({
               />
             ) : (
               <div
-                className="w-20 h-20 flex items-center justify-center text-3xl font-bold text-cream font-[family-name:var(--font-fraunces)]"
+                className="w-20 h-20 flex items-center justify-center text-3xl font-bold text-cream font-[family-name:var(--font-kode-mono)]"
                 style={{ backgroundColor: '#0247E2' }}
               >
                 {firstLetter}
@@ -167,7 +170,7 @@ function ProfileHeader({
 
           {/* Name + description */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-4xl sm:text-5xl font-bold text-cream font-[family-name:var(--font-fraunces)] mb-3 leading-tight">
+            <h1 className="text-4xl sm:text-5xl font-bold text-cream font-[family-name:var(--font-kode-mono)] mb-3 leading-tight">
               {displayName}
             </h1>
             {profile.description && (
@@ -223,6 +226,7 @@ function ProfileHeader({
 
         {/* Actions + stats row */}
         <div className="flex flex-wrap items-center gap-4">
+          <SubscribeButton slug={name} />
           <Link
             href={`/community/edit/${name}`}
             className="inline-flex items-center px-4 py-2 text-xs font-semibold border border-cobalt text-cobalt hover:bg-cobalt hover:text-cream transition-colors tracking-wide uppercase"
@@ -233,6 +237,8 @@ function ProfileHeader({
             {eventCount} {eventCount === 1 ? 'event' : 'events'}
             {' · '}
             {totalAttendees} total {totalAttendees === 1 ? 'attendee' : 'attendees'}
+            {' · '}
+            {subscriberCount} {subscriberCount === 1 ? 'subscriber' : 'subscribers'}
           </p>
         </div>
 
@@ -259,10 +265,12 @@ function BasicHeader({
   name,
   eventCount,
   totalAttendees,
+  subscriberCount,
 }: {
   name: string;
   eventCount: number;
   totalAttendees: number;
+  subscriberCount: number;
 }) {
   const displayName = deslugify(name);
   return (
@@ -274,14 +282,19 @@ function BasicHeader({
           </Link>
           {' '}/ {name}
         </p>
-        <h1 className="text-5xl sm:text-6xl font-bold text-cream font-[family-name:var(--font-fraunces)] mb-4">
+        <h1 className="text-5xl sm:text-6xl font-bold text-cream font-[family-name:var(--font-kode-mono)] mb-4">
           {displayName}
         </h1>
-        <p className="text-warm-gray text-base mb-8">
+        <p className="text-warm-gray text-base mb-4">
           {eventCount} {eventCount === 1 ? 'event' : 'events'}
           {' · '}
           {totalAttendees} total {totalAttendees === 1 ? 'attendee' : 'attendees'}
+          {' · '}
+          {subscriberCount} {subscriberCount === 1 ? 'subscriber' : 'subscribers'}
         </p>
+        <div className="mb-8">
+          <SubscribeButton slug={name} />
+        </div>
 
         {/* Claim CTA */}
         <div className="inline-flex flex-col gap-3 p-5 border border-warm-gray/20 bg-white/5">
@@ -312,10 +325,11 @@ export default async function CommunityPage({
   let events: ArkivEvent[] = [];
   let totalAttendees = 0;
   let communityProfile: ArkivCommunity | null = null;
+  let subscriberCount = 0;
 
   try {
-    // Fetch community profile and events in parallel
-    const [profileResult, eventsResult] = await Promise.all([
+    // Fetch community profile, events, and subscriber count in parallel
+    const [profileResult, eventsResult, subCount] = await Promise.all([
       publicClient
         .buildQuery()
         .where([eq('type', 'community'), eq('slug', name)])
@@ -329,7 +343,14 @@ export default async function CommunityPage({
         .withPayload(true)
         .fetch()
         .catch(() => null),
+      publicClient
+        .buildQuery()
+        .where([eq('type', 'subscription'), eq('communitySlug', name)])
+        .count()
+        .catch(() => 0),
     ]);
+
+    subscriberCount = subCount ?? 0;
 
     const profileEntity = profileResult?.entities?.[0];
     if (profileEntity) {
@@ -368,12 +389,14 @@ export default async function CommunityPage({
           name={name}
           eventCount={events.length}
           totalAttendees={totalAttendees}
+          subscriberCount={subscriberCount}
         />
       ) : (
         <BasicHeader
           name={name}
           eventCount={events.length}
           totalAttendees={totalAttendees}
+          subscriberCount={subscriberCount}
         />
       )}
 
@@ -382,7 +405,7 @@ export default async function CommunityPage({
         {events.length === 0 ? (
           <div className="flex flex-col items-center text-center py-28 border border-dashed border-warm-gray/50">
             <p className="text-5xl mb-6" role="img" aria-label="columns">🏛️</p>
-            <p className="text-2xl text-ink font-[family-name:var(--font-fraunces)] mb-3">
+            <p className="text-2xl text-ink font-[family-name:var(--font-kode-mono)] mb-3">
               No events yet.
             </p>
             <p className="text-warm-gray text-sm mb-8 max-w-xs leading-relaxed">

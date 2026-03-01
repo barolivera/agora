@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, parseEvent, parseCommunity, type ArkivCommunity } from '@/lib/arkiv';
+import CommunitiesGrid, { type CommunityEntry } from './CommunitiesGrid';
 
 export const metadata: Metadata = {
   title: 'Communities — Agora',
@@ -12,78 +13,12 @@ export const metadata: Metadata = {
   },
 };
 
-function deslugify(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
-
-type CommunityEntry = {
-  slug: string;
-  count: number;
-  profile?: ArkivCommunity;
-};
-
-function CommunityCard({ entry }: { entry: CommunityEntry }) {
-  const { slug, count, profile } = entry;
-  const displayName = profile?.name || deslugify(slug);
-  const firstLetter = displayName.charAt(0).toUpperCase();
-
-  return (
-    <Link
-      href={`/community/${slug}`}
-      className="group flex flex-col gap-4 p-6 border border-warm-gray/40 bg-cream hover:border-cobalt transition-colors"
-    >
-      {/* Logo / placeholder */}
-      <div className="flex items-center gap-4">
-        {profile?.logoUrl ? (
-          <img
-            src={profile.logoUrl}
-            alt={displayName}
-            width={48}
-            height={48}
-            className="object-cover shrink-0"
-          />
-        ) : (
-          <div
-            className="w-12 h-12 flex items-center justify-center text-xl font-bold text-cream font-[family-name:var(--font-fraunces)] shrink-0"
-            style={{ backgroundColor: '#0247E2' }}
-          >
-            {firstLetter}
-          </div>
-        )}
-        <h2 className="text-xl font-bold text-ink font-[family-name:var(--font-fraunces)] group-hover:text-cobalt transition-colors leading-snug">
-          {displayName}
-        </h2>
-      </div>
-
-      {/* Description */}
-      {profile?.description && (
-        <p className="text-sm text-warm-gray line-clamp-2 leading-relaxed">
-          {profile.description}
-        </p>
-      )}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between mt-auto pt-1">
-        <p className="text-xs text-warm-gray/70">
-          {count} {count === 1 ? 'event' : 'events'}
-        </p>
-        <span className="text-xs font-semibold text-cobalt tracking-wide uppercase opacity-0 group-hover:opacity-100 transition-opacity">
-          View →
-        </span>
-      </div>
-    </Link>
-  );
-}
-
 export default async function CommunitiesPage() {
   let communities: CommunityEntry[] = [];
 
   try {
-    // Fetch events and community profiles in parallel
-    const [eventsResult, profilesResult] = await Promise.all([
+    // Fetch events, community profiles, and subscriptions in parallel
+    const [eventsResult, profilesResult, subscriptionsResult] = await Promise.all([
       publicClient
         .buildQuery()
         .where(eq('type', 'event'))
@@ -95,6 +30,13 @@ export default async function CommunitiesPage() {
         .buildQuery()
         .where(eq('type', 'community'))
         .withPayload(true)
+        .fetch()
+        .catch(() => null),
+      publicClient
+        .buildQuery()
+        .where(eq('type', 'subscription'))
+        .withPayload(true)
+        .limit(2000)
         .fetch()
         .catch(() => null),
     ]);
@@ -117,6 +59,14 @@ export default async function CommunitiesPage() {
       }
     }
 
+    // Build slug → subscriber count map
+    const subCounts = new Map<string, number>();
+    for (const entity of subscriptionsResult?.entities ?? []) {
+      const data = entity.toJson();
+      const slug = (data?.communitySlug as string) ?? '';
+      if (slug) subCounts.set(slug, (subCounts.get(slug) ?? 0) + 1);
+    }
+
     // Merge: all slugs that appear in events OR have a profile
     const allSlugs = new Set([...groups.keys(), ...profilesBySlug.keys()]);
 
@@ -125,6 +75,7 @@ export default async function CommunitiesPage() {
         slug,
         count: groups.get(slug) ?? 0,
         profile: profilesBySlug.get(slug),
+        subscriberCount: subCounts.get(slug) ?? 0,
       }))
       .sort((a, b) => b.count - a.count);
   } catch {
@@ -138,7 +89,7 @@ export default async function CommunitiesPage() {
       <section className="bg-ink py-16 px-6">
         <div className="max-w-6xl mx-auto flex flex-wrap items-end justify-between gap-6">
           <div>
-            <h1 className="text-5xl sm:text-6xl font-bold text-cream font-[family-name:var(--font-fraunces)] mb-4">
+            <h1 className="text-5xl sm:text-6xl font-bold text-cream font-[family-name:var(--font-kode-mono)] mb-4">
               Communities on Agora
             </h1>
             <p className="text-warm-gray text-base max-w-lg">
@@ -156,37 +107,7 @@ export default async function CommunitiesPage() {
 
       {/* ── Grid ──────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-14">
-        {communities.length === 0 ? (
-          <div className="flex flex-col items-center text-center py-28 border border-dashed border-warm-gray/50">
-            <p className="text-5xl mb-6" role="img" aria-label="columns">🏛️</p>
-            <p className="text-2xl text-ink font-[family-name:var(--font-fraunces)] mb-3">
-              No communities yet.
-            </p>
-            <p className="text-warm-gray text-sm mb-8 max-w-xs leading-relaxed">
-              Create a community or tag an event with a community name to get started.
-            </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Link
-                href="/community/create"
-                className="bg-orange text-cream px-6 py-3 text-sm font-semibold hover:bg-orange-light transition-colors"
-              >
-                Create a community
-              </Link>
-              <Link
-                href="/create-event"
-                className="border border-cobalt text-cobalt px-6 py-3 text-sm font-semibold hover:bg-cobalt hover:text-cream transition-colors"
-              >
-                Create an event
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {communities.map((entry) => (
-              <CommunityCard key={entry.slug} entry={entry} />
-            ))}
-          </div>
-        )}
+        <CommunitiesGrid communities={communities} />
       </section>
 
     </div>

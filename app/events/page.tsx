@@ -40,7 +40,7 @@ function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
         {parsedDate ? (
           <div className="mb-auto">
             <div
-              className="text-7xl font-bold leading-none font-[family-name:var(--font-fraunces)]"
+              className="text-7xl font-bold leading-none font-[family-name:var(--font-kode-mono)]"
               style={{ opacity: 0.88 }}
             >
               {parsedDate.day}
@@ -52,7 +52,7 @@ function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
         ) : (
           <div className="mb-auto" />
         )}
-        <h3 className="text-xl font-bold leading-snug font-[family-name:var(--font-fraunces)] mt-6 line-clamp-3">
+        <h3 className="text-xl font-bold leading-snug font-[family-name:var(--font-kode-mono)] mt-6 line-clamp-3">
           {event?.title || 'Untitled Event'}
         </h3>
       </div>
@@ -220,7 +220,7 @@ export default function EventsPage() {
     <main className="max-w-6xl mx-auto px-6 py-16">
 
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-fraunces)]">
+        <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
           All Events
         </h1>
         <Link
@@ -285,7 +285,7 @@ export default function EventsPage() {
         </div>
       ) : events.length === 0 && !hasActiveFilters ? (
         <div className="flex flex-col items-center text-center py-28 border border-dashed border-warm-gray/50">
-          <p className="text-2xl text-ink font-[family-name:var(--font-fraunces)] mb-3">
+          <p className="text-2xl text-ink font-[family-name:var(--font-kode-mono)] mb-3">
             No events yet.
           </p>
           <p className="text-warm-gray text-sm mb-8">

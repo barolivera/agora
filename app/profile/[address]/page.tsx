@@ -47,7 +47,7 @@ function SmallEventCard({ event, index }: { event: ArkivEvent; index: number }) 
         {parsedDate ? (
           <div className="mb-auto">
             <div
-              className="text-5xl font-bold leading-none font-[family-name:var(--font-fraunces)]"
+              className="text-5xl font-bold leading-none font-[family-name:var(--font-kode-mono)]"
               style={{ opacity: 0.88 }}
             >
               {parsedDate.day}
@@ -59,7 +59,7 @@ function SmallEventCard({ event, index }: { event: ArkivEvent; index: number }) 
         ) : (
           <div className="mb-auto" />
         )}
-        <h3 className="text-base font-bold leading-snug font-[family-name:var(--font-fraunces)] mt-4 line-clamp-3">
+        <h3 className="text-base font-bold leading-snug font-[family-name:var(--font-kode-mono)] mt-4 line-clamp-3">
           {event?.title || 'Untitled Event'}
         </h3>
       </div>
@@ -173,7 +173,7 @@ export default function PublicProfilePage() {
 
             {/* Name + address + location */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-3xl sm:text-4xl font-bold text-cream font-[family-name:var(--font-fraunces)] mb-1 leading-tight">
+              <h1 className="text-3xl sm:text-4xl font-bold text-cream font-[family-name:var(--font-kode-mono)] mb-1 leading-tight">
                 {displayName}
               </h1>
               <p className="text-warm-gray font-mono text-sm">{shortAddress(address)}</p>
@@ -258,7 +258,7 @@ export default function PublicProfilePage() {
 
       {/* ── Events section ────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-6 py-12">
-        <h2 className="text-2xl font-bold text-ink font-[family-name:var(--font-fraunces)] mb-6">
+        <h2 className="text-2xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-6">
           Events by {displayName}
         </h2>
         {events.length === 0 ? (
