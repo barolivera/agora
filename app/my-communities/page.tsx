@@ -97,7 +97,7 @@ export default function MyCommunitiesPage() {
           })
         );
 
-        setCommunities(results.filter((r): r is SubscribedCommunity => r !== null));
+        setCommunities(results.filter(Boolean) as SubscribedCommunity[]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load communities');
       } finally {
