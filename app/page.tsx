@@ -352,7 +352,7 @@ export default function HomePage() {
         {/* Full-bleed background image */}
         <div className="absolute -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2" style={{ width: '1512px', height: '605px' }} aria-hidden="true">
           <img
-            src="https://www.figma.com/api/mcp/asset/318d018b-7180-419c-9ea6-497d6fca2bbe"
+            src="https://www.figma.com/api/mcp/asset/34d3f32d-8ca5-4f14-95f3-7b7793941ec0"
             alt=""
             className="absolute block max-w-none size-full pointer-events-none select-none"
           />

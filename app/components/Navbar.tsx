@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export function Navbar() {
@@ -14,8 +15,10 @@ export function Navbar() {
         <div className="flex items-center gap-8">
           <Link
             href="/"
-            className="text-2xl font-bold text-orange font-[family-name:var(--font-kode-mono)] tracking-tight"
+            className="flex items-center gap-2 text-2xl font-bold font-[family-name:var(--font-kode-mono)] tracking-tight"
+            style={{ color: '#F2EDE4' }}
           >
+            <Image src="/agora-logo_v2.svg" alt="" width={28} height={28} />
             Agora
           </Link>
 
