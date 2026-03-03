@@ -37,7 +37,7 @@ export function Navbar() {
             className="flex items-center gap-2 text-2xl font-bold font-[family-name:var(--font-kode-mono)] tracking-tight"
             style={{ color: '#F2EDE4' }}
           >
-            <Image src="/agora-logo_v2.svg" alt="" width={28} height={28} />
+            <Image src="/logo.svg" alt="" width={28} height={28} />
             Agora
           </Link>
 
