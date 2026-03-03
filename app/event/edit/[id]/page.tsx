@@ -170,9 +170,7 @@ export default function EditEventPage() {
       if (category) {
         payload.category = category;
       }
-      if (coverImageUrl.trim()) {
-        payload.coverImageUrl = coverImageUrl.trim();
-      }
+      payload.coverImageUrl = coverImageUrl.trim() || '';
       const normalizedCommunity = normalizeCommunity(communityTag);
       if (normalizedCommunity) {
         payload.community = normalizedCommunity;

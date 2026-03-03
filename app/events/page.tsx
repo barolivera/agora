@@ -8,7 +8,7 @@ import { EventCard, CardSkeleton } from '@/app/components/EventCard';
 import { ErrorMessage } from '@/app/components/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 
-const EVENT_CATEGORIES = [
+const CATEGORY_OPTIONS = [
   'Meetup', 'Workshop', 'Hackathon', 'Conference',
   'Study Group', 'Social', 'Online', 'Other',
 ] as const;
@@ -165,59 +165,45 @@ export default function EventsPage() {
       {/* ── Search input ── */}
       <SearchInput value={searchQuery} onChange={setSearchQuery} />
 
-      {/* ── Filter bar ── */}
-      <div className="flex flex-wrap items-center gap-y-1 mb-8 pb-4 border-b border-warm-gray/30">
-        <div className="flex">
-          {(['all', 'upcoming', 'live', 'ended'] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-colors font-[family-name:var(--font-dm-sans)] ${
-                statusFilter === s
-                  ? 'bg-ink text-cream'
-                  : 'text-warm-gray hover:text-ink'
-              }`}
-            >
-              {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        <span className="w-px h-4 bg-warm-gray/40 self-center mx-3 hidden sm:block" aria-hidden="true" />
-
-        <div className="flex flex-wrap gap-1">
-          <button
-            onClick={() => setCategoryFilter('')}
-            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-colors font-[family-name:var(--font-dm-sans)] ${
-              categoryFilter === '' ? 'bg-ink text-cream' : 'text-warm-gray hover:text-ink'
-            }`}
+      {/* ── Filters ── */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+            className="bg-ink text-cream rounded-full px-4 py-2 text-sm font-[family-name:var(--font-dm-sans)] appearance-none cursor-pointer pr-8 focus:outline-none"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23F2EDE4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
           >
-            All types
-          </button>
-          {EVENT_CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-colors font-[family-name:var(--font-dm-sans)] ${
-                categoryFilter === cat ? 'bg-ink text-cream' : 'text-warm-gray hover:text-ink'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+            <option value="all">All Events</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="live">Live</option>
+            <option value="ended">Ended</option>
+          </select>
 
-        <span className="w-px h-4 bg-warm-gray/40 self-center mx-3 hidden sm:block" aria-hidden="true" />
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="bg-ink text-cream rounded-full px-4 py-2 text-sm font-[family-name:var(--font-dm-sans)] appearance-none cursor-pointer pr-8 focus:outline-none"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23F2EDE4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+          >
+            <option value="">All Types</option>
+            {CATEGORY_OPTIONS.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        </div>
 
         <div className="flex">
           {(['newest', 'soonest'] as const).map((s) => (
             <button
               key={s}
               onClick={() => setSortOrder(s)}
-              className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-colors font-[family-name:var(--font-dm-sans)] ${
+              className={`px-4 py-2 text-sm transition-all duration-200 font-[family-name:var(--font-dm-sans)] ${
+                s === 'newest' ? 'rounded-l-full' : 'rounded-r-full'
+              } ${
                 sortOrder === s
                   ? 'bg-ink text-cream'
-                  : 'text-warm-gray hover:text-ink'
+                  : 'bg-transparent border border-ink/20 text-ink/60 hover:text-ink hover:border-ink/40'
               }`}
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
