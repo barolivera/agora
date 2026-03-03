@@ -33,6 +33,8 @@ export type ArkivEvent = {
   organizer: string;
   community?: string;
   status?: string;
+  coverImageUrl?: string;
+  category?: string;
 };
 
 export type ArkivRSVP = {
@@ -123,6 +125,8 @@ export function parseEvent(entity: Entity): ArkivEvent {
     organizer: data?.organizer ?? '',
     community: data?.community ?? undefined,
     status: data?.status ?? undefined,
+    coverImageUrl: data?.coverImageUrl ?? undefined,
+    category: data?.category ?? undefined,
   };
 }
 
@@ -142,6 +146,7 @@ export type ArkivCommunity = {
   slug: string;
   description: string;
   logoUrl?: string;
+  coverUrl?: string;
   website?: string;
   twitter?: string;
   discord?: string;
@@ -157,6 +162,7 @@ export function parseCommunity(entity: Entity): ArkivCommunity {
     slug: data?.slug ?? '',
     description: data?.description ?? '',
     logoUrl: data?.logoUrl ?? undefined,
+    coverUrl: data?.coverUrl ?? undefined,
     website: data?.website ?? undefined,
     twitter: data?.twitter ?? undefined,
     discord: data?.discord ?? undefined,
@@ -243,4 +249,48 @@ export function parseProfile(entity: Entity): ArkivProfile {
     discord: data?.discord ?? undefined,
     farcaster: data?.farcaster ?? undefined,
   };
+}
+
+// ── Profile display name helpers ────────────────────────────────────────────
+
+export function shortAddress(addr: string): string {
+  if (!addr || addr.length < 10) return addr;
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
+const profileCache = new Map<string, ArkivProfile | null>();
+
+export async function fetchProfile(address: string): Promise<ArkivProfile | null> {
+  const key = address.toLowerCase();
+  if (profileCache.has(key)) return profileCache.get(key)!;
+
+  try {
+    const result = await publicClient
+      .buildQuery()
+      .where([eq('type', 'profile'), eq('address', key)])
+      .withPayload(true)
+      .limit(1)
+      .fetch();
+    const entity = result?.entities?.[0];
+    const profile = entity ? parseProfile(entity) : null;
+    profileCache.set(key, profile);
+    return profile;
+  } catch {
+    profileCache.set(key, null);
+    return null;
+  }
+}
+
+/**
+ * Resolves a batch of addresses to display names in parallel.
+ * Returns a Map<lowercased-address, nickname | null>.
+ */
+export async function fetchDisplayNames(addresses: string[]): Promise<Map<string, string | null>> {
+  const unique = [...new Set(addresses.map((a) => a.toLowerCase()))];
+  const results = await Promise.all(unique.map((addr) => fetchProfile(addr)));
+  const map = new Map<string, string | null>();
+  unique.forEach((addr, i) => {
+    map.set(addr, results[i]?.nickname ?? null);
+  });
+  return map;
 }

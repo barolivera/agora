@@ -13,9 +13,10 @@ const KAOLIN_CHAIN_ID = 60138453025;
 
 interface Props {
   slug: string;
+  compact?: boolean;
 }
 
-export default function SubscribeButton({ slug }: Props) {
+export default function SubscribeButton({ slug, compact }: Props) {
   const { address, isConnected } = useAccount();
   const { data: wagmiWalletClient } = useWalletClient();
   const chainId = useChainId();
@@ -40,7 +41,7 @@ export default function SubscribeButton({ slug }: Props) {
       try {
         const result = await publicClient
           .buildQuery()
-          .where([eq('type', 'subscription'), eq('communitySlug', slug), eq('subscriber', currentAddress)])
+          .where([eq('type', 'subscription'), eq('communitySlug', slug), eq('subscriber', currentAddress.toLowerCase())])
           .withPayload(true)
           .limit(1)
           .fetch();
@@ -83,14 +84,14 @@ export default function SubscribeButton({ slug }: Props) {
       await arkivWalletClient.createEntity({
         payload: jsonToPayload({
           communitySlug: slug,
-          subscriber: address,
+          subscriber: address.toLowerCase(),
           subscribedAt: new Date().toISOString(),
         }),
         contentType: 'application/json',
         attributes: [
           { key: 'type', value: 'subscription' },
           { key: 'communitySlug', value: slug },
-          { key: 'subscriber', value: address },
+          { key: 'subscriber', value: address.toLowerCase() },
         ],
         expiresIn: ExpirationTime.fromDays(365),
       });
@@ -98,7 +99,7 @@ export default function SubscribeButton({ slug }: Props) {
       // Re-fetch to get the entity key
       const result = await publicClient
         .buildQuery()
-        .where([eq('type', 'subscription'), eq('communitySlug', slug), eq('subscriber', address)])
+        .where([eq('type', 'subscription'), eq('communitySlug', slug), eq('subscriber', address.toLowerCase())])
         .withPayload(true)
         .limit(1)
         .fetch();
@@ -142,26 +143,34 @@ export default function SubscribeButton({ slug }: Props) {
 
   if (!isConnected) return null;
 
+  const subscribedCls = compact
+    ? 'inline-flex items-center px-3 py-1 text-xs font-semibold border border-ink/30 text-ink/60 rounded-full hover:border-ink/50 transition-colors font-[family-name:var(--font-kode-mono)] disabled:opacity-50'
+    : 'inline-flex items-center px-4 py-2 text-xs font-semibold border border-cobalt text-cobalt hover:bg-cobalt/10 transition-colors tracking-wide uppercase disabled:opacity-50';
+
+  const unsubscribedCls = compact
+    ? 'inline-flex items-center px-3 py-1 text-xs font-semibold border border-ink/30 text-ink/60 rounded-full hover:border-ink/50 hover:text-ink transition-colors font-[family-name:var(--font-kode-mono)] disabled:opacity-50'
+    : 'inline-flex items-center px-4 py-2 text-xs font-semibold bg-cobalt text-cream hover:bg-cobalt-light transition-colors tracking-wide uppercase disabled:opacity-50';
+
   return (
     <div className="flex flex-col gap-1">
       {isSubscribed ? (
         <button
           onClick={handleUnsubscribe}
           disabled={loading || checking}
-          className="inline-flex items-center px-4 py-2 text-xs font-semibold border border-cobalt text-cobalt hover:bg-cobalt/10 transition-colors tracking-wide uppercase disabled:opacity-50"
+          className={subscribedCls}
         >
-          {loading ? 'Unsubscribing…' : 'Subscribed ✓'}
+          {loading ? '…' : 'Subscribed ✓'}
         </button>
       ) : (
         <button
           onClick={handleSubscribe}
           disabled={loading || checking}
-          className="inline-flex items-center px-4 py-2 text-xs font-semibold bg-orange text-cream hover:bg-orange-light transition-colors tracking-wide uppercase disabled:opacity-50"
+          className={unsubscribedCls}
         >
-          {loading ? 'Subscribing…' : 'Subscribe'}
+          {loading ? '…' : 'Subscribe'}
         </button>
       )}
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {!compact && error && <p className="text-xs text-red-400">{error}</p>}
     </div>
   );
 }

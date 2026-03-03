@@ -5,23 +5,14 @@ import Link from 'next/link';
 import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, parseEvent, parseCommunity, type ArkivEvent, type ArkivCommunity } from '@/lib/arkiv';
 import { getEventStatus } from '@/lib/expiration';
-import StatusBadge from '@/app/components/StatusBadge';
+import { EventCard, CardSkeleton } from '@/app/components/EventCard';
 import { ErrorMessage } from '@/app/components/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 
-// Poster color rotation: orange, cobalt, ink, yellow
-const POSTER_BG = ['#E8491C', '#0247E2', '#1A1614', '#D4E84C'] as const;
-const POSTER_FG = ['#F2EDE4', '#F2EDE4', '#F2EDE4', '#1A1614'] as const;
-
-function parseEventDate(dateStr: string): { day: string; month: string } | null {
-  if (!dateStr) return null;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return null;
-  return {
-    day: String(d.getDate()).padStart(2, '0'),
-    month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-  };
-}
+const EVENT_CATEGORIES = [
+  'Meetup', 'Workshop', 'Hackathon', 'Conference',
+  'Study Group', 'Social', 'Online', 'Other',
+] as const;
 
 // ── Search input ─────────────────────────────────────────────────────────────
 
@@ -63,86 +54,6 @@ function SearchInput({
         </button>
       )}
     </div>
-  );
-}
-
-// ── Poster event card ──────────────────────────────────────────────────────────
-
-function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
-  const colorIdx = index % 4;
-  const bg = POSTER_BG[colorIdx];
-  const fg = POSTER_FG[colorIdx];
-  const parsedDate = parseEventDate(event?.date ?? '');
-  const status = event?.status === 'cancelled' ? 'cancelled' : getEventStatus(event?.date ?? '');
-  const dimmed = status === 'ended' || status === 'cancelled';
-
-  return (
-    <Link
-      href={`/event/${event?.entityKey}`}
-      className={`flex flex-col aspect-[3/4] overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl${dimmed ? ' opacity-75' : ''}`}
-      style={{ background: bg, color: fg }}
-    >
-      {/* Main poster area */}
-      <div className="flex-1 flex flex-col p-5">
-        {parsedDate ? (
-          <div className="mb-auto">
-            <div
-              className="text-7xl font-bold leading-none font-[family-name:var(--font-kode-mono)]"
-              style={{ opacity: 0.88 }}
-            >
-              {parsedDate.day}
-            </div>
-            <div className="text-xs font-bold tracking-[0.25em] uppercase mt-1" style={{ opacity: 0.55 }}>
-              {parsedDate.month}
-            </div>
-          </div>
-        ) : (
-          <div className="mb-auto" />
-        )}
-
-        {/* Title — anchored to bottom of main area */}
-        <h3 className="text-xl font-bold leading-snug font-[family-name:var(--font-kode-mono)] mt-6 line-clamp-3">
-          {event?.title || 'Untitled Event'}
-        </h3>
-      </div>
-
-      {/* Bottom info strip */}
-      <div
-        className="px-5 py-3 flex items-center justify-between gap-3"
-        style={{ borderTop: '1px solid rgba(128,128,128,0.2)' }}
-      >
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <StatusBadge status={status} />
-          {event?.location && (
-            <span className="text-xs truncate" style={{ opacity: 0.70 }}>
-              {event.location}
-            </span>
-          )}
-        </div>
-        {event?.organizer && (
-          <img
-            src={`https://effigy.im/a/${event.organizer}.svg`}
-            alt=""
-            width={22}
-            height={22}
-            className="rounded-full shrink-0"
-            style={{ opacity: 0.75 }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        )}
-      </div>
-    </Link>
-  );
-}
-
-function CardSkeleton({ index }: { index: number }) {
-  return (
-    <div
-      className="aspect-[3/4] animate-pulse"
-      style={{ background: POSTER_BG[index % 4], opacity: 0.3 }}
-    />
   );
 }
 
@@ -225,6 +136,7 @@ export default function HomePage() {
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'live' | 'ended'>('all');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'soonest'>('newest');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -319,6 +231,10 @@ export default function HomePage() {
         const s = e.status === 'cancelled' ? 'cancelled' : getEventStatus(e.date ?? '');
         return s === statusFilter;
       });
+    }
+
+    if (categoryFilter) {
+      result = result.filter((e) => e?.category === categoryFilter);
     }
 
     if (searchQuery.trim()) {
@@ -441,6 +357,32 @@ export default function HomePage() {
             {/* Divider */}
             <span className="w-px h-4 bg-warm-gray/40 self-center mx-3 hidden sm:block" aria-hidden="true" />
 
+            {/* Category */}
+            <div className="flex flex-wrap gap-1">
+              <button
+                onClick={() => setCategoryFilter('')}
+                className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-colors font-[family-name:var(--font-dm-sans)] ${
+                  categoryFilter === '' ? 'bg-ink text-cream' : 'text-warm-gray hover:text-ink'
+                }`}
+              >
+                All types
+              </button>
+              {EVENT_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat)}
+                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-colors font-[family-name:var(--font-dm-sans)] ${
+                    categoryFilter === cat ? 'bg-ink text-cream' : 'text-warm-gray hover:text-ink'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <span className="w-px h-4 bg-warm-gray/40 self-center mx-3 hidden sm:block" aria-hidden="true" />
+
             {/* Sort */}
             <div className="flex">
               {(['newest', 'soonest'] as const).map((s) => (
@@ -490,7 +432,7 @@ export default function HomePage() {
                 : 'No events match your filters.'}
             </p>
             <button
-              onClick={() => { setStatusFilter('all'); setSortOrder('newest'); setSearchQuery(''); }}
+              onClick={() => { setStatusFilter('all'); setCategoryFilter(''); setSortOrder('newest'); setSearchQuery(''); }}
               className="text-xs font-semibold text-cobalt underline underline-offset-2 hover:text-cobalt-light transition-colors font-[family-name:var(--font-dm-sans)]"
             >
               Clear {searchQuery.trim() ? 'search' : 'filters'}

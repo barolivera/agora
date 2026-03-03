@@ -39,6 +39,7 @@ export default function EditCommunityPage() {
   const [formName, setFormName] = useState('');
   const [description, setDescription] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  const [coverUrl, setCoverUrl] = useState('');
   const [website, setWebsite] = useState('');
   const [twitter, setTwitter] = useState('');
   const [discord, setDiscord] = useState('');
@@ -67,6 +68,7 @@ export default function EditCommunityPage() {
           setFormName(profile.name || deslugify(name));
           setDescription(profile.description ?? '');
           setLogoUrl(profile.logoUrl ?? '');
+          setCoverUrl(profile.coverUrl ?? '');
           setWebsite(profile.website ?? '');
           setTwitter(profile.twitter ?? '');
           setDiscord(profile.discord ?? '');
@@ -134,6 +136,7 @@ export default function EditCommunityPage() {
         updatedAt: new Date().toISOString(),
       };
       if (logoUrl.trim()) payload.logoUrl = logoUrl.trim();
+      if (coverUrl.trim()) payload.coverUrl = coverUrl.trim();
       if (website.trim()) payload.website = website.trim();
       if (twitter.trim()) payload.twitter = twitter.trim();
       if (discord.trim()) payload.discord = discord.trim();
@@ -259,6 +262,21 @@ export default function EditCommunityPage() {
                 />
               </div>
             )}
+          </div>
+
+          {/* Cover image URL */}
+          <div>
+            <label className="block text-sm font-medium text-ink mb-1.5">
+              Cover image URL
+              <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
+            </label>
+            <input
+              type="url"
+              placeholder="https://… (recommended: 1200×400px)"
+              value={coverUrl}
+              onChange={(e) => setCoverUrl(e.target.value)}
+              className={inputCls}
+            />
           </div>
 
           {/* Website */}

@@ -9,8 +9,15 @@ import { jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eventExpiresAt, secondsUntilExpiry } from '@/lib/expiration';
 import { ErrorMessage } from '@/app/components/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
+import { shortAddress } from '@/lib/arkiv';
+import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 
 const KAOLIN_CHAIN_ID = 60138453025;
+
+const EVENT_CATEGORIES = [
+  'Meetup', 'Workshop', 'Hackathon', 'Conference',
+  'Study Group', 'Social', 'Online', 'Other',
+] as const;
 
 // ── Gradient helper ────────────────────────────────────────────────────────────
 
@@ -40,11 +47,6 @@ function parsePreviewDate(dateStr: string): { day: string; month: string } | nul
     day: String(d.getDate()).padStart(2, '0'),
     month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
   };
-}
-
-function shortAddress(addr: string): string {
-  if (!addr || addr.length < 10) return addr;
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
 // ── Community helpers ──────────────────────────────────────────────────────────
@@ -77,6 +79,7 @@ function PreviewCard({
   capacity,
   organizer,
   coverImageUrl,
+  names,
 }: {
   title: string;
   date: string;
@@ -84,6 +87,7 @@ function PreviewCard({
   capacity: string;
   organizer: string;
   coverImageUrl: string;
+  names: Map<string, string | null>;
 }) {
   const parsedDate = parsePreviewDate(date);
   const gradient = titleGradient(title);
@@ -171,9 +175,16 @@ function PreviewCard({
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
-          <span className="text-xs text-warm-gray font-mono truncate">
-            {shortAddress(organizer)}
-          </span>
+          <div className="truncate min-w-0">
+            <span className="text-xs text-warm-gray font-mono truncate block">
+              {displayName(organizer, names).name}
+            </span>
+            {displayName(organizer, names).isResolved && (
+              <span className="text-xs text-warm-gray/60 font-mono truncate block">
+                {shortAddress(organizer)}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -194,9 +205,12 @@ export default function CreateEventPage() {
   const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [category, setCategory] = useState('');
   const [communityTag, setCommunityTag] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const names = useDisplayNames(address ? [address] : []);
 
   if (!isConnected) {
     return (
@@ -241,9 +255,12 @@ export default function CreateEventPage() {
         date,
         location,
         capacity: Number(capacity) || 0,
-        organizer: address,
+        organizer: address.toLowerCase(),
         status: 'upcoming',
       };
+      if (category) {
+        payload.category = category;
+      }
       if (coverImageUrl.trim()) {
         payload.coverImageUrl = coverImageUrl.trim();
       }
@@ -256,10 +273,13 @@ export default function CreateEventPage() {
 
       const attributes: { key: string; value: string }[] = [
         { key: 'type', value: 'event' },
-        { key: 'organizer', value: address },
+        { key: 'organizer', value: address.toLowerCase() },
         { key: 'date', value: new Date(date).getTime().toString() },
         { key: 'status', value: 'upcoming' },
       ];
+      if (category) {
+        attributes.push({ key: 'category', value: category });
+      }
       if (normalizedCommunity) {
         attributes.push({ key: 'community', value: normalizedCommunity });
       }
@@ -326,6 +346,29 @@ export default function CreateEventPage() {
                   rows={4}
                   className={`${inputCls} resize-none`}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1.5">
+                  Category <span className="text-orange">*</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {EVENT_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCategory(cat)}
+                      className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-dm-sans)] ${
+                        category === cat
+                          ? 'bg-ink text-cream'
+                          : 'border border-warm-gray/40 text-warm-gray hover:text-ink hover:border-ink/30'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <input type="hidden" name="category" value={category} required />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -451,6 +494,7 @@ export default function CreateEventPage() {
               capacity={capacity}
               organizer={address ?? ''}
               coverImageUrl={coverImageUrl}
+              names={names}
             />
             <p className="mt-3 text-xs text-warm-gray/50 text-center">
               Updates as you type

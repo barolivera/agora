@@ -3,7 +3,7 @@ export type EventStatus = 'upcoming' | 'live' | 'ended' | 'cancelled';
 const STATUS_STYLES: Record<EventStatus, { bg: string; color: string; label: string }> = {
   upcoming: { bg: '#0247E2', color: '#F2EDE4', label: 'Upcoming' },
   live:     { bg: '#22c55e', color: '#ffffff', label: '● Live' },
-  ended:    { bg: '#C8C0B4', color: '#1A1614', label: 'Ended' },
+  ended:    { bg: '#FF3D00', color: '#FAFAFA', label: 'Ended' },
   cancelled:{ bg: '#ef4444', color: '#ffffff', label: 'Cancelled' },
 };
 

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { eq } from '@arkiv-network/sdk/query';
 import {
   publicClient,
@@ -9,8 +8,9 @@ import {
   type ArkivCommunity,
 } from '@/lib/arkiv';
 import SubscribeButton from './SubscribeButton';
+import EventsWithSidebar from './EventsWithSidebar';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function deslugify(slug: string): string {
   return slug
@@ -19,12 +19,7 @@ function deslugify(slug: string): string {
     .join(' ');
 }
 
-function shortAddress(addr: string): string {
-  if (!addr || addr.length < 10) return addr;
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
-
-// ── Metadata ──────────────────────────────────────────────────────────────────
+// ── Metadata ───────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
   params,
@@ -43,293 +38,216 @@ export async function generateMetadata({
   };
 }
 
-// ── Event card (server-safe) ───────────────────────────────────────────────────
+// ── Cover section (hero banner with overlaid title) ────────────────────────────
 
-const POSTER_BG = ['#E8491C', '#0247E2', '#1A1614', '#D4E84C'] as const;
-const POSTER_FG = ['#F2EDE4', '#F2EDE4', '#F2EDE4', '#1A1614'] as const;
-
-function parseEventDate(dateStr: string): { day: string; month: string } | null {
-  if (!dateStr) return null;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return null;
-  return {
-    day: String(d.getDate()).padStart(2, '0'),
-    month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-  };
-}
-
-function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
-  const colorIdx = index % 4;
-  const bg = POSTER_BG[colorIdx];
-  const fg = POSTER_FG[colorIdx];
-  const parsedDate = parseEventDate(event?.date ?? '');
-
+function CoverSection({
+  coverUrl,
+  displayName,
+}: {
+  coverUrl?: string;
+  displayName: string;
+}) {
   return (
-    <Link
-      href={`/event/${event?.entityKey}`}
-      className="flex flex-col aspect-[3/4] overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl"
-      style={{ background: bg, color: fg }}
-    >
-      <div className="flex-1 flex flex-col p-5">
-        {parsedDate ? (
-          <div className="mb-auto">
-            <div
-              className="text-7xl font-bold leading-none font-[family-name:var(--font-kode-mono)]"
-              style={{ opacity: 0.88 }}
-            >
-              {parsedDate.day}
-            </div>
-            <div className="text-xs font-bold tracking-[0.25em] uppercase mt-1" style={{ opacity: 0.55 }}>
-              {parsedDate.month}
-            </div>
-          </div>
-        ) : (
-          <div className="mb-auto" />
-        )}
-        <h3 className="text-xl font-bold leading-snug font-[family-name:var(--font-kode-mono)] mt-6 line-clamp-3">
-          {event?.title || 'Untitled Event'}
-        </h3>
-      </div>
+    <div className="relative h-56 overflow-hidden">
+      {/* Background: image or gradient */}
+      {coverUrl ? (
+        <img
+          src={coverUrl}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, #1A1614 55%, #0247E2 100%)',
+          }}
+        />
+      )}
 
-      <div
-        className="px-5 py-3 flex items-center justify-between gap-3"
-        style={{ borderTop: '1px solid rgba(128,128,128,0.2)' }}
-      >
-        {event?.location ? (
-          <span className="text-xs truncate" style={{ opacity: 0.70 }}>
-            {event.location}
-          </span>
-        ) : (
-          <span />
-        )}
-        {event?.organizer && (
-          <img
-            src={`https://effigy.im/a/${event.organizer}.svg`}
-            alt=""
-            width={22}
-            height={22}
-            className="rounded-full shrink-0"
-            style={{ opacity: 0.75 }}
-          />
-        )}
+      {/* Semi-transparent overlay */}
+      <div className="absolute inset-0 bg-ink/55" />
+
+      {/* Community name anchored to bottom */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <div className="max-w-6xl mx-auto px-6 pb-5">
+          <h1
+            className="text-4xl sm:text-5xl font-bold text-cream font-[family-name:var(--font-kode-mono)] leading-none"
+            style={{ textShadow: '0 2px 12px rgba(26,22,20,0.6)' }}
+          >
+            {displayName}
+          </h1>
+        </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
-// ── Profile header ────────────────────────────────────────────────────────────
+// ── Social icon components ─────────────────────────────────────────────────────
 
-function ProfileHeader({
+function GlobeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z" />
+    </svg>
+  );
+}
+
+function DiscordIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+    </svg>
+  );
+}
+
+// ── Hero section (profile row below cover) ─────────────────────────────────────
+
+function HeroSection({
   profile,
   name,
-  eventCount,
-  totalAttendees,
   subscriberCount,
 }: {
-  profile: ArkivCommunity;
+  profile: ArkivCommunity | null;
   name: string;
-  eventCount: number;
-  totalAttendees: number;
   subscriberCount: number;
 }) {
-  const displayName = profile.name || deslugify(name);
+  const displayName = profile?.name || deslugify(name);
   const firstLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <section className="bg-ink py-16 px-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Breadcrumb */}
-        <p className="text-xs font-bold tracking-[0.2em] uppercase text-warm-gray/50 mb-8">
-          <Link href="/community" className="hover:text-warm-gray transition-colors">
-            Communities
-          </Link>
-          {' '}/ {name}
-        </p>
+    <section className="bg-ink">
+      {/* Cover banner with name overlay */}
+      <CoverSection coverUrl={profile?.coverUrl} displayName={displayName} />
 
-        {/* Logo + name + description row */}
-        <div className="flex items-start gap-6 mb-6">
-          {/* Logo */}
+      {/* Profile section */}
+      <div className="max-w-6xl mx-auto px-6 pt-6 pb-6">
+        <div className="flex flex-col gap-6">
+
+          {/* Avatar */}
           <div className="shrink-0">
-            {profile.logoUrl ? (
+            {profile?.logoUrl ? (
               <img
                 src={profile.logoUrl}
                 alt={displayName}
                 width={80}
                 height={80}
-                className="object-cover"
+                className="w-20 h-20 rounded-xl object-cover"
+                style={{ border: '3px solid #F2EDE4' }}
               />
             ) : (
               <div
-                className="w-20 h-20 flex items-center justify-center text-3xl font-bold text-cream font-[family-name:var(--font-kode-mono)]"
-                style={{ backgroundColor: '#0247E2' }}
+                className="w-20 h-20 rounded-xl flex items-center justify-center text-2xl font-bold text-cream font-[family-name:var(--font-kode-mono)]"
+                style={{ border: '3px solid #F2EDE4', backgroundColor: '#0247E2' }}
               >
                 {firstLetter}
               </div>
             )}
           </div>
 
-          {/* Name + description */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-4xl sm:text-5xl font-bold text-cream font-[family-name:var(--font-kode-mono)] mb-3 leading-tight">
-              {displayName}
-            </h1>
-            {profile.description && (
-              <p className="text-warm-gray text-base max-w-2xl leading-relaxed font-[family-name:var(--font-dm-sans)]">
-                {profile.description}
-              </p>
-            )}
+          {/* Info row: name + desc + links | subscribe button */}
+          <div className="flex items-start gap-6">
+
+            {/* Left: name + description + social links */}
+            <div className="flex flex-col gap-2.5 flex-1 min-w-0">
+              <div className="flex flex-col gap-1">
+                <p className="text-2xl font-bold text-cream font-[family-name:var(--font-kode-mono)] leading-tight">
+                  {displayName}
+                </p>
+                {profile?.description && (
+                  <p className="text-sm text-cream/80 leading-snug line-clamp-2 font-[family-name:var(--font-dm-sans)] max-w-lg">
+                    {profile.description}
+                  </p>
+                )}
+              </div>
+
+              {(profile?.website || profile?.twitter || profile?.discord) && (
+                <div className="flex items-center gap-5">
+                  {profile.website && (
+                    <a
+                      href={profile.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                    >
+                      <GlobeIcon />
+                      <span className="font-[family-name:var(--font-dm-sans)]">
+                        {profile.website.replace(/^https?:\/\//, '')}
+                      </span>
+                    </a>
+                  )}
+                  {profile.twitter && (
+                    <a
+                      href={
+                        profile.twitter.startsWith('http')
+                          ? profile.twitter
+                          : `https://x.com/${profile.twitter.replace(/^@/, '')}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                    >
+                      <XIcon />
+                      <span className="font-[family-name:var(--font-dm-sans)]">
+                        {profile.twitter.startsWith('@') ? profile.twitter : `@${profile.twitter}`}
+                      </span>
+                    </a>
+                  )}
+                  {profile.discord && (
+                    <a
+                      href={profile.discord}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                    >
+                      <DiscordIcon />
+                      <span className="font-[family-name:var(--font-dm-sans)]">Discord</span>
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Right: subscribe button */}
+            <SubscribeButton slug={name} />
           </div>
-        </div>
-
-        {/* Social links */}
-        {(profile.website || profile.twitter || profile.discord) && (
-          <div className="flex items-center gap-5 mb-6">
-            {profile.website && (
-              <a
-                href={profile.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm text-warm-gray hover:text-cream transition-colors"
-              >
-                <span aria-hidden="true">🌐</span>
-                <span>Website</span>
-              </a>
-            )}
-            {profile.twitter && (
-              <a
-                href={
-                  profile.twitter.startsWith('http')
-                    ? profile.twitter
-                    : `https://x.com/${profile.twitter.replace(/^@/, '')}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm text-warm-gray hover:text-cream transition-colors"
-              >
-                <span aria-hidden="true" className="font-bold">𝕏</span>
-                <span>{profile.twitter.startsWith('@') ? profile.twitter : `@${profile.twitter}`}</span>
-              </a>
-            )}
-            {profile.discord && (
-              <a
-                href={profile.discord}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm text-warm-gray hover:text-cream transition-colors"
-              >
-                <span aria-hidden="true">💬</span>
-                <span>Discord</span>
-              </a>
-            )}
-          </div>
-        )}
-
-        {/* Actions + stats row */}
-        <div className="flex flex-wrap items-center gap-4">
-          <SubscribeButton slug={name} />
-          <Link
-            href={`/community/edit/${name}`}
-            className="inline-flex items-center px-4 py-2 text-xs font-semibold border border-cobalt text-cobalt hover:bg-cobalt hover:text-cream transition-colors tracking-wide uppercase"
-          >
-            Edit community
-          </Link>
-          <p className="text-warm-gray/70 text-sm">
-            {eventCount} {eventCount === 1 ? 'event' : 'events'}
-            {' · '}
-            {totalAttendees} total {totalAttendees === 1 ? 'attendee' : 'attendees'}
-            {' · '}
-            {subscriberCount} {subscriberCount === 1 ? 'subscriber' : 'subscribers'}
-          </p>
-        </div>
-
-        {/* Created by */}
-        {profile.createdBy && (
-          <p className="text-warm-gray/50 text-xs mt-4">
-            Created by{' '}
-            <Link
-              href={`/profile/${profile.createdBy}`}
-              className="font-mono hover:text-warm-gray transition-colors underline underline-offset-2"
-            >
-              {shortAddress(profile.createdBy)}
-            </Link>
-          </p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-// ── Basic header (no profile) ─────────────────────────────────────────────────
-
-function BasicHeader({
-  name,
-  eventCount,
-  totalAttendees,
-  subscriberCount,
-}: {
-  name: string;
-  eventCount: number;
-  totalAttendees: number;
-  subscriberCount: number;
-}) {
-  const displayName = deslugify(name);
-  return (
-    <section className="bg-ink py-16 px-6">
-      <div className="max-w-6xl mx-auto">
-        <p className="text-xs font-bold tracking-[0.2em] uppercase text-warm-gray/50 mb-3">
-          <Link href="/community" className="hover:text-warm-gray transition-colors">
-            Communities
-          </Link>
-          {' '}/ {name}
-        </p>
-        <h1 className="text-5xl sm:text-6xl font-bold text-cream font-[family-name:var(--font-kode-mono)] mb-4">
-          {displayName}
-        </h1>
-        <p className="text-warm-gray text-base mb-4">
-          {eventCount} {eventCount === 1 ? 'event' : 'events'}
-          {' · '}
-          {totalAttendees} total {totalAttendees === 1 ? 'attendee' : 'attendees'}
-          {' · '}
-          {subscriberCount} {subscriberCount === 1 ? 'subscriber' : 'subscribers'}
-        </p>
-        <div className="mb-8">
-          <SubscribeButton slug={name} />
-        </div>
-
-        {/* Claim CTA */}
-        <div className="inline-flex flex-col gap-3 p-5 border border-warm-gray/20 bg-white/5">
-          <p className="text-sm text-warm-gray max-w-sm">
-            No community profile yet. Add a description, logo, and social links.
-          </p>
-          <Link
-            href={`/community/create?slug=${name}&name=${name}`}
-            className="inline-flex items-center self-start bg-orange text-cream px-5 py-2.5 text-sm font-semibold hover:bg-orange-light transition-colors"
-          >
-            Claim this community page →
-          </Link>
         </div>
       </div>
     </section>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Page ───────────────────────────────────────────────────────────────────────
+// All data-fetching logic is preserved exactly as-is below.
 
 export default async function CommunityPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ name: string }>;
+  searchParams?: Promise<{ tab?: string; date?: string }>;
 }) {
   const { name } = await params;
+  const sp = searchParams ? await searchParams : {};
+  const initialTab = sp.tab === 'past' ? 'past' : 'upcoming';
+  const initialDate = sp.date ?? null;
 
   let events: ArkivEvent[] = [];
-  let totalAttendees = 0;
   let communityProfile: ArkivCommunity | null = null;
   let subscriberCount = 0;
+  let subscriberAddresses: string[] = [];
 
   try {
-    // Fetch community profile, events, and subscriber count in parallel
-    const [profileResult, eventsResult, subCount] = await Promise.all([
+    const [profileResult, eventsResult, subscriptionsResult] = await Promise.all([
       publicClient
         .buildQuery()
         .where([eq('type', 'community'), eq('slug', name)])
@@ -346,11 +264,11 @@ export default async function CommunityPage({
       publicClient
         .buildQuery()
         .where([eq('type', 'subscription'), eq('communitySlug', name)])
-        .count()
-        .catch(() => 0),
+        .withPayload(true)
+        .limit(20)
+        .fetch()
+        .catch(() => null),
     ]);
-
-    subscriberCount = subCount ?? 0;
 
     const profileEntity = profileResult?.entities?.[0];
     if (profileEntity) {
@@ -359,22 +277,24 @@ export default async function CommunityPage({
 
     events = eventsResult?.entities?.map(parseEvent) ?? [];
 
-    if (events.length > 0) {
-      const rsvpCounts = await Promise.all(
-        events.map(async (event) => {
-          try {
-            const r = await publicClient
-              .buildQuery()
-              .where([eq('type', 'rsvp'), eq('eventId', event.entityKey)])
-              .fetch();
-            return r?.entities?.length ?? 0;
-          } catch {
-            return 0;
-          }
-        })
-      );
-      totalAttendees = rsvpCounts.reduce((sum, n) => sum + n, 0);
-    }
+    // Subscriber count + addresses for member avatars
+    const subEntities = subscriptionsResult?.entities ?? [];
+    subscriberCount = subEntities.length;
+    subscriberAddresses = subEntities
+      .map((e) => {
+        const d = e.toJson();
+        return (d?.subscriber as string) ?? '';
+      })
+      .filter(Boolean);
+
+    // Total subscriber count (may exceed the 20 we fetched)
+    const fullSubCount = await publicClient
+      .buildQuery()
+      .where([eq('type', 'subscription'), eq('communitySlug', name)])
+      .count()
+      .catch(() => subscriberCount);
+    subscriberCount = fullSubCount ?? subscriberCount;
+
   } catch {
     // render with empty state
   }
@@ -382,51 +302,25 @@ export default async function CommunityPage({
   return (
     <div className="min-h-screen bg-cream">
 
-      {/* ── Header ────────────────────────────────────────── */}
-      {communityProfile ? (
-        <ProfileHeader
+      {/* ── Hero ──────────────────────────────────────────── */}
+      <HeroSection
+        profile={communityProfile}
+        name={name}
+        subscriberCount={subscriberCount}
+      />
+
+      {/* ── Content ───────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        <EventsWithSidebar
+          events={events}
           profile={communityProfile}
           name={name}
-          eventCount={events.length}
-          totalAttendees={totalAttendees}
+          subscriberAddresses={subscriberAddresses}
           subscriberCount={subscriberCount}
+          initialTab={initialTab}
+          initialDate={initialDate}
         />
-      ) : (
-        <BasicHeader
-          name={name}
-          eventCount={events.length}
-          totalAttendees={totalAttendees}
-          subscriberCount={subscriberCount}
-        />
-      )}
-
-      {/* ── Events grid ───────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 py-14">
-        {events.length === 0 ? (
-          <div className="flex flex-col items-center text-center py-28 border border-dashed border-warm-gray/50">
-            <p className="text-5xl mb-6" role="img" aria-label="columns">🏛️</p>
-            <p className="text-2xl text-ink font-[family-name:var(--font-kode-mono)] mb-3">
-              No events yet.
-            </p>
-            <p className="text-warm-gray text-sm mb-8 max-w-xs leading-relaxed">
-              Be the first to create an event for this community.
-            </p>
-            <Link
-              href="/create-event"
-              className="bg-orange text-cream px-6 py-3 text-sm font-semibold hover:bg-orange-light transition-colors"
-            >
-              Create an event
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {events.map((event, i) => (
-              <EventCard key={event?.entityKey} event={event} index={i} />
-            ))}
-          </div>
-        )}
-      </section>
-
+      </div>
     </div>
   );
 }

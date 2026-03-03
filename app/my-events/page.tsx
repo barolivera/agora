@@ -176,7 +176,12 @@ export default function MyEventsPage() {
                       <h2 className="font-semibold text-ink truncate font-[family-name:var(--font-kode-mono)]">
                         {event.title}
                       </h2>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-warm-gray">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-warm-gray">
+                        {event.category && (
+                          <span className="text-[10px] font-semibold uppercase tracking-widest text-cobalt font-[family-name:var(--font-dm-sans)]">
+                            {event.category}
+                          </span>
+                        )}
                         {formatDate(event.date) && <span>{formatDate(event.date)}</span>}
                         {event.location && <span>{event.location}</span>}
                       </div>

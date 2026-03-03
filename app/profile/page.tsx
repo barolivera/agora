@@ -6,11 +6,9 @@ import { useAccount, useWalletClient } from 'wagmi';
 import { createWalletClient, custom, type Hex } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
-import { and, eq } from '@arkiv-network/sdk/query';
+import { eq } from '@arkiv-network/sdk/query';
 import Link from 'next/link';
-import { publicClient, parseProfile, parseEvent, parseSubscription, type ArkivProfile, type ArkivEvent, type ArkivSubscription } from '@/lib/arkiv';
-import { getEventStatus } from '@/lib/expiration';
-import StatusBadge from '@/app/components/StatusBadge';
+import { publicClient, parseProfile, type ArkivProfile } from '@/lib/arkiv';
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -22,10 +20,6 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-
-  const [myEvents, setMyEvents] = useState<ArkivEvent[]>([]);
-  const [mySubscriptions, setMySubscriptions] = useState<ArkivSubscription[]>([]);
-  const [activityLoading, setActivityLoading] = useState(true);
 
   // Form state
   const [nickname, setNickname] = useState('');
@@ -71,40 +65,6 @@ export default function EditProfilePage() {
     }
 
     loadProfile();
-  }, [address]);
-
-  useEffect(() => {
-    if (!address) {
-      setActivityLoading(false);
-      return;
-    }
-
-    async function loadActivity() {
-      setActivityLoading(true);
-      try {
-        const [eventsResult, subsResult] = await Promise.all([
-          publicClient
-            .buildQuery()
-            .where(and([eq('type', 'event'), eq('organizer', address!.toLowerCase())]))
-            .withPayload(true)
-            .fetch()
-            .catch(() => null),
-          publicClient
-            .buildQuery()
-            .where(and([eq('type', 'subscription'), eq('subscriber', address!.toLowerCase())]))
-            .withPayload(true)
-            .fetch()
-            .catch(() => null),
-        ]);
-
-        setMyEvents(eventsResult?.entities?.map(parseEvent) ?? []);
-        setMySubscriptions(subsResult?.entities?.map(parseSubscription) ?? []);
-      } finally {
-        setActivityLoading(false);
-      }
-    }
-
-    loadActivity();
   }, [address]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -334,12 +294,12 @@ export default function EditProfilePage() {
               {saved ? 'Profile saved on-chain ✓' : saving ? 'Saving…' : 'Save profile'}
             </button>
             {existingProfile && address && (
-              <a
+              <Link
                 href={`/profile/${address}`}
                 className="text-sm text-warm-gray hover:text-ink transition-colors"
               >
                 View public profile →
-              </a>
+              </Link>
             )}
           </div>
 
@@ -348,118 +308,6 @@ export default function EditProfilePage() {
         <p className="mt-8 text-xs text-warm-gray/60 font-[family-name:var(--font-dm-sans)]">
           Your profile expires after 1 year and renews when you edit it.
         </p>
-
-        {/* ── My Events ────────────────────────────────── */}
-        <section className="mt-16 pt-10 border-t border-warm-gray/30">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
-              My Events
-            </h2>
-            <Link
-              href="/create-event"
-              className="text-sm font-semibold bg-orange text-cream px-4 py-2 hover:bg-orange-light transition-colors"
-            >
-              + Create event
-            </Link>
-          </div>
-
-          {activityLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-warm-gray/20 animate-pulse" />
-              ))}
-            </div>
-          ) : myEvents.length === 0 ? (
-            <p className="text-sm text-warm-gray py-6">
-              You haven&apos;t created any events yet.
-            </p>
-          ) : (
-            <ul className="divide-y divide-warm-gray/20">
-              {myEvents.map((event) => {
-                if (!event?.entityKey) return null;
-                const status = event.status === 'cancelled'
-                  ? 'cancelled'
-                  : getEventStatus(event.date ?? '');
-                return (
-                  <li key={event.entityKey}>
-                    <Link
-                      href={`/event/${event.entityKey}`}
-                      className="flex items-center justify-between gap-4 py-3 hover:text-cobalt transition-colors group"
-                    >
-                      <span className="text-sm font-medium text-ink group-hover:text-cobalt truncate">
-                        {event.title || 'Untitled Event'}
-                      </span>
-                      <div className="flex items-center gap-3 shrink-0">
-                        {event.date && (
-                          <span className="text-xs text-warm-gray">
-                            {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
-                        )}
-                        <StatusBadge status={status} />
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        {/* ── My Communities ───────────────────────────── */}
-        <section className="mt-12 pt-10 border-t border-warm-gray/30">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
-              My Communities
-            </h2>
-            <Link
-              href="/community"
-              className="text-sm text-cobalt hover:text-cobalt-light transition-colors"
-            >
-              Browse all →
-            </Link>
-          </div>
-
-          {activityLoading ? (
-            <div className="space-y-3">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-12 bg-warm-gray/20 animate-pulse" />
-              ))}
-            </div>
-          ) : mySubscriptions.length === 0 ? (
-            <p className="text-sm text-warm-gray py-6">
-              You haven&apos;t joined any communities yet.{' '}
-              <Link href="/community" className="text-cobalt hover:text-cobalt-light underline underline-offset-2">
-                Browse communities
-              </Link>
-            </p>
-          ) : (
-            <ul className="divide-y divide-warm-gray/20">
-              {mySubscriptions.map((sub) => {
-                if (!sub?.entityKey) return null;
-                const slug = sub.communitySlug ?? '';
-                const displayName = slug
-                  .split('-')
-                  .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-                  .join(' ');
-                return (
-                  <li key={sub.entityKey}>
-                    <Link
-                      href={`/community/${slug}`}
-                      className="flex items-center justify-between gap-4 py-3 hover:text-cobalt transition-colors group"
-                    >
-                      <span className="text-sm font-medium text-ink group-hover:text-cobalt">
-                        {displayName}
-                      </span>
-                      <span className="text-xs text-warm-gray shrink-0">
-                        {slug}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
 
       </div>
     </main>

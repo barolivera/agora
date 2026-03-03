@@ -17,6 +17,11 @@ const COMMUNITY_SUGGESTIONS = [
   'BuidlGuidl',
 ];
 
+const EVENT_CATEGORIES = [
+  'Meetup', 'Workshop', 'Hackathon', 'Conference',
+  'Study Group', 'Social', 'Online', 'Other',
+] as const;
+
 function normalizeCommunity(raw: string): string {
   return raw.toLowerCase().replace(/\s+/g, '-').trim();
 }
@@ -57,6 +62,7 @@ export default function EditEventPage() {
   const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [category, setCategory] = useState('');
   const [communityTag, setCommunityTag] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -76,6 +82,7 @@ export default function EditEventPage() {
         setLocation(data?.location ?? '');
         setCapacity(data?.capacity != null ? String(data.capacity) : '');
         setCoverImageUrl(data?.coverImageUrl ?? '');
+        setCategory(data?.category ?? '');
         setCommunityTag(data?.community ?? '');
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Failed to load event');
@@ -158,8 +165,11 @@ export default function EditEventPage() {
         date,
         location,
         capacity: Number(capacity) || 0,
-        organizer: address,
+        organizer: address.toLowerCase(),
       };
+      if (category) {
+        payload.category = category;
+      }
       if (coverImageUrl.trim()) {
         payload.coverImageUrl = coverImageUrl.trim();
       }
@@ -170,9 +180,12 @@ export default function EditEventPage() {
 
       const attributes: { key: string; value: string }[] = [
         { key: 'type', value: 'event' },
-        { key: 'organizer', value: address },
+        { key: 'organizer', value: address.toLowerCase() },
         { key: 'date', value: new Date(date).getTime().toString() },
       ];
+      if (category) {
+        attributes.push({ key: 'category', value: category });
+      }
       if (normalizedCommunity) {
         attributes.push({ key: 'community', value: normalizedCommunity });
       }
@@ -236,6 +249,28 @@ export default function EditEventPage() {
               rows={4}
               className={`${inputCls} resize-none`}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-ink mb-1.5">
+              Category <span className="text-orange">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {EVENT_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-dm-sans)] ${
+                    category === cat
+                      ? 'bg-ink text-cream'
+                      : 'border border-warm-gray/40 text-warm-gray hover:text-ink hover:border-ink/30'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">

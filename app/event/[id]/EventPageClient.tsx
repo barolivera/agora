@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import QRCode from 'qrcode';
+import jsQR from 'jsqr';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useAccount, useWalletClient, useChainId } from 'wagmi';
@@ -18,11 +20,16 @@ import {
   parseRSVP,
   parseAttendance,
   parseWaitlist,
+  parseCommunity,
+  shortAddress,
   type ArkivEvent,
   type ArkivRSVP,
   type ArkivAttendance,
   type ArkivWaitlist,
+  type ArkivCommunity,
 } from '@/lib/arkiv';
+import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
+import SubscribeButton from '@/app/community/[name]/SubscribeButton';
 
 const KAOLIN_CHAIN_ID = 60138453025;
 
@@ -59,11 +66,6 @@ function formatTime(dateStr: string): string {
   return t === '12:00 AM' ? '' : t;
 }
 
-function shortAddress(addr: string): string {
-  if (!addr || addr.length < 10) return addr;
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
-
 function deslugify(slug: string): string {
   return slug
     .split('-')
@@ -71,53 +73,158 @@ function deslugify(slug: string): string {
     .join(' ');
 }
 
+function googleCalendarUrl(event: ArkivEvent): string {
+  const start = new Date(event.date);
+  if (isNaN(start.getTime())) return '#';
+  const end = new Date(start);
+  end.setHours(end.getHours() + 2);
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    dates: `${fmt(start)}/${fmt(end)}`,
+    location: event.location ?? '',
+    details: event.description ?? '',
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
 function PageSkeleton() {
   return (
-    <div>
-      <div className="h-64 sm:h-72 bg-warm-gray/30 animate-pulse" />
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-10">
-          <div className="space-y-4 animate-pulse">
-            <div className="h-5 bg-warm-gray/30 rounded w-1/4" />
-            <div className="h-4 bg-warm-gray/30 rounded w-full" />
-            <div className="h-4 bg-warm-gray/30 rounded w-5/6" />
-            <div className="h-4 bg-warm-gray/30 rounded w-4/6" />
-            <div className="h-4 bg-warm-gray/30 rounded w-full mt-2" />
-            <div className="h-4 bg-warm-gray/30 rounded w-3/4" />
+    <div className="min-h-screen bg-cream">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row gap-12">
+          <div className="flex-1 min-w-0 space-y-6 animate-pulse">
+            <div className="w-full aspect-video bg-warm-gray/30" />
+            <div className="h-8 bg-warm-gray/30 w-3/4" />
+            <div className="h-4 bg-warm-gray/30 w-1/2" />
+            <div className="h-4 bg-warm-gray/30 w-full" />
+            <div className="h-4 bg-warm-gray/30 w-5/6" />
           </div>
-          <div className="h-72 bg-warm-gray/30 animate-pulse" />
+          <div className="md:w-[340px] shrink-0">
+            <div className="h-72 bg-warm-gray/30 animate-pulse" />
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// ── Attendee row ──────────────────────────────────────────────────────────────
+// ── Stacked attendees ────────────────────────────────────────────────────────
 
-function AttendeeRow({ rsvp, verified }: { rsvp: ArkivRSVP; verified: boolean }) {
+/** Deterministic hue from an address string, used for fallback avatar bg. */
+function addressHue(addr: string): number {
+  let h = 0;
+  for (let i = 0; i < addr.length; i++) h = (h * 31 + addr.charCodeAt(i)) & 0xfff;
+  return h % 360;
+}
+
+function AttendeeAvatar({ addr, label, size = 40 }: { addr: string; label: string; size?: number }) {
+  const initials = label.slice(0, 2).toUpperCase();
+  const hue = addressHue(addr);
   return (
-    <li className="flex items-center gap-2.5">
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
       <img
-        src={`https://effigy.im/a/${rsvp?.attendee}.svg`}
-        alt=""
-        width={24}
-        height={24}
-        className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
+        src={`https://effigy.im/a/${addr}.svg`}
+        alt={label}
+        width={size}
+        height={size}
+        className="rounded-full border-2 border-cream w-full h-full object-cover"
         onError={(e) => {
+          // Hide img, show fallback underneath
           (e.target as HTMLImageElement).style.display = 'none';
         }}
       />
-      <span className="text-sm text-ink font-mono truncate flex-1">
-        {shortAddress(rsvp?.attendee ?? '')}
-      </span>
-      {verified && (
-        <span className="text-xs font-semibold text-green-600 flex items-center gap-1 shrink-0">
-          ✓ Verified
-        </span>
+      {/* Fallback: initials on coloured circle (visible when img fails) */}
+      <div
+        className="absolute inset-0 rounded-full border-2 border-cream flex items-center justify-center text-cream font-bold font-[family-name:var(--font-kode-mono)] -z-10"
+        style={{ fontSize: size * 0.35, backgroundColor: `hsl(${hue}, 55%, 45%)` }}
+      >
+        {initials}
+      </div>
+    </div>
+  );
+}
+
+function AttendeesStack({
+  rsvps,
+  names,
+  verifiedAddresses,
+}: {
+  rsvps: ArkivRSVP[];
+  names: Map<string, string | null>;
+  verifiedAddresses: Set<string>;
+}) {
+  const count = rsvps.length;
+  const visible = rsvps.slice(0, 6);
+
+  // Build summary text: up to 2 resolved names + "y X más"
+  const namedAttendees = useMemo(() => {
+    const result: string[] = [];
+    for (const rsvp of rsvps) {
+      if (result.length >= 2) break;
+      const nick = names.get(rsvp.attendee?.toLowerCase());
+      if (nick) result.push(nick);
+    }
+    return result;
+  }, [rsvps, names]);
+
+  const remaining = count - namedAttendees.length;
+
+  const verifiedCount = rsvps.filter(
+    (r) => verifiedAddresses.has(r.attendee?.toLowerCase() ?? '')
+  ).length;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Stacked avatars */}
+      <div className="flex items-center">
+        {visible.map((rsvp, i) => {
+          const addr = rsvp.attendee ?? '';
+          const { name } = displayName(addr, names);
+          return (
+            <div
+              key={rsvp.entityKey}
+              className="relative hover:z-10 transition-transform hover:scale-110"
+              style={{ marginLeft: i === 0 ? 0 : -12, zIndex: visible.length - i }}
+            >
+              <AttendeeAvatar addr={addr} label={name} />
+            </div>
+          );
+        })}
+        {count > 6 && (
+          <div
+            className="w-10 h-10 rounded-full border-2 border-cream bg-warm-gray/30 flex items-center justify-center text-xs font-bold text-ink/70 font-[family-name:var(--font-kode-mono)]"
+            style={{ marginLeft: -12 }}
+          >
+            +{count - 6}
+          </div>
+        )}
+      </div>
+
+      {/* Summary text */}
+      <p className="text-sm text-ink/80 font-[family-name:var(--font-dm-sans)] leading-snug">
+        {namedAttendees.length > 0 ? (
+          <>
+            <span className="font-semibold text-ink">{namedAttendees.join(', ')}</span>
+            {remaining > 0 && (
+              <> y <span className="font-semibold text-ink">{remaining}</span> más</>
+            )}
+          </>
+        ) : (
+          <span className="text-warm-gray">{count} {count === 1 ? 'asistente' : 'asistentes'}</span>
+        )}
+      </p>
+
+      {/* Verified badge */}
+      {verifiedCount > 0 && (
+        <p className="text-xs font-semibold text-green-600 flex items-center gap-1">
+          ✓ {verifiedCount} verified on-chain
+        </p>
       )}
-    </li>
+    </div>
   );
 }
 
@@ -161,6 +268,32 @@ export default function EventPageClient() {
   const [cancelEventStatus, setCancelEventStatus] = useState('');
   const [rawEventData, setRawEventData] = useState<Record<string, unknown>>({});
 
+  // Community profile for sidebar card
+  const [communityProfile, setCommunityProfile] = useState<ArkivCommunity | null>(null);
+
+  // QR Ticket modal
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [ticketQrUrl, setTicketQrUrl] = useState('');
+  const [ticketQrError, setTicketQrError] = useState('');
+
+  // QR Scanner modal
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanResult, setScanResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [scanError, setScanError] = useState('');
+  const [scanVerifying, setScanVerifying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Collect all addresses to resolve display names in one batch
+  const allAddresses = [
+    ...(event?.organizer ? [event.organizer] : []),
+    ...(rsvps ?? []).map((r) => r.attendee),
+    ...(waitlist ?? []).map((w) => w.attendee),
+    ...(address ? [address] : []),
+  ].filter(Boolean);
+  const names = useDisplayNames(allAddresses);
+
   const fetchAttendees = useCallback(async () => {
     if (!id) return;
     const result = await publicClient
@@ -200,8 +333,22 @@ export default function EventPageClient() {
       try {
         const entity = await publicClient.getEntity(id as Hex);
         setRawEventData((entity.toJson() as Record<string, unknown>) ?? {});
-        setEvent(parseEvent(entity));
+        const parsedEvent = parseEvent(entity);
+        setEvent(parsedEvent);
         await Promise.all([fetchAttendees(), fetchAttendances(), fetchWaitlist()]);
+
+        // Fetch community profile if event belongs to one
+        if (parsedEvent.community) {
+          const commResult = await publicClient
+            .buildQuery()
+            .where([eq('type', 'community'), eq('slug', parsedEvent.community)])
+            .withPayload(true)
+            .limit(1)
+            .fetch()
+            .catch(() => null);
+          const commEntity = commResult?.entities?.[0];
+          if (commEntity) setCommunityProfile(parseCommunity(commEntity));
+        }
       } catch (err) {
         setError(friendlyError(err));
       } finally {
@@ -235,8 +382,6 @@ export default function EventPageClient() {
           eventId: id,
           attendee: address,
           confirmedAt: new Date().toISOString(),
-          // Embed the organizer address so each RSVP carries the full
-          // 3-way relationship: organizer → event → rsvp
           eventOrganizer: event.organizer,
         }),
         contentType: 'application/json',
@@ -307,12 +452,7 @@ export default function EventPageClient() {
     );
     const myRsvpKey = myRsvp?.entityKey;
 
-    console.log('myRsvpKey:', myRsvpKey);
-
-    if (!myRsvpKey) {
-      console.error('No RSVP entity key found');
-      return;
-    }
+    if (!myRsvpKey) return;
 
     const capacity = event.capacity ?? 0;
     const wasAtCapacity = capacity > 0 && (rsvps?.length ?? 0) >= capacity;
@@ -332,7 +472,6 @@ export default function EventPageClient() {
       await arkivWalletClient.deleteEntity({ entityKey: myRsvpKey as Hex });
       setRsvps(prev => prev.filter(r => r.entityKey !== myRsvpKey));
 
-      // Clean up waitlist entry if the user had one.
       const myWaitlistEntry = (waitlist ?? []).find(
         (w) => (w?.attendee?.toLowerCase() ?? '') === address.toLowerCase()
       );
@@ -341,7 +480,6 @@ export default function EventPageClient() {
         setWaitlist(prev => prev.filter(w => w.entityKey !== myWaitlistEntry.entityKey));
       }
 
-      // Guard: remove verified attendance record if one exists.
       const myAttendance = (attendances ?? []).find(
         (a) => (a?.attendee?.toLowerCase() ?? '') === address.toLowerCase()
       );
@@ -434,7 +572,6 @@ export default function EventPageClient() {
         transport: custom(wagmiWalletClient as any),
       });
 
-      // 1. Update the event entity to cancelled
       const payload: Record<string, unknown> = { ...rawEventData, status: 'cancelled' };
 
       const attributes: { key: string; value: string }[] = [
@@ -455,8 +592,6 @@ export default function EventPageClient() {
         expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
       });
 
-      // 2. Propagate cancellation to all child RSVPs — maintains referential
-      //    integrity so children reflect parent state changes.
       for (const rsvp of (rsvps ?? [])) {
         if (!rsvp?.entityKey) continue;
         await arkivWalletClient.updateEntity({
@@ -478,7 +613,6 @@ export default function EventPageClient() {
         });
       }
 
-      // 3. Propagate cancellation to waitlist entries.
       for (const entry of (waitlist ?? [])) {
         if (!entry?.entityKey) continue;
         await arkivWalletClient.updateEntity({
@@ -516,12 +650,209 @@ export default function EventPageClient() {
     setTimeout(() => setCopied(false), 4000);
   }
 
+  // ── QR Ticket handlers ──────────────────────────────────────────────────────
+
+  async function handleViewTicket() {
+    if (!address || !id) return;
+    setTicketQrUrl('');
+    setTicketQrError('');
+    setShowTicketModal(true);
+
+    const myRsvp = (rsvps ?? []).find(
+      (r) => (r?.attendee?.toLowerCase() ?? '') === address.toLowerCase()
+    );
+
+    try {
+      const dataUrl = await QRCode.toDataURL(
+        JSON.stringify({ eventId: id, attendee: address, rsvpKey: myRsvp?.entityKey ?? '' }),
+        { width: 200, margin: 2, color: { dark: '#1A1614', light: '#F2EDE4' } }
+      );
+      setTicketQrUrl(dataUrl);
+    } catch {
+      setTicketQrError('Failed to generate QR code');
+    }
+  }
+
+  function handleCloseTicket() {
+    setShowTicketModal(false);
+    setTicketQrUrl('');
+    setTicketQrError('');
+  }
+
+  function stopCamera() {
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+    if (videoRef.current?.srcObject) {
+      (videoRef.current.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
+      videoRef.current.srcObject = null;
+    }
+  }
+
+  function startScanning() {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+
+    scanIntervalRef.current = setInterval(() => {
+      if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert',
+      });
+
+      if (code?.data) {
+        handleScannedCode(code.data);
+      }
+    }, 250);
+  }
+
+  async function handleOpenScanner() {
+    setScanResult(null);
+    setScanError('');
+    setScanVerifying(false);
+    setShowScanner(true);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      });
+
+      // Wait a tick for the video element to mount
+      await new Promise((r) => setTimeout(r, 100));
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play();
+          startScanning();
+        };
+      }
+    } catch {
+      setScanError('Camera access denied. Please allow camera permissions and try again.');
+    }
+  }
+
+  async function handleScannedCode(raw: string) {
+    // Pause scanning while we process
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+
+    setScanResult(null);
+    setScanError('');
+
+    let parsed: { eventId?: string; attendee?: string; rsvpKey?: string };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      setScanError('Invalid QR code — not a valid ticket.');
+      setTimeout(() => startScanning(), 3000);
+      return;
+    }
+
+    if (!parsed.eventId || !parsed.attendee) {
+      setScanError('Invalid ticket data.');
+      setTimeout(() => startScanning(), 3000);
+      return;
+    }
+
+    if (parsed.eventId !== id) {
+      setScanError('This ticket is for a different event.');
+      setTimeout(() => startScanning(), 3000);
+      return;
+    }
+
+    const attendeeLower = parsed.attendee.toLowerCase();
+
+    // Check if this person actually RSVPed
+    const hasRsvp = (rsvps ?? []).some(
+      (r) => (r?.attendee?.toLowerCase() ?? '') === attendeeLower
+    );
+    if (!hasRsvp) {
+      setScanError(`${shortAddress(parsed.attendee)} is not in the RSVP list.`);
+      setTimeout(() => startScanning(), 3000);
+      return;
+    }
+
+    // Already verified?
+    if (verifiedAddresses.has(attendeeLower)) {
+      setScanResult({ success: true, message: `${shortAddress(parsed.attendee)} is already verified.` });
+      return;
+    }
+
+    // Verify on-chain
+    if (!address || !wagmiWalletClient) {
+      setScanError('Connect your wallet to verify attendance.');
+      return;
+    }
+    if (chainId !== KAOLIN_CHAIN_ID) {
+      setScanError('Please switch to Arkiv Kaolin to verify.');
+      return;
+    }
+
+    setScanVerifying(true);
+    try {
+      const arkivWalletClient = createWalletClient({
+        account: wagmiWalletClient.account,
+        chain: kaolin,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        transport: custom(wagmiWalletClient as any),
+      });
+
+      await arkivWalletClient.createEntity({
+        payload: jsonToPayload({
+          eventId: id,
+          attendee: parsed.attendee,
+          verified: true,
+          verifiedAt: new Date().toISOString(),
+        }),
+        contentType: 'application/json',
+        attributes: [
+          { key: 'type', value: 'attendance' },
+          { key: 'eventId', value: id },
+          { key: 'attendee', value: parsed.attendee },
+          { key: 'verified', value: 'true' },
+        ],
+        expiresIn: ExpirationTime.fromDays(3650),
+      });
+
+      await fetchAttendances();
+      setScanResult({ success: true, message: `Attendance verified for ${shortAddress(parsed.attendee)}` });
+    } catch (err) {
+      setScanError(friendlyError(err));
+    } finally {
+      setScanVerifying(false);
+    }
+  }
+
+  function handleCloseScanner() {
+    stopCamera();
+    setShowScanner(false);
+    setScanResult(null);
+    setScanError('');
+    setScanVerifying(false);
+  }
+
+  // Clean up camera on unmount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => stopCamera(), []);
+
   if (loading) return <PageSkeleton />;
 
   if (!event) {
     return (
       <main className="max-w-2xl mx-auto py-20 px-6 text-center">
-        <p className="text-3xl mb-4">🏛️</p>
         <p className="text-warm-gray font-[family-name:var(--font-kode-mono)] text-lg mb-2">
           Event not found
         </p>
@@ -568,500 +899,742 @@ export default function EventPageClient() {
 
   return (
     <div className="min-h-screen bg-cream">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row gap-12 items-start">
 
-      {/* ── Hero / Poster ──────────────────────────────────── */}
-      <section className="relative overflow-hidden" style={{ background: gradient }}>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/10 to-transparent pointer-events-none" />
+          {/* ── LEFT COLUMN (60%) ──────────────────────────────── */}
+          <div className="flex-1 min-w-0">
 
-        <div className="relative max-w-5xl mx-auto px-6 py-20 flex flex-col gap-6">
-          <div>
-            <StatusBadge status={displayStatus} />
-          </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-cream max-w-2xl leading-tight font-[family-name:var(--font-kode-mono)] drop-shadow-sm">
-            {event?.title || 'Untitled Event'}
-          </h1>
-
-          {/* Date / time / location row */}
-          <div className="flex flex-wrap gap-x-8 gap-y-3 text-cream/85 text-sm sm:text-base">
-            {day && (
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 shrink-0 opacity-75" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
-                <span>{day}</span>
-              </div>
-            )}
-            {time && (
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 shrink-0 opacity-75" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                </svg>
-                <span>{time}</span>
-              </div>
-            )}
-            {event?.location && (
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 shrink-0 opacity-75" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                </svg>
-                <span>{event.location}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Organizer row */}
-          {event?.organizer && (
-            <Link
-              href={`/profile/${event.organizer}`}
-              className="flex items-center gap-2.5 mt-1 group w-fit"
-            >
-              <img
-                src={`https://effigy.im/a/${event.organizer}.svg`}
-                alt=""
-                width={28}
-                height={28}
-                className="rounded-full ring-2 ring-cream/30 shrink-0"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-              <span className="text-sm text-cream/70 font-mono group-hover:text-cream transition-colors">
-                {shortAddress(event.organizer)}
-              </span>
-            </Link>
-          )}
-
-          {/* Community badge */}
-          {event?.community && (
-            <div>
-              <Link
-                href={`/community/${event.community}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-cream rounded-full"
-                style={{ backgroundColor: '#0247E2' }}
-              >
-                Part of {deslugify(event.community)}
-              </Link>
-            </div>
-          )}
-
-          {/* Share buttons */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleShare}
-              style={{ backgroundColor: '#0247E2' }}
-              className="px-4 py-2 text-xs font-semibold text-cream tracking-widest uppercase hover:opacity-90 transition-opacity"
-            >
-              {copied ? 'Copied!' : 'Share event'}
-            </button>
-            <a
-              href={`/event/${id}/opengraph-image`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 text-xs font-semibold text-cream tracking-widest uppercase border border-cream/40 hover:border-cream/80 transition-colors"
-            >
-              View poster
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Content ────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-10 items-start">
-
-          {/* Left: description + organizer controls */}
-          <div>
-            {event?.description ? (
-              <>
-                <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-kode-mono)]">
-                  About this event
-                </h2>
-                <p className="text-ink leading-relaxed whitespace-pre-wrap">
-                  {event.description}
-                </p>
-              </>
-            ) : (
-              <p className="text-warm-gray italic">No description provided.</p>
-            )}
-
-            {/* Expiry notice */}
-            {event?.date && (
-              <p className="mt-6 text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
-                This event page expires on {formatExpiryDate(eventExpiresAt(event.date))}
-              </p>
-            )}
-
-            {/* ── Organizer Controls ────────────────────────── */}
-            {isOrganizer && (
-              <div className="mt-10 pt-8 border-t border-warm-gray/30">
-                <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-kode-mono)]">
-                  Organizer Controls
-                </h2>
-
-                <div className="mb-5 flex items-center gap-3 flex-wrap">
-                  <Link
-                    href={`/event/edit/${id}`}
-                    className="inline-block px-4 py-2 text-sm font-semibold border border-warm-gray text-warm-gray hover:border-ink hover:text-ink transition-colors"
-                  >
-                    Edit event
-                  </Link>
-                </div>
-
-                {/* Status management */}
-                <div className="mb-6 flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-warm-gray">Status:</span>
-                    <StatusBadge status={displayStatus} />
-                  </div>
-                  {(displayStatus === 'upcoming' || displayStatus === 'live') && (
-                    showCancelEventConfirm ? (
-                      <div className="border border-red-200 p-4 flex flex-col gap-3">
-                        <p className="text-sm font-semibold text-ink">Cancel this event?</p>
-                        <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
-                          Are you sure? This cannot be undone.
-                          {(rsvps?.length ?? 0) > 0 && (
-                            <> All {rsvps.length} RSVP{rsvps.length !== 1 ? 's' : ''} will be marked cancelled.</>
-                          )}
-                        </p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleCancelEvent}
-                            disabled={cancelEventLoading}
-                            className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
-                          >
-                            {cancelEventLoading ? 'Cancelling…' : 'Yes, cancel event'}
-                          </button>
-                          <button
-                            onClick={() => setShowCancelEventConfirm(false)}
-                            disabled={cancelEventLoading}
-                            className="px-3 py-1.5 text-xs text-warm-gray border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors disabled:opacity-40"
-                          >
-                            Keep event
-                          </button>
-                        </div>
-                        {cancelEventStatus && (
-                          <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
-                            {cancelEventStatus}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setShowCancelEventConfirm(true)}
-                        className="self-start px-4 py-1.5 text-xs font-semibold border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        Cancel event
-                      </button>
-                    )
-                  )}
-                </div>
-
-                {atCapacity && (
-                  <div className="mb-6 p-4 border border-warm-gray/30">
-                    <p className="text-sm font-semibold text-ink mb-3">
-                      Waitlist{(waitlist?.length ?? 0) > 0 ? ` (${waitlist?.length ?? 0})` : ''}
-                    </p>
-                    {(waitlist?.length ?? 0) > 0 ? (
-                      <ul className="space-y-2.5 mb-3">
-                        {(waitlist ?? []).map((entry) => (
-                          <li key={entry?.entityKey} className="flex items-center gap-2.5">
-                            <img
-                              src={`https://effigy.im/a/${entry?.attendee}.svg`}
-                              alt=""
-                              width={20}
-                              height={20}
-                              className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                            <span className="text-sm text-ink font-mono truncate">
-                              {shortAddress(entry?.attendee ?? '')}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-warm-gray italic mb-3">No one on the waitlist yet.</p>
-                    )}
-                    <p className="text-xs text-warm-gray/70 font-[family-name:var(--font-dm-sans)] leading-snug">
-                      Waitlist members are stored on-chain and expire with the event — no abandoned data.
-                    </p>
-                  </div>
-                )}
-
-                {verifyDone ? (
-                  <p className="text-sm font-medium text-ink">
-                    Event closed. Attendance verified on-chain.
-                  </p>
-                ) : eventPassed ? (
-                  <>
-                    {!showVerifyPanel ? (
-                      <button
-                        onClick={() => setShowVerifyPanel(true)}
-                        className="px-4 py-2.5 bg-ink text-cream text-sm font-semibold hover:bg-ink/80 transition-colors"
-                      >
-                        Close event &amp; verify attendance
-                      </button>
-                    ) : (
-                      <div className="space-y-4">
-                        <p className="text-sm text-warm-gray">
-                          Select who actually attended:
-                        </p>
-                        {(rsvps?.length ?? 0) === 0 ? (
-                          <p className="text-sm text-warm-gray italic">No RSVPs to verify.</p>
-                        ) : (
-                          <ul className="space-y-2.5">
-                            {(rsvps ?? []).map((rsvp) => {
-                              const addr = rsvp?.attendee ?? '';
-                              const addrLower = addr.toLowerCase();
-                              const checked = checkedAttendees.has(addrLower);
-                              return (
-                                <li key={rsvp?.entityKey} className="flex items-center gap-3">
-                                  <input
-                                    type="checkbox"
-                                    id={`verify-${addrLower}`}
-                                    checked={checked}
-                                    onChange={(e) => {
-                                      setCheckedAttendees((prev) => {
-                                        const next = new Set(prev);
-                                        if (e.target.checked) next.add(addrLower);
-                                        else next.delete(addrLower);
-                                        return next;
-                                      });
-                                    }}
-                                    className="w-4 h-4 accent-orange shrink-0"
-                                  />
-                                  <label
-                                    htmlFor={`verify-${addrLower}`}
-                                    className="text-sm text-ink font-mono cursor-pointer"
-                                  >
-                                    {shortAddress(addr)}
-                                  </label>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                        <div className="flex items-center gap-3 pt-1">
-                          <button
-                            onClick={handleVerifyAttendance}
-                            disabled={verifyLoading || checkedAttendees.size === 0}
-                            className="px-4 py-2.5 bg-orange text-cream text-sm font-semibold hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                          >
-                            {verifyLoading
-                              ? 'Verifying…'
-                              : `Confirm attendance (${checkedAttendees.size})`}
-                          </button>
-                          <button
-                            onClick={() => setShowVerifyPanel(false)}
-                            className="text-sm text-warm-gray hover:text-ink transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-sm text-warm-gray/70 italic">
-                    The &quot;Close event &amp; verify attendance&quot; option will appear after
-                    the event date has passed.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Right: attendee card */}
-          <div className="lg:sticky lg:top-6">
-            <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
-
-              {/* Count + capacity bar */}
-              <div>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
-                    {rsvps?.length ?? 0}
+            {/* 1. Event Poster / Header Image */}
+            <div className="relative w-full aspect-video overflow-hidden mb-8">
+              {event?.coverImageUrl ? (
+                <>
+                  <img
+                    src={event.coverImageUrl}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                </>
+              ) : (
+                <>
+                  <div className="absolute inset-0" style={{ background: gradient }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                </>
+              )}
+              <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col gap-3">
+                <StatusBadge status={displayStatus} />
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-cream leading-tight font-[family-name:var(--font-kode-mono)] drop-shadow-sm">
+                  {event?.title || 'Untitled Event'}
+                </h1>
+                {event?.category && (
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-cream/70 font-[family-name:var(--font-dm-sans)]">
+                    {event.category}
                   </span>
-                  {(event?.capacity ?? 0) > 0 ? (
-                    <span className="text-warm-gray text-sm">
-                      / {event?.capacity} attending
-                    </span>
-                  ) : (
-                    <span className="text-warm-gray text-sm">attending</span>
-                  )}
-                </div>
-                {capacityPct !== null && (
-                  <div className="h-1.5 bg-warm-gray/30 overflow-hidden">
-                    <div
-                      className="h-full bg-orange transition-all duration-500"
-                      style={{ width: `${capacityPct}%` }}
-                    />
-                  </div>
                 )}
               </div>
+            </div>
 
-              {/* Attendees list */}
-              {(rsvps?.length ?? 0) === 0 ? (
-                <p className="text-sm text-warm-gray">No attendees yet — be the first!</p>
-              ) : (
-                <ul className="space-y-3 max-h-52 overflow-y-auto pr-1">
-                  {(rsvps ?? []).map((rsvp) => (
-                    <AttendeeRow
-                      key={rsvp?.entityKey}
-                      rsvp={rsvp}
-                      verified={verifiedAddresses.has(rsvp?.attendee?.toLowerCase() ?? '')}
-                    />
-                  ))}
-                </ul>
-              )}
-
-              {/* Public attendees note */}
-              <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)] leading-snug">
-                Attendance is public and verifiable on-chain by anyone.
-              </p>
-
-              {/* Waitlist count + list */}
-              {(waitlist?.length ?? 0) > 0 && (
-                <div className="border-t border-warm-gray/20 pt-4 flex flex-col gap-3">
-                  <p className="text-sm text-warm-gray font-[family-name:var(--font-dm-sans)]">
-                    {waitlist?.length ?? 0} {(waitlist?.length ?? 0) === 1 ? 'person' : 'people'} on the waitlist
-                  </p>
-                  <ul className="space-y-3 max-h-40 overflow-y-auto pr-1">
-                    {(waitlist ?? []).map((entry) => (
-                      <li key={entry?.entityKey} className="flex items-center gap-2.5">
-                        <img
-                          src={`https://effigy.im/a/${entry?.attendee}.svg`}
-                          alt=""
-                          width={24}
-                          height={24}
-                          className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                        <span className="text-sm text-ink font-mono truncate flex-1">
-                          {shortAddress(entry?.attendee ?? '')}
-                        </span>
-                        <span
-                          className="text-xs font-semibold shrink-0"
-                          style={{ color: '#0247E2' }}
-                        >
-                          Waitlist
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+            {/* 2. Event Info Bar */}
+            <div className="flex flex-wrap gap-x-8 gap-y-3 mb-6">
+              {day && (
+                <div className="flex items-center gap-2.5 text-sm">
+                  <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-ink font-[family-name:var(--font-dm-sans)]">{day}</span>
                 </div>
               )}
-
-              {/* On-chain verification info */}
-              <p className="text-xs text-warm-gray/70 font-[family-name:var(--font-dm-sans)] leading-snug">
-                Verified attendance is stored permanently on-chain and can be used for POAPs,
-                community access, and on-chain credentials.
-              </p>
-
-              {/* Error */}
-              {error && <ErrorMessage message={error} />}
-
-              {/* CTA */}
-              {displayStatus === 'cancelled' ? (
-                <div className="p-4 bg-warm-gray/10 border border-warm-gray/30 text-center">
-                  <p className="text-sm text-warm-gray font-[family-name:var(--font-dm-sans)]">
-                    This event has been cancelled
-                  </p>
+              {time && (
+                <div className="flex items-center gap-2.5 text-sm">
+                  <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-ink font-[family-name:var(--font-dm-sans)]">{time}</span>
                 </div>
-              ) : !isConnected ? (
-                <p
-                  className="text-center text-sm font-semibold py-3 font-[family-name:var(--font-dm-sans)]"
-                  style={{ color: '#0247E2' }}
+              )}
+              {event?.location && (
+                <div className="flex items-center gap-2.5 text-sm">
+                  <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-ink font-[family-name:var(--font-dm-sans)]">{event.location}</span>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Organizer Row */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6 pb-6 border-b border-warm-gray/20">
+              {event?.organizer && (
+                <Link
+                  href={`/profile/${event.organizer}`}
+                  className="flex items-center gap-2.5 group"
                 >
-                  Connect wallet to RSVP
-                </p>
-              ) : alreadyRsvpd ? (
-                <div className="flex flex-col gap-2">
-                  <button
-                    disabled
-                    className="w-full py-3 text-sm font-semibold bg-ink/10 text-ink border border-ink/20 cursor-default"
-                  >
-                    Attendance Confirmed ✓
-                  </button>
-                  {showCancelConfirm ? (
-                    <div className="border border-warm-gray/30 p-3 flex flex-col gap-2.5">
-                      <p className="text-sm text-ink">
-                        Are you sure you want to cancel? This will remove your RSVP from the blockchain.
-                      </p>
-                      <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)] leading-snug">
-                        Your RSVP will be deleted from Arkiv immediately.
-                      </p>
-                      <div className="flex gap-2 pt-0.5">
-                        <button
-                          onClick={handleCancelRSVP}
-                          disabled={cancelLoading}
-                          className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
-                        >
-                          {cancelLoading ? 'Cancelling…' : 'Yes, cancel'}
-                        </button>
-                        <button
-                          onClick={() => setShowCancelConfirm(false)}
-                          className="px-3 py-1.5 text-xs text-warm-gray border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors"
-                        >
-                          Keep RSVP
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowCancelConfirm(true)}
-                      className="text-xs text-warm-gray underline text-center font-[family-name:var(--font-dm-sans)] hover:text-ink transition-colors"
-                    >
-                      Cancel attendance
-                    </button>
-                  )}
-                </div>
-              ) : atCapacity ? (
-                alreadyOnWaitlist ? (
-                  <button
-                    disabled
-                    className="w-full py-3 text-sm font-semibold border cursor-default"
-                    style={{ color: '#0247E2', borderColor: '#0247E2', backgroundColor: '#0247E210' }}
-                  >
-                    You&apos;re on the waitlist
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleWaitlist}
-                    disabled={waitlistLoading}
-                    className="w-full py-3 text-sm font-semibold text-cream transition-colors disabled:opacity-60 disabled:cursor-wait"
-                    style={{ backgroundColor: '#0247E2' }}
-                  >
-                    {waitlistLoading ? 'Joining…' : 'Join Waitlist'}
-                  </button>
-                )
-              ) : (
+                  <img
+                    src={`https://effigy.im/a/${event.organizer}.svg`}
+                    alt=""
+                    width={28}
+                    height={28}
+                    className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="min-w-0">
+                    <span className="text-sm text-warm-gray font-mono group-hover:text-ink transition-colors block truncate">
+                      {displayName(event.organizer, names).name}
+                    </span>
+                    {displayName(event.organizer, names).isResolved && (
+                      <span className="text-sm text-ink/60 font-mono block truncate">
+                        {shortAddress(event.organizer)}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              )}
+              {event?.community && (
+                <Link
+                  href={`/community/${event.community}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-cobalt border border-cobalt/30 hover:bg-cobalt/5 transition-colors"
+                >
+                  Part of {deslugify(event.community)}
+                </Link>
+              )}
+            </div>
+
+            {/* 4. Action Buttons Row */}
+            <div className="flex flex-wrap items-center gap-3 mb-8">
+              <button
+                onClick={handleShare}
+                className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-warm-gray/40 hover:border-ink/40 transition-colors"
+              >
+                {copied ? 'Copied!' : 'Share event'}
+              </button>
+              <a
+                href={googleCalendarUrl(event)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-warm-gray/40 hover:border-ink/40 transition-colors"
+              >
+                Add to calendar
+              </a>
+              {alreadyRsvpd && (
                 <button
-                  onClick={handleRSVP}
-                  disabled={rsvpLoading || !canRsvp}
-                  className="w-full py-3 text-sm font-semibold bg-orange text-cream hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-wait"
+                  onClick={handleViewTicket}
+                  className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-warm-gray/40 hover:border-ink/40 transition-colors"
                 >
-                  {rsvpLoading ? 'Confirming…' : 'Confirm Attendance'}
+                  View ticket
                 </button>
               )}
+            </div>
 
-              {/* Freed-spot notice after cancellation */}
-              {cancelledWithWaitlist && (
-                <p
-                  className="text-xs text-center font-[family-name:var(--font-dm-sans)] leading-snug"
-                  style={{ color: '#0247E2' }}
-                >
-                  Your spot has been freed. Waitlisted attendees can now join.
+            {/* 5. About This Event */}
+            <div className="mb-10">
+              <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-kode-mono)]">
+                About this event
+              </h2>
+              {event?.description ? (
+                <p className="text-ink leading-relaxed whitespace-pre-wrap font-[family-name:var(--font-dm-sans)]">
+                  {event.description}
+                </p>
+              ) : (
+                <p className="text-warm-gray italic font-[family-name:var(--font-dm-sans)]">
+                  No description provided.
                 </p>
               )}
+              {event?.date && (
+                <p className="mt-6 text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                  This event page expires on {formatExpiryDate(eventExpiresAt(event.date))}
+                </p>
+              )}
+            </div>
+
+            {/* 6. Location */}
+            {event?.location && (
+              <div className="mb-10">
+                <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-kode-mono)]">
+                  Location
+                </h2>
+                <p className="text-ink font-[family-name:var(--font-dm-sans)] mb-4">
+                  {event.location}
+                </p>
+                <iframe
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(event.location)}&output=embed`}
+                  className="w-full border border-warm-gray/30"
+                  style={{ height: 200, border: 'none' }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Event location map"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ── RIGHT COLUMN (40%, sticky) ─────────────────────── */}
+          <div className="w-full md:w-[380px] md:max-w-[380px] shrink-0">
+            <div className="md:sticky md:top-6 flex flex-col gap-6">
+
+              {/* 1. RSVP Card */}
+              <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
+
+                {/* Count + capacity bar */}
+                <div>
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
+                      {rsvps?.length ?? 0}
+                    </span>
+                    {(event?.capacity ?? 0) > 0 ? (
+                      <span className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)]">
+                        / {event?.capacity} attending
+                      </span>
+                    ) : (
+                      <span className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)]">attending</span>
+                    )}
+                  </div>
+                  {capacityPct !== null && (
+                    <div className="h-1.5 bg-warm-gray/30 overflow-hidden">
+                      <div
+                        className="h-full bg-orange transition-all duration-500"
+                        style={{ width: `${capacityPct}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Attendees — stacked avatars */}
+                {(rsvps?.length ?? 0) === 0 ? (
+                  <p className="text-sm text-warm-gray">No attendees yet — be the first!</p>
+                ) : (
+                  <AttendeesStack
+                    rsvps={rsvps ?? []}
+                    names={names}
+                    verifiedAddresses={verifiedAddresses}
+                  />
+                )}
+
+                {/* Public attendees note */}
+                <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)] leading-snug">
+                  Attendance is public and verifiable on-chain.
+                </p>
+
+                {/* Waitlist */}
+                {(waitlist?.length ?? 0) > 0 && (
+                  <div className="border-t border-warm-gray/20 pt-4 flex flex-col gap-3">
+                    <p className="text-sm text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                      {waitlist?.length ?? 0} {(waitlist?.length ?? 0) === 1 ? 'person' : 'people'} on the waitlist
+                    </p>
+                    <ul className="space-y-3 max-h-40 overflow-y-auto pr-1">
+                      {(waitlist ?? []).map((entry) => (
+                        <li key={entry?.entityKey} className="flex items-center gap-2.5">
+                          <img
+                            src={`https://effigy.im/a/${entry?.attendee}.svg`}
+                            alt=""
+                            width={24}
+                            height={24}
+                            className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                          <div className="truncate flex-1 min-w-0">
+                            <span className="text-sm text-ink font-mono truncate block">
+                              {displayName(entry?.attendee ?? '', names).name}
+                            </span>
+                            {displayName(entry?.attendee ?? '', names).isResolved && (
+                              <span className="text-sm text-ink/60 font-mono truncate block">
+                                {shortAddress(entry?.attendee ?? '')}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs font-semibold text-cobalt shrink-0">
+                            Waitlist
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Error */}
+                {error && <ErrorMessage message={error} />}
+
+                {/* CTA */}
+                {displayStatus === 'cancelled' ? (
+                  <div className="p-4 bg-warm-gray/10 border border-warm-gray/30 text-center">
+                    <p className="text-sm text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                      This event has been cancelled
+                    </p>
+                  </div>
+                ) : !isConnected ? (
+                  <p className="text-center text-sm font-semibold text-cobalt py-3 font-[family-name:var(--font-dm-sans)]">
+                    Connect wallet to RSVP
+                  </p>
+                ) : alreadyRsvpd ? (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      disabled
+                      className="w-full py-3 text-sm font-semibold bg-ink/10 text-ink border border-ink/20 cursor-default"
+                    >
+                      Attendance Confirmed ✓
+                    </button>
+                    {showCancelConfirm ? (
+                      <div className="border border-warm-gray/30 p-3 flex flex-col gap-2.5">
+                        <p className="text-sm text-ink">
+                          Are you sure you want to cancel? This will remove your RSVP from the blockchain.
+                        </p>
+                        <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)] leading-snug">
+                          Your RSVP will be deleted from Arkiv immediately.
+                        </p>
+                        <div className="flex gap-2 pt-0.5">
+                          <button
+                            onClick={handleCancelRSVP}
+                            disabled={cancelLoading}
+                            className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
+                          >
+                            {cancelLoading ? 'Cancelling…' : 'Yes, cancel'}
+                          </button>
+                          <button
+                            onClick={() => setShowCancelConfirm(false)}
+                            className="px-3 py-1.5 text-xs text-warm-gray border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors"
+                          >
+                            Keep RSVP
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowCancelConfirm(true)}
+                        className="text-xs text-warm-gray underline text-center font-[family-name:var(--font-dm-sans)] hover:text-ink transition-colors"
+                      >
+                        Cancel attendance
+                      </button>
+                    )}
+                  </div>
+                ) : atCapacity ? (
+                  alreadyOnWaitlist ? (
+                    <button
+                      disabled
+                      className="w-full py-3 text-sm font-semibold border cursor-default text-cobalt border-cobalt bg-cobalt/5"
+                    >
+                      You&apos;re on the waitlist
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleWaitlist}
+                      disabled={waitlistLoading}
+                      className="w-full py-3 text-sm font-semibold text-cream bg-cobalt transition-colors disabled:opacity-60 disabled:cursor-wait hover:bg-cobalt-light"
+                    >
+                      {waitlistLoading ? 'Joining…' : 'Join Waitlist'}
+                    </button>
+                  )
+                ) : (
+                  <button
+                    onClick={handleRSVP}
+                    disabled={rsvpLoading || !canRsvp}
+                    className="w-full py-3 text-sm font-semibold bg-orange text-cream hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    {rsvpLoading ? 'Confirming…' : 'Confirm Attendance'}
+                  </button>
+                )}
+
+                {/* Freed-spot notice */}
+                {cancelledWithWaitlist && (
+                  <p className="text-xs text-center text-cobalt font-[family-name:var(--font-dm-sans)] leading-snug">
+                    Your spot has been freed. Waitlisted attendees can now join.
+                  </p>
+                )}
+              </div>
+
+              {/* 2. Community Card */}
+              {event?.community && (
+                <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-4">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                    Community
+                  </h3>
+                  <Link
+                    href={`/community/${event.community}`}
+                    className="flex items-center gap-3 group"
+                  >
+                    {communityProfile?.logoUrl ? (
+                      <img
+                        src={communityProfile.logoUrl}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className="object-cover shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className="w-10 h-10 flex items-center justify-center text-lg font-bold text-cream font-[family-name:var(--font-kode-mono)] shrink-0"
+                        style={{ backgroundColor: '#0247E2' }}
+                      >
+                        {deslugify(event.community).charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="text-ink font-semibold font-[family-name:var(--font-kode-mono)] group-hover:text-cobalt transition-colors leading-snug">
+                      {communityProfile?.name || deslugify(event.community)}
+                    </span>
+                  </Link>
+                  {communityProfile?.description && (
+                    <p className="text-sm text-warm-gray leading-relaxed font-[family-name:var(--font-dm-sans)]">
+                      {communityProfile.description.length > 100
+                        ? communityProfile.description.slice(0, 100) + '…'
+                        : communityProfile.description}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <Link
+                      href={`/community/${event.community}`}
+                      className="text-xs font-semibold text-cobalt hover:text-cobalt-light transition-colors"
+                    >
+                      View community →
+                    </Link>
+                    <SubscribeButton slug={event.community} />
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Organizer Controls */}
+              {isOrganizer && (
+                <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                    Organizer Controls
+                  </h3>
+
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Link
+                      href={`/event/edit/${id}`}
+                      className="px-4 py-2 text-xs font-semibold border border-warm-gray text-warm-gray hover:border-ink hover:text-ink transition-colors"
+                    >
+                      Edit event
+                    </Link>
+                    <button
+                      onClick={handleOpenScanner}
+                      className="px-4 py-2 text-xs font-semibold border border-warm-gray text-warm-gray hover:border-ink hover:text-ink transition-colors"
+                    >
+                      Scan QR
+                    </button>
+                  </div>
+
+                  {/* Status management */}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-warm-gray">Status:</span>
+                      <StatusBadge status={displayStatus} />
+                    </div>
+                    {(displayStatus === 'upcoming' || displayStatus === 'live') && (
+                      showCancelEventConfirm ? (
+                        <div className="border border-red-200 p-4 flex flex-col gap-3">
+                          <p className="text-sm font-semibold text-ink">Cancel this event?</p>
+                          <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                            Are you sure? This cannot be undone.
+                            {(rsvps?.length ?? 0) > 0 && (
+                              <> All {rsvps.length} RSVP{rsvps.length !== 1 ? 's' : ''} will be marked cancelled.</>
+                            )}
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleCancelEvent}
+                              disabled={cancelEventLoading}
+                              className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
+                            >
+                              {cancelEventLoading ? 'Cancelling…' : 'Yes, cancel event'}
+                            </button>
+                            <button
+                              onClick={() => setShowCancelEventConfirm(false)}
+                              disabled={cancelEventLoading}
+                              className="px-3 py-1.5 text-xs text-warm-gray border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors disabled:opacity-40"
+                            >
+                              Keep event
+                            </button>
+                          </div>
+                          {cancelEventStatus && (
+                            <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                              {cancelEventStatus}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setShowCancelEventConfirm(true)}
+                          className="self-start px-4 py-1.5 text-xs font-semibold border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          Cancel event
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  {/* Waitlist (organizer view) */}
+                  {atCapacity && (
+                    <div className="border-t border-warm-gray/20 pt-4">
+                      <p className="text-sm font-semibold text-ink mb-3">
+                        Waitlist{(waitlist?.length ?? 0) > 0 ? ` (${waitlist?.length ?? 0})` : ''}
+                      </p>
+                      {(waitlist?.length ?? 0) > 0 ? (
+                        <ul className="space-y-2.5 mb-3">
+                          {(waitlist ?? []).map((entry) => (
+                            <li key={entry?.entityKey} className="flex items-center gap-2.5">
+                              <img
+                                src={`https://effigy.im/a/${entry?.attendee}.svg`}
+                                alt=""
+                                width={20}
+                                height={20}
+                                className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                              <div className="truncate min-w-0">
+                                <span className="text-sm text-ink font-mono truncate block">
+                                  {displayName(entry?.attendee ?? '', names).name}
+                                </span>
+                                {displayName(entry?.attendee ?? '', names).isResolved && (
+                                  <span className="text-sm text-ink/60 font-mono truncate block">
+                                    {shortAddress(entry?.attendee ?? '')}
+                                  </span>
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-warm-gray italic mb-3">No one on the waitlist yet.</p>
+                      )}
+                      <p className="text-xs text-warm-gray/70 font-[family-name:var(--font-dm-sans)] leading-snug">
+                        Waitlist members are stored on-chain and expire with the event.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Verify attendance */}
+                  {verifyDone ? (
+                    <p className="text-sm font-medium text-ink">
+                      Event closed. Attendance verified on-chain.
+                    </p>
+                  ) : eventPassed ? (
+                    <>
+                      {!showVerifyPanel ? (
+                        <button
+                          onClick={() => setShowVerifyPanel(true)}
+                          className="px-4 py-2.5 bg-ink text-cream text-sm font-semibold hover:bg-ink/80 transition-colors"
+                        >
+                          Close event &amp; verify attendance
+                        </button>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-sm text-warm-gray">
+                            Select who actually attended:
+                          </p>
+                          {(rsvps?.length ?? 0) === 0 ? (
+                            <p className="text-sm text-warm-gray italic">No RSVPs to verify.</p>
+                          ) : (
+                            <ul className="space-y-2.5">
+                              {(rsvps ?? []).map((rsvp) => {
+                                const addr = rsvp?.attendee ?? '';
+                                const addrLower = addr.toLowerCase();
+                                const checked = checkedAttendees.has(addrLower);
+                                return (
+                                  <li key={rsvp?.entityKey} className="flex items-center gap-3">
+                                    <input
+                                      type="checkbox"
+                                      id={`verify-${addrLower}`}
+                                      checked={checked}
+                                      onChange={(e) => {
+                                        setCheckedAttendees((prev) => {
+                                          const next = new Set(prev);
+                                          if (e.target.checked) next.add(addrLower);
+                                          else next.delete(addrLower);
+                                          return next;
+                                        });
+                                      }}
+                                      className="w-4 h-4 accent-orange shrink-0"
+                                    />
+                                    <label
+                                      htmlFor={`verify-${addrLower}`}
+                                      className="font-mono cursor-pointer"
+                                    >
+                                      <span className="text-sm text-ink block">{displayName(addr, names).name}</span>
+                                      {displayName(addr, names).isResolved && (
+                                        <span className="text-sm text-ink/60 block">{shortAddress(addr)}</span>
+                                      )}
+                                    </label>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                          <div className="flex items-center gap-3 pt-1">
+                            <button
+                              onClick={handleVerifyAttendance}
+                              disabled={verifyLoading || checkedAttendees.size === 0}
+                              className="px-4 py-2.5 bg-orange text-cream text-sm font-semibold hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {verifyLoading
+                                ? 'Verifying…'
+                                : `Confirm attendance (${checkedAttendees.size})`}
+                            </button>
+                            <button
+                              onClick={() => setShowVerifyPanel(false)}
+                              className="text-sm text-warm-gray hover:text-ink transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-warm-gray/70 italic font-[family-name:var(--font-dm-sans)]">
+                      The &quot;Close event &amp; verify attendance&quot; option will appear after
+                      the event date has passed.
+                    </p>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
 
         </div>
       </div>
+
+      {/* ── QR Ticket Modal ── */}
+      {showTicketModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 backdrop-blur-sm p-4">
+          <div className="relative w-[340px] bg-ink p-6 flex flex-col items-center">
+            {/* Close */}
+            <button
+              onClick={handleCloseTicket}
+              className="absolute top-3 right-3 text-cream/60 hover:text-cream transition-colors"
+              aria-label="Close ticket"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <line x1="4" y1="4" x2="16" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
+                <line x1="16" y1="4" x2="4" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
+              </svg>
+            </button>
+
+            {/* QR Code */}
+            <div className="w-[200px] h-[200px] flex items-center justify-center mb-4">
+              {ticketQrError ? (
+                <p className="text-sm text-red-400 text-center">{ticketQrError}</p>
+              ) : ticketQrUrl ? (
+                <img src={ticketQrUrl} alt="Event ticket QR code" width={200} height={200} />
+              ) : (
+                <div className="w-[200px] h-[200px] bg-cream/10 animate-pulse" />
+              )}
+            </div>
+
+            {/* Dashed separator */}
+            <div className="w-full border-t border-dashed border-cream/20 my-4" />
+
+            {/* Event info */}
+            <h3 className="text-cream font-bold text-center font-[family-name:var(--font-kode-mono)] leading-snug mb-2">
+              {event?.title || 'Untitled Event'}
+            </h3>
+            {day && (
+              <p className="text-cream/60 text-sm font-[family-name:var(--font-dm-sans)]">
+                {day}{time ? ` · ${time}` : ''}
+              </p>
+            )}
+            {event?.location && (
+              <p className="text-cream/50 text-xs font-[family-name:var(--font-dm-sans)] mt-1">
+                {event.location}
+              </p>
+            )}
+
+            {/* Attendee address */}
+            <div className="mt-4 px-3 py-1.5 bg-cream/10 text-cream/70 text-xs font-mono">
+              <span className="block">{displayName(address ?? '', names).name}</span>
+              {displayName(address ?? '', names).isResolved && (
+                <span className="block text-cream/50">{shortAddress(address ?? '')}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── QR Scanner Modal ── */}
+      {showScanner && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-ink/90 p-4">
+          {/* Close */}
+          <button
+            onClick={handleCloseScanner}
+            className="absolute top-4 right-4 text-cream/60 hover:text-cream transition-colors z-10"
+            aria-label="Close scanner"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+              <line x1="20" y1="4" x2="4" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+            </svg>
+          </button>
+
+          <p className="text-cream/80 text-sm font-[family-name:var(--font-dm-sans)] mb-4">
+            Point your camera at an attendee&apos;s QR ticket
+          </p>
+
+          {/* Video + viewfinder */}
+          <div className="relative w-[300px] h-[300px] overflow-hidden bg-black">
+            <video
+              ref={videoRef}
+              className="absolute inset-0 w-full h-full object-cover"
+              playsInline
+              muted
+            />
+            {/* Viewfinder corners */}
+            <div className="absolute inset-0 pointer-events-none">
+              {/* Top-left */}
+              <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-cream/70" />
+              {/* Top-right */}
+              <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-cream/70" />
+              {/* Bottom-left */}
+              <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-cream/70" />
+              {/* Bottom-right */}
+              <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-cream/70" />
+            </div>
+          </div>
+
+          {/* Hidden canvas for jsQR processing */}
+          <canvas ref={canvasRef} className="hidden" />
+
+          {/* Status area */}
+          <div className="mt-4 text-center min-h-[48px] flex flex-col items-center justify-center">
+            {scanVerifying ? (
+              <p className="text-cream/70 text-sm font-[family-name:var(--font-dm-sans)] animate-pulse">
+                Verifying attendance…
+              </p>
+            ) : scanResult ? (
+              <div className="flex flex-col items-center gap-2">
+                <p className={`text-sm font-semibold ${scanResult.success ? 'text-green-400' : 'text-orange'}`}>
+                  {scanResult.success ? '✓ ' : ''}{scanResult.message}
+                </p>
+                <button
+                  onClick={() => {
+                    setScanResult(null);
+                    setScanError('');
+                    startScanning();
+                  }}
+                  className="text-xs text-cream/60 underline hover:text-cream transition-colors font-[family-name:var(--font-dm-sans)]"
+                >
+                  Scan next attendee
+                </button>
+              </div>
+            ) : scanError ? (
+              <p className="text-sm text-orange font-[family-name:var(--font-dm-sans)]">
+                {scanError}
+              </p>
+            ) : (
+              <p className="text-cream/50 text-xs font-[family-name:var(--font-dm-sans)]">
+                Scanning…
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {copied && (

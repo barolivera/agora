@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAccount } from 'wagmi';
-import { eq } from '@arkiv-network/sdk/query';
-import { publicClient, type ArkivCommunity } from '@/lib/arkiv';
+import { type ArkivCommunity } from '@/lib/arkiv';
+import SubscribeButton from '@/app/community/[name]/SubscribeButton';
 
 function deslugify(slug: string): string {
   return slug
@@ -20,38 +18,30 @@ export type CommunityEntry = {
   subscriberCount: number;
 };
 
-function CommunityCard({
-  entry,
-  isSubscribed,
-}: {
-  entry: CommunityEntry;
-  isSubscribed: boolean;
-}) {
-  const { slug, count, profile, subscriberCount } = entry;
-  const displayName = profile?.name || deslugify(slug);
-  const firstLetter = displayName.charAt(0).toUpperCase();
+function CommunityCard({ entry }: { entry: CommunityEntry }) {
+  const { slug, profile } = entry;
+  const name = profile?.name || deslugify(slug);
+  const firstLetter = name.charAt(0).toUpperCase();
 
   return (
     <Link
       href={`/community/${slug}`}
       className="group relative flex flex-col gap-4 p-6 border border-warm-gray/40 bg-cream hover:border-cobalt transition-colors"
     >
-      {/* Subscribed badge */}
-      {isSubscribed && (
-        <span
-          className="absolute top-3 right-3 text-xs font-semibold text-cobalt border border-cobalt px-1.5 py-0.5"
-          title="Subscribed"
-        >
-          ✓
-        </span>
-      )}
+      {/* Subscribe button */}
+      <div
+        className="absolute top-4 right-4 z-10"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+      >
+        <SubscribeButton slug={slug} compact />
+      </div>
 
       {/* Logo / placeholder */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 pr-24">
         {profile?.logoUrl ? (
           <img
             src={profile.logoUrl}
-            alt={displayName}
+            alt={name}
             width={48}
             height={48}
             className="object-cover shrink-0"
@@ -65,70 +55,21 @@ function CommunityCard({
           </div>
         )}
         <h2 className="text-xl font-bold text-ink font-[family-name:var(--font-kode-mono)] group-hover:text-cobalt transition-colors leading-snug">
-          {displayName}
+          {name}
         </h2>
       </div>
 
       {/* Description */}
       {profile?.description && (
-        <p className="text-sm text-warm-gray line-clamp-2 leading-relaxed">
+        <p className="text-sm text-ink/60 line-clamp-2 leading-relaxed font-[family-name:var(--font-dm-sans)]">
           {profile.description}
         </p>
       )}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between mt-auto pt-1">
-        <p className="text-xs text-warm-gray/70">
-          {count} {count === 1 ? 'event' : 'events'}
-          {subscriberCount > 0 && (
-            <span>
-              {' · '}
-              {subscriberCount} {subscriberCount === 1 ? 'subscriber' : 'subscribers'}
-            </span>
-          )}
-        </p>
-        <span className="text-xs font-semibold text-cobalt tracking-wide uppercase opacity-0 group-hover:opacity-100 transition-opacity">
-          View →
-        </span>
-      </div>
     </Link>
   );
 }
 
 export default function CommunitiesGrid({ communities }: { communities: CommunityEntry[] }) {
-  const { address, isConnected } = useAccount();
-  const [subscribedSlugs, setSubscribedSlugs] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!address || !isConnected) {
-      setSubscribedSlugs(new Set());
-      return;
-    }
-
-    const currentAddress = address;
-
-    async function fetchSubscribedSlugs() {
-      try {
-        const result = await publicClient
-          .buildQuery()
-          .where([eq('type', 'subscription'), eq('subscriber', currentAddress)])
-          .withPayload(true)
-          .fetch();
-        const slugs = new Set<string>();
-        for (const entity of result?.entities ?? []) {
-          const data = entity.toJson();
-          const slug = (data?.communitySlug as string) ?? '';
-          if (slug) slugs.add(slug);
-        }
-        setSubscribedSlugs(slugs);
-      } catch {
-        // ignore — badges won't show, non-critical
-      }
-    }
-
-    fetchSubscribedSlugs();
-  }, [address, isConnected]);
-
   if (communities.length === 0) {
     return (
       <div className="flex flex-col items-center text-center py-28 border border-dashed border-warm-gray/50">
@@ -160,11 +101,7 @@ export default function CommunitiesGrid({ communities }: { communities: Communit
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {communities.map((entry) => (
-        <CommunityCard
-          key={entry.slug}
-          entry={entry}
-          isSubscribed={subscribedSlugs.has(entry.slug)}
-        />
+        <CommunityCard key={entry.slug} entry={entry} />
       ))}
     </div>
   );

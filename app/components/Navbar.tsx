@@ -1,12 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useDisconnect, useAccount } from 'wagmi';
+import { shortAddress } from '@/lib/arkiv';
+import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [walletOpen, setWalletOpen] = useState(false);
+  const walletRef = useRef<HTMLDivElement>(null);
+  const { disconnect } = useDisconnect();
+  const { address } = useAccount();
+  const names = useDisplayNames(address ? [address] : []);
+
+  useEffect(() => {
+    if (!walletOpen) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (walletRef.current && !walletRef.current.contains(e.target as Node)) {
+        setWalletOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [walletOpen]);
 
   return (
     <div className="relative">
@@ -42,7 +61,7 @@ export function Navbar() {
         {/* Right: wallet + hamburger */}
         <div className="flex items-center gap-3">
           <ConnectButton.Custom>
-            {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
+            {({ account, chain, openChainModal, openConnectModal, mounted }) => {
               if (!mounted) return null;
 
               if (!account) {
@@ -74,19 +93,38 @@ export function Navbar() {
                       <img src={chain.iconUrl} alt={chain.name ?? ''} width={18} height={18} className="rounded-full" />
                     </button>
                   )}
-                  <Link
-                    href={`/profile/${account.address}`}
-                    className="flex items-center gap-2 bg-orange text-cream text-sm font-semibold px-4 py-2 hover:bg-orange-light transition-colors"
-                  >
-                    <img
-                      src={`https://effigy.im/a/${account.address}.svg`}
-                      alt=""
-                      width={20}
-                      height={20}
-                      className="rounded-full"
-                    />
-                    {account.displayName}
-                  </Link>
+                  <div ref={walletRef} className="relative">
+                    <button
+                      onClick={() => setWalletOpen((o) => !o)}
+                      className="flex items-center gap-2 bg-ink border border-cream/30 text-cream text-sm font-semibold px-3 py-2 hover:border-cream/50 transition-colors"
+                    >
+                      <img
+                        src={`https://effigy.im/a/${account.address}.svg`}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="rounded-full"
+                      />
+                      {displayName(account.address, names).name}
+                    </button>
+                    {walletOpen && (
+                      <div className="absolute right-0 mt-1 w-48 bg-ink border border-cream/20 z-50 flex flex-col">
+                        <Link
+                          href={`/profile/${account.address}`}
+                          onClick={() => setWalletOpen(false)}
+                          className="px-4 py-3 text-sm text-cream/80 hover:bg-cream/5 hover:text-cream transition-colors font-[family-name:var(--font-dm-sans)]"
+                        >
+                          View profile
+                        </Link>
+                        <button
+                          onClick={() => { disconnect(); setWalletOpen(false); }}
+                          className="px-4 py-3 text-sm text-left text-cream/80 hover:bg-cream/5 hover:text-cream transition-colors border-t border-cream/10 font-[family-name:var(--font-dm-sans)]"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             }}
