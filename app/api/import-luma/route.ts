@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { LumaEventData, LumaImportResponse, AIEnrichment } from '@/lib/types/luma';
-import { enrichEventWithAI } from '@/lib/ai/enrichEvent';
 
 function extractFromJsonLd(html: string): Partial<LumaEventData> {
   const data: Partial<LumaEventData> = {};
@@ -20,6 +19,12 @@ function extractFromJsonLd(html: string): Partial<LumaEventData> {
           const d = new Date(json.startDate);
           if (!isNaN(d.getTime())) {
             data.date = d.toISOString().slice(0, 16);
+          }
+        }
+        if (json.endDate) {
+          const ed = new Date(json.endDate);
+          if (!isNaN(ed.getTime())) {
+            data.endTime = ed.toISOString().slice(11, 16);
           }
         }
         if (json.location) {
@@ -116,6 +121,10 @@ function extractFromNextData(html: string): Partial<LumaEventData> {
           const d = new Date(event.start_at);
           if (!isNaN(d.getTime())) data.date = d.toISOString().slice(0, 16);
         }
+        if (event.end_at) {
+          const ed = new Date(event.end_at);
+          if (!isNaN(ed.getTime())) data.endTime = ed.toISOString().slice(11, 16);
+        }
         if (event.geo_address_info?.full_address) {
           data.location = event.geo_address_info.full_address;
         } else if (event.location) {
@@ -179,6 +188,7 @@ export async function POST(request: Request) {
       title: jsonLd.title ?? nextData.title ?? og.title ?? '',
       description: jsonLd.description ?? nextData.description ?? og.description ?? '',
       date: jsonLd.date ?? nextData.date ?? og.date ?? '',
+      endTime: jsonLd.endTime ?? nextData.endTime,
       location: jsonLd.location ?? nextData.location ?? og.location ?? '',
       coverImageUrl: jsonLd.coverImageUrl ?? nextData.coverImageUrl ?? og.coverImageUrl ?? '',
       organizer: jsonLd.organizer ?? nextData.organizer ?? og.organizer ?? '',
@@ -193,11 +203,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // AI enrichment — non-blocking; failures are swallowed gracefully
+    // AI enrichment — fully optional; dynamic import so module-level errors
+    // (e.g. missing ANTHROPIC_API_KEY) don't crash the entire route
     let ai: AIEnrichment | null = null;
     let aiError: string | undefined;
 
     try {
+      const { enrichEventWithAI } = await import('@/lib/ai/enrichEvent');
       ai = await enrichEventWithAI(merged);
     } catch (err) {
       console.error('[import-luma] AI enrichment failed:', err);

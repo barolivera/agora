@@ -178,7 +178,7 @@ export default function MyEventsPage() {
                       </h2>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-warm-gray">
                         {event.category && (
-                          <span className="text-[10px] font-semibold uppercase tracking-widest text-cobalt font-[family-name:var(--font-dm-sans)]">
+                          <span className="text-[10px] font-semibold uppercase tracking-widest text-cobalt font-[family-name:var(--font-geist-sans)]">
                             {event.category}
                           </span>
                         )}
@@ -199,12 +199,12 @@ export default function MyEventsPage() {
                 {canDelete && (
                   <div className="px-5 pb-4 pt-0 border-t border-warm-gray/10">
                     {isDeleting ? (
-                      <p className="text-xs text-warm-gray pt-3 font-[family-name:var(--font-dm-sans)]">
+                      <p className="text-xs text-warm-gray pt-3 font-[family-name:var(--font-geist-sans)]">
                         {deleteStatus}
                       </p>
                     ) : isConfirming ? (
                       <div className="flex flex-wrap items-center gap-3 pt-3">
-                        <p className="text-xs text-ink font-[family-name:var(--font-dm-sans)]">
+                        <p className="text-xs text-ink font-[family-name:var(--font-geist-sans)]">
                           Delete this event and all its RSVPs and attendance records?
                         </p>
                         <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export default function MyEventsPage() {
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(event.entityKey)}
-                        className="mt-3 text-xs font-semibold text-red-500 hover:text-red-700 transition-colors font-[family-name:var(--font-dm-sans)]"
+                        className="mt-3 text-xs font-semibold text-red-500 hover:text-red-700 transition-colors font-[family-name:var(--font-geist-sans)]"
                       >
                         Delete event + data
                       </button>

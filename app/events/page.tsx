@@ -36,7 +36,7 @@ function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search events by title or location..."
-        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-warm-gray text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-dm-sans)] focus:outline-none focus:border-ink"
+        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-warm-gray text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-geist-sans)] focus:outline-none focus:border-ink"
       />
       {/* Clear button */}
       {value && (
@@ -121,12 +121,13 @@ export default function EventsPage() {
   const filteredEvents = (() => {
     let result = [...(events ?? [])];
 
-    // Always filter out junk: must have valid community tag + valid date
+    // Always filter out junk: must have valid community tag + valid date + not pending approval
     const beforeCount = result.length;
     result = result.filter((e) => {
       const hasCommunity = e?.community && e.community.trim() !== '';
       const hasDate = e?.date && e.date.trim() !== '';
-      return hasCommunity && hasDate;
+      const notPending = e?.status !== 'pending';
+      return hasCommunity && hasDate && notPending;
     });
     console.log(`Total events: ${beforeCount}, After filter: ${result.length}`);
 
@@ -198,7 +199,7 @@ export default function EventsPage() {
           </button>
         ))}
         {feedFilter === 'all' && (
-          <span className="ml-2 text-[10px] text-warm-gray font-[family-name:var(--font-dm-sans)]">
+          <span className="ml-2 text-[10px] text-warm-gray font-[family-name:var(--font-geist-sans)]">
             Includes independent events
           </span>
         )}
@@ -219,7 +220,7 @@ export default function EventsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="bg-ink text-cream rounded-full px-4 py-2 text-sm font-[family-name:var(--font-dm-sans)] appearance-none cursor-pointer pr-8 focus:outline-none"
+            className="bg-ink text-cream rounded-full px-4 py-2 text-sm font-[family-name:var(--font-geist-sans)] appearance-none cursor-pointer pr-8 focus:outline-none"
             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23F2EDE4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
           >
             <option value="all">All Events</option>
@@ -231,7 +232,7 @@ export default function EventsPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-ink text-cream rounded-full px-4 py-2 text-sm font-[family-name:var(--font-dm-sans)] appearance-none cursor-pointer pr-8 focus:outline-none"
+            className="bg-ink text-cream rounded-full px-4 py-2 text-sm font-[family-name:var(--font-geist-sans)] appearance-none cursor-pointer pr-8 focus:outline-none"
             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23F2EDE4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
           >
             <option value="">All Types</option>
@@ -246,7 +247,7 @@ export default function EventsPage() {
             <button
               key={s}
               onClick={() => setSortOrder(s)}
-              className={`px-4 py-2 text-sm transition-all duration-200 font-[family-name:var(--font-dm-sans)] ${
+              className={`px-4 py-2 text-sm transition-all duration-200 font-[family-name:var(--font-geist-sans)] ${
                 s === 'newest' ? 'rounded-l-full' : 'rounded-r-full'
               } ${
                 sortOrder === s
@@ -290,7 +291,7 @@ export default function EventsPage() {
           </p>
           <button
             onClick={clearAll}
-            className="text-xs font-semibold text-cobalt underline underline-offset-2 hover:text-cobalt-light transition-colors font-[family-name:var(--font-dm-sans)]"
+            className="text-xs font-semibold text-cobalt underline underline-offset-2 hover:text-cobalt-light transition-colors font-[family-name:var(--font-geist-sans)]"
           >
             Clear {searchQuery.trim() ? 'search' : 'filters'}
           </button>

@@ -91,7 +91,7 @@ function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
       {/* Text content */}
       <div className="flex flex-col gap-3 justify-center px-7 py-5 min-w-0">
         {dateLabel && (
-          <p className="text-xs font-bold uppercase tracking-[1px] font-[family-name:var(--font-dm-sans)]">
+          <p className="text-xs font-bold uppercase tracking-[1px] font-[family-name:var(--font-geist-sans)]">
             {dateLabel}
           </p>
         )}
@@ -100,13 +100,13 @@ function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
             {event?.title || 'Untitled Event'}
           </p>
           {event?.community && (
-            <p className="text-base font-medium font-[family-name:var(--font-dm-sans)]">
+            <p className="text-base font-medium font-[family-name:var(--font-geist-sans)]">
               By {deslugify(event.community)}
             </p>
           )}
         </div>
         {event?.location && (
-          <div className="flex items-center gap-1 text-xs font-[family-name:var(--font-dm-sans)]">
+          <div className="flex items-center gap-1 text-xs font-[family-name:var(--font-geist-sans)]">
             <LocationPinIcon />
             <span>{event.location}</span>
           </div>
@@ -134,7 +134,7 @@ function MembersCard({
       </h2>
 
       {subscriberCount === 0 ? (
-        <p className="text-sm text-warm-gray/60 font-[family-name:var(--font-dm-sans)]">
+        <p className="text-sm text-warm-gray/60 font-[family-name:var(--font-geist-sans)]">
           Be the first to subscribe.
         </p>
       ) : (
@@ -168,7 +168,7 @@ function MembersCard({
               )}
             </div>
           )}
-          <p className="text-xs text-ink/40 font-[family-name:var(--font-dm-sans)]">
+          <p className="text-xs text-ink/40 font-[family-name:var(--font-geist-sans)]">
             {subscriberCount.toLocaleString()}{' '}
             {subscriberCount === 1 ? 'subscriber' : 'subscribers'}
           </p>
@@ -207,7 +207,10 @@ export default function EventsWithSidebar({
   const [selectedDate, setSelectedDate] = useState<string | null>(initialDate);
   const names = useDisplayNames(subscriberAddresses);
 
-  const byFilter = events.filter((e) =>
+  // Exclude pending-approval events from the public list
+  const approved = events.filter((e) => e?.status !== 'pending');
+
+  const byFilter = approved.filter((e) =>
     filter === 'upcoming' ? isUpcoming(e) : !isUpcoming(e)
   );
 
@@ -247,7 +250,7 @@ export default function EventsWithSidebar({
           </button>
 
           {selectedDate && (
-            <span className="ml-auto flex items-center gap-1.5 text-[10px] text-cobalt font-[family-name:var(--font-dm-sans)]">
+            <span className="ml-auto flex items-center gap-1.5 text-[10px] text-cobalt font-[family-name:var(--font-geist-sans)]">
               {selectedDate}
               <button
                 onClick={() => setSelectedDate(null)}
@@ -270,7 +273,7 @@ export default function EventsWithSidebar({
                 </p>
                 <button
                   onClick={() => setSelectedDate(null)}
-                  className="text-sm text-cobalt hover:text-cobalt-light transition-colors font-[family-name:var(--font-dm-sans)]"
+                  className="text-sm text-cobalt hover:text-cobalt-light transition-colors font-[family-name:var(--font-geist-sans)]"
                 >
                   View all events
                 </button>
@@ -281,7 +284,7 @@ export default function EventsWithSidebar({
                 <p className="text-lg text-ink font-[family-name:var(--font-kode-mono)] mb-2">
                   No upcoming events yet.
                 </p>
-                <p className="text-warm-gray text-sm mb-6 max-w-xs leading-relaxed font-[family-name:var(--font-dm-sans)]">
+                <p className="text-warm-gray text-sm mb-6 max-w-xs leading-relaxed font-[family-name:var(--font-geist-sans)]">
                   Be the first to create an event for this community.
                 </p>
                 <Link

@@ -143,12 +143,12 @@ export default function EditCommunityPage() {
           <h1 className="text-2xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-3">
             Not authorized
           </h1>
-          <p className="text-warm-gray text-sm mb-6 font-[family-name:var(--font-dm-sans)]">
+          <p className="text-warm-gray text-sm mb-6 font-[family-name:var(--font-geist-sans)]">
             Only the community creator can edit this page.
           </p>
           <Link
             href={`/community/${name}`}
-            className="text-sm text-cobalt hover:text-cobalt-light transition-colors font-[family-name:var(--font-dm-sans)]"
+            className="text-sm text-cobalt hover:text-cobalt-light transition-colors font-[family-name:var(--font-geist-sans)]"
           >
             Back to {deslugify(name)} →
           </Link>
@@ -239,7 +239,7 @@ export default function EditCommunityPage() {
         <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
           Edit community
         </h1>
-        <p className="text-warm-gray text-sm mb-10 font-[family-name:var(--font-dm-sans)]">
+        <p className="text-warm-gray text-sm mb-10 font-[family-name:var(--font-geist-sans)]">
           Update your community profile on Agora.
         </p>
 
@@ -345,7 +345,7 @@ export default function EditCommunityPage() {
             <div className="flex flex-col gap-4">
               {/* Website */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                   Website
                 </label>
                 <input
@@ -359,7 +359,7 @@ export default function EditCommunityPage() {
 
               {/* Twitter / X */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                   Twitter / X
                 </label>
                 <input
@@ -374,7 +374,7 @@ export default function EditCommunityPage() {
 
               {/* Instagram */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                   Instagram
                 </label>
                 <input
@@ -389,7 +389,7 @@ export default function EditCommunityPage() {
 
               {/* LinkedIn */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                   LinkedIn
                 </label>
                 <input
@@ -404,7 +404,7 @@ export default function EditCommunityPage() {
 
               {/* YouTube */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                   YouTube
                 </label>
                 <input
@@ -419,7 +419,7 @@ export default function EditCommunityPage() {
 
               {/* Discord */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                   Discord invite URL
                 </label>
                 <input
@@ -470,7 +470,7 @@ export default function EditCommunityPage() {
           </div>
         </form>
 
-        <p className="mt-8 text-xs text-warm-gray/60 font-[family-name:var(--font-dm-sans)]">
+        <p className="mt-8 text-xs text-warm-gray/60 font-[family-name:var(--font-geist-sans)]">
           Community profiles expire after 1 year and renew when you edit them.
         </p>
       </div>

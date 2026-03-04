@@ -77,7 +77,7 @@ function EventPoster({ title, status, gradient }: { title: string; status: 'upco
         <h1 className="text-2xl sm:text-3xl font-bold text-cream leading-tight font-[family-name:var(--font-kode-mono)] drop-shadow-sm">
           {title}
         </h1>
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-cream/70 font-[family-name:var(--font-dm-sans)]">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-cream/70 font-[family-name:var(--font-geist-sans)]">
           Meetup
         </span>
       </div>
@@ -90,15 +90,15 @@ function InfoBar() {
     <div className="flex flex-wrap gap-x-8 gap-y-3 px-6 py-4">
       <div className="flex items-center gap-2.5 text-sm">
         <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>
-        <span className="text-ink font-[family-name:var(--font-dm-sans)]">Wed, April 15, 2026</span>
+        <span className="text-ink font-[family-name:var(--font-geist-sans)]">Wed, April 15, 2026</span>
       </div>
       <div className="flex items-center gap-2.5 text-sm">
         <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" /></svg>
-        <span className="text-ink font-[family-name:var(--font-dm-sans)]">7:00 PM</span>
+        <span className="text-ink font-[family-name:var(--font-geist-sans)]">7:00 PM</span>
       </div>
       <div className="flex items-center gap-2.5 text-sm">
         <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
-        <span className="text-ink font-[family-name:var(--font-dm-sans)]">Palermo Soho, Buenos Aires</span>
+        <span className="text-ink font-[family-name:var(--font-geist-sans)]">Palermo Soho, Buenos Aires</span>
       </div>
     </div>
   );
@@ -125,7 +125,7 @@ function CapacityBar({ count, capacity }: { count: number; capacity: number }) {
     <div>
       <div className="flex items-baseline gap-2 mb-2">
         <span className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">{count}</span>
-        <span className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)]">/ {capacity} attending</span>
+        <span className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">/ {capacity} attending</span>
       </div>
       <div className="h-1.5 bg-warm-gray/30 overflow-hidden">
         <div className="h-full bg-orange transition-all" style={{ width: `${pct}%` }} />
@@ -169,7 +169,7 @@ export default function EventStatesPage() {
       <h1 className="text-3xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
         Event Page — All States
       </h1>
-      <p className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)] mb-8">
+      <p className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)] mb-8">
         Visual inventory of every state the event detail page can be in.
       </p>
 
@@ -212,15 +212,15 @@ export default function EventStatesPage() {
               <ActionButtons />
               <div className="px-6 py-4">
                 <h2 className="text-xl font-semibold text-ink mb-3 font-[family-name:var(--font-kode-mono)]">About this event</h2>
-                <p className="text-ink leading-relaxed font-[family-name:var(--font-dm-sans)] text-sm">{MOCK_EVENT.description}</p>
+                <p className="text-ink leading-relaxed font-[family-name:var(--font-geist-sans)] text-sm">{MOCK_EVENT.description}</p>
               </div>
             </div>
             <div className="w-[300px] shrink-0 p-4">
               <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
                 <CapacityBar count={12} capacity={50} />
                 <AvatarStack count={12} />
-                <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">Attendance is public and verifiable on-chain.</p>
-                <p className="text-center text-sm font-semibold text-cobalt py-3 font-[family-name:var(--font-dm-sans)]">
+                <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">Attendance is public and verifiable on-chain.</p>
+                <p className="text-center text-sm font-semibold text-cobalt py-3 font-[family-name:var(--font-geist-sans)]">
                   Connect wallet to RSVP
                 </p>
               </div>
@@ -235,7 +235,7 @@ export default function EventStatesPage() {
           <div className="p-6 flex flex-col gap-5">
             <CapacityBar count={12} capacity={50} />
             <AvatarStack count={12} />
-            <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">Attendance is public and verifiable on-chain.</p>
+            <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">Attendance is public and verifiable on-chain.</p>
             <button className="w-full py-3 text-sm font-semibold bg-orange text-cream hover:bg-orange-light transition-colors">
               Confirm Attendance
             </button>
@@ -247,12 +247,12 @@ export default function EventStatesPage() {
           <div className="p-6 flex flex-col gap-5">
             <CapacityBar count={13} capacity={50} />
             <AvatarStack count={13} />
-            <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">Attendance is public and verifiable on-chain.</p>
+            <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">Attendance is public and verifiable on-chain.</p>
             <div className="flex flex-col gap-2">
               <button disabled className="w-full py-3 text-sm font-semibold bg-ink/10 text-ink border border-ink/20 cursor-default">
                 Attendance Confirmed ✓
               </button>
-              <button className="text-xs text-warm-gray underline text-center font-[family-name:var(--font-dm-sans)] hover:text-ink transition-colors">
+              <button className="text-xs text-warm-gray underline text-center font-[family-name:var(--font-geist-sans)] hover:text-ink transition-colors">
                 Cancel attendance
               </button>
             </div>
@@ -271,7 +271,7 @@ export default function EventStatesPage() {
                 <p className="text-sm text-ink">
                   Are you sure you want to cancel? This will remove your RSVP from the blockchain.
                 </p>
-                <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)] leading-snug">
+                <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)] leading-snug">
                   Your RSVP will be deleted from Arkiv immediately.
                 </p>
                 <div className="flex gap-2 pt-0.5">
@@ -292,7 +292,7 @@ export default function EventStatesPage() {
           <div className="p-6 flex flex-col gap-5">
             <CapacityBar count={50} capacity={50} />
             <AvatarStack count={50} />
-            <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">Attendance is public and verifiable on-chain.</p>
+            <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">Attendance is public and verifiable on-chain.</p>
             <button className="w-full py-3 text-sm font-semibold text-cream bg-cobalt transition-colors hover:bg-cobalt-light">
               Join Waitlist
             </button>
@@ -304,7 +304,7 @@ export default function EventStatesPage() {
           <div className="p-6 flex flex-col gap-5">
             <CapacityBar count={50} capacity={50} />
             <AvatarStack count={50} />
-            <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">Attendance is public and verifiable on-chain.</p>
+            <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">Attendance is public and verifiable on-chain.</p>
             <button disabled className="w-full py-3 text-sm font-semibold border cursor-default text-cobalt border-cobalt bg-cobalt/5">
               You&apos;re on the waitlist
             </button>
@@ -316,9 +316,9 @@ export default function EventStatesPage() {
           <div className="p-6 flex flex-col gap-5">
             <CapacityBar count={12} capacity={50} />
             <AvatarStack count={12} />
-            <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">Attendance is public and verifiable on-chain.</p>
+            <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">Attendance is public and verifiable on-chain.</p>
             <div className="p-4 bg-warm-gray/10 border border-warm-gray/30 text-center">
-              <p className="text-sm text-warm-gray font-[family-name:var(--font-dm-sans)]">
+              <p className="text-sm text-warm-gray font-[family-name:var(--font-geist-sans)]">
                 This event has been cancelled
               </p>
             </div>
@@ -365,7 +365,7 @@ export default function EventStatesPage() {
                 ].map((s) => (
                   <div
                     key={s.label}
-                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)]"
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-geist-sans)]"
                   >
                     <span className="shrink-0 text-warm-gray">{s.icon}</span>
                     {s.label}
@@ -400,7 +400,7 @@ export default function EventStatesPage() {
                 {['Google Calendar', 'Apple / iCal', 'Outlook.com', 'Yahoo Calendar'].map((label) => (
                   <div
                     key={label}
-                    className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)] text-center"
+                    className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-geist-sans)] text-center"
                   >
                     {label}
                   </div>
@@ -413,7 +413,7 @@ export default function EventStatesPage() {
         {/* ─── 8. ORGANIZER CONTROLS ─── */}
         <Frame label="8a · Organizer Controls — Default">
           <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-dm-sans)]">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-geist-sans)]">
               Organizer Controls
             </h3>
             <div className="flex items-center gap-3 flex-wrap">
@@ -439,7 +439,7 @@ export default function EventStatesPage() {
         {/* 8b: Cancel event confirmation */}
         <Frame label="8b · Organizer Controls — Cancel Confirmation">
           <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-dm-sans)]">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-geist-sans)]">
               Organizer Controls
             </h3>
             <div className="flex items-center gap-3 flex-wrap">
@@ -453,7 +453,7 @@ export default function EventStatesPage() {
               </div>
               <div className="border border-red-200 p-4 flex flex-col gap-3">
                 <p className="text-sm font-semibold text-ink">Cancel this event?</p>
-                <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                   Are you sure? This cannot be undone. All 12 RSVPs will be marked cancelled.
                 </p>
                 <div className="flex gap-2">
@@ -472,7 +472,7 @@ export default function EventStatesPage() {
         {/* ─── 9. VERIFY ATTENDANCE ─── */}
         <Frame label="9a · Organizer — Verify Attendance Panel">
           <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-dm-sans)]">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-geist-sans)]">
               Organizer Controls
             </h3>
             <div className="space-y-4">
@@ -503,7 +503,7 @@ export default function EventStatesPage() {
         {/* 9b: Verify done */}
         <Frame label="9b · Organizer — Attendance Verified">
           <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-dm-sans)]">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-geist-sans)]">
               Organizer Controls
             </h3>
             <p className="text-sm font-medium text-ink">
@@ -526,10 +526,10 @@ export default function EventStatesPage() {
               <h3 className="text-cream font-bold text-center font-[family-name:var(--font-kode-mono)] leading-snug mb-2 text-sm">
                 {MOCK_EVENT.title}
               </h3>
-              <p className="text-cream/60 text-sm font-[family-name:var(--font-dm-sans)]">
+              <p className="text-cream/60 text-sm font-[family-name:var(--font-geist-sans)]">
                 Wed, April 15, 2026 · 7:00 PM
               </p>
-              <p className="text-cream/50 text-xs font-[family-name:var(--font-dm-sans)] mt-1">
+              <p className="text-cream/50 text-xs font-[family-name:var(--font-geist-sans)] mt-1">
                 {MOCK_EVENT.location}
               </p>
               <div className="mt-4 px-3 py-1.5 bg-cream/10 text-cream/70 text-xs font-mono">
@@ -542,7 +542,7 @@ export default function EventStatesPage() {
         {/* ─── 11. QR SCANNER MODAL ─── */}
         <Frame label="11 · QR Scanner Modal">
           <div className="flex flex-col items-center justify-center p-8 bg-ink/90 min-h-[400px]">
-            <p className="text-cream/80 text-sm font-[family-name:var(--font-dm-sans)] mb-4">
+            <p className="text-cream/80 text-sm font-[family-name:var(--font-geist-sans)] mb-4">
               Point your camera at an attendee&apos;s QR ticket
             </p>
             <div className="relative w-[240px] h-[240px] overflow-hidden bg-black">
@@ -556,7 +556,7 @@ export default function EventStatesPage() {
                 <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-cream/70" />
               </div>
             </div>
-            <p className="text-cream/50 text-xs font-[family-name:var(--font-dm-sans)] mt-4">Scanning…</p>
+            <p className="text-cream/50 text-xs font-[family-name:var(--font-geist-sans)] mt-4">Scanning…</p>
           </div>
         </Frame>
 
@@ -564,7 +564,7 @@ export default function EventStatesPage() {
         <Frame label="12 · Community Sidebar Card">
           <div className="p-4">
             <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-4 max-w-[340px]">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-dm-sans)]">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-geist-sans)]">
                 Community
               </h3>
               <div className="flex items-center gap-3">
@@ -575,7 +575,7 @@ export default function EventStatesPage() {
                   Eth Buenos Aires
                 </span>
               </div>
-              <p className="text-sm text-warm-gray leading-relaxed font-[family-name:var(--font-dm-sans)]">
+              <p className="text-sm text-warm-gray leading-relaxed font-[family-name:var(--font-geist-sans)]">
                 Building the Ethereum community in Buenos Aires through meetups, hackathons, and workshops.
               </p>
               <div className="flex items-center justify-between gap-3">
@@ -593,7 +593,7 @@ export default function EventStatesPage() {
           <div className="p-6 flex flex-col gap-5">
             <CapacityBar count={50} capacity={50} />
             <div className="border-t border-warm-gray/20 pt-4 flex flex-col gap-3">
-              <p className="text-sm text-warm-gray font-[family-name:var(--font-dm-sans)]">
+              <p className="text-sm text-warm-gray font-[family-name:var(--font-geist-sans)]">
                 3 people on the waitlist
               </p>
               <ul className="space-y-3">
@@ -619,7 +619,7 @@ export default function EventStatesPage() {
         <Frame label="14 · Error Message">
           <div className="p-6 flex flex-col gap-5">
             <CapacityBar count={12} capacity={50} />
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-[family-name:var(--font-dm-sans)]">
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-[family-name:var(--font-geist-sans)]">
               Something went wrong. The transaction may have failed — please check your wallet and try again.
             </div>
             <button className="w-full py-3 text-sm font-semibold bg-orange text-cream hover:bg-orange-light transition-colors">
@@ -630,7 +630,7 @@ export default function EventStatesPage() {
 
       </div>
 
-      <p className="text-warm-gray text-xs mt-8 font-[family-name:var(--font-dm-sans)]">
+      <p className="text-warm-gray text-xs mt-8 font-[family-name:var(--font-geist-sans)]">
         Generated {new Date().toISOString().slice(0, 10)} · {28} states captured
       </p>
 

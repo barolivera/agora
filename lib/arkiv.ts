@@ -35,6 +35,7 @@ export type ArkivEvent = {
   status?: string;
   coverImageUrl?: string;
   category?: string;
+  endTime?: string;
 };
 
 export type ArkivRSVP = {
@@ -128,6 +129,7 @@ export function parseEvent(entity: Entity): ArkivEvent {
     status: data?.status ?? undefined,
     coverImageUrl: data?.coverImageUrl ?? undefined,
     category: data?.category ?? undefined,
+    endTime: data?.endTime ?? undefined,
   };
 }
 

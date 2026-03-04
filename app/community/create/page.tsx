@@ -151,7 +151,7 @@ function CreateCommunityForm() {
               className={inputCls}
             />
             {slug && (
-              <p className="mt-1.5 text-xs text-cobalt font-[family-name:var(--font-dm-sans)]">
+              <p className="mt-1.5 text-xs text-cobalt font-[family-name:var(--font-geist-sans)]">
                 Your community page:{' '}
                 <span className="font-mono">agora.xyz/community/{slug}</span>
               </p>

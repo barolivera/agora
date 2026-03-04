@@ -58,12 +58,22 @@ function formatDay(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-function formatTime(dateStr: string): string {
+function formatTime(dateStr: string, endTime?: string): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return '';
   const t = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  return t === '12:00 AM' ? '' : t;
+  if (t === '12:00 AM') return '';
+  if (endTime) {
+    const [h, m] = endTime.split(':').map(Number);
+    if (!isNaN(h) && !isNaN(m)) {
+      const endDate = new Date(d);
+      endDate.setHours(h, m, 0, 0);
+      const et = endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      return `${t} — ${et}`;
+    }
+  }
+  return t;
 }
 
 function deslugify(slug: string): string {
@@ -79,7 +89,16 @@ function calendarDates(event: ArkivEvent) {
   const start = new Date(event.date);
   if (isNaN(start.getTime())) return null;
   const end = new Date(start);
-  end.setHours(end.getHours() + 2);
+  if (event.endTime) {
+    const [h, m] = event.endTime.split(':').map(Number);
+    if (!isNaN(h) && !isNaN(m)) {
+      end.setHours(h, m, 0, 0);
+    } else {
+      end.setHours(end.getHours() + 2);
+    }
+  } else {
+    end.setHours(end.getHours() + 2);
+  }
   return { start, end };
 }
 
@@ -233,7 +252,7 @@ function ShareModal({
               href={s.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)]"
+              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-geist-sans)]"
             >
               <span className="shrink-0 text-warm-gray">{s.icon}</span>
               {s.label}
@@ -241,7 +260,7 @@ function ShareModal({
           ))}
           <button
             onClick={copyLink}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)]"
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-geist-sans)]"
           >
             <span className="shrink-0 text-warm-gray">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -312,7 +331,7 @@ function CalendarModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={onClose}
-                className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)] text-center"
+                className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-geist-sans)] text-center"
               >
                 {opt.label}
               </a>
@@ -320,7 +339,7 @@ function CalendarModal({
               <button
                 key={opt.label}
                 onClick={() => { opt.action?.(); onClose(); }}
-                className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)] text-center"
+                className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-geist-sans)] text-center"
               >
                 {opt.label}
               </button>
@@ -448,7 +467,7 @@ function AttendeesStack({
       </div>
 
       {/* Summary text */}
-      <p className="text-sm text-ink/80 font-[family-name:var(--font-dm-sans)] leading-snug">
+      <p className="text-sm text-ink/80 font-[family-name:var(--font-geist-sans)] leading-snug">
         {namedAttendees.length > 0 ? (
           <>
             <span className="font-semibold text-ink">{namedAttendees.join(', ')}</span>
@@ -1131,7 +1150,7 @@ export default function EventPageClient() {
   );
 
   const day = formatDay(event?.date ?? '');
-  const time = formatTime(event?.date ?? '');
+  const time = formatTime(event?.date ?? '', event?.endTime);
   const gradient = titleGradient(event?.title ?? '');
 
   const capacityPct =
@@ -1173,7 +1192,7 @@ export default function EventPageClient() {
                   {event?.title || 'Untitled Event'}
                 </h1>
                 {event?.category && (
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-cream/70 font-[family-name:var(--font-dm-sans)]">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-cream/70 font-[family-name:var(--font-geist-sans)]">
                     {event.category}
                   </span>
                 )}
@@ -1187,7 +1206,7 @@ export default function EventPageClient() {
                   <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-ink font-[family-name:var(--font-dm-sans)]">{day}</span>
+                  <span className="text-ink font-[family-name:var(--font-geist-sans)]">{day}</span>
                 </div>
               )}
               {time && (
@@ -1195,7 +1214,7 @@ export default function EventPageClient() {
                   <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-ink font-[family-name:var(--font-dm-sans)]">{time}</span>
+                  <span className="text-ink font-[family-name:var(--font-geist-sans)]">{time}</span>
                 </div>
               )}
               {event?.location && (
@@ -1203,7 +1222,7 @@ export default function EventPageClient() {
                   <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-ink font-[family-name:var(--font-dm-sans)]">{event.location}</span>
+                  <span className="text-ink font-[family-name:var(--font-geist-sans)]">{event.location}</span>
                 </div>
               )}
             </div>
@@ -1283,16 +1302,16 @@ export default function EventPageClient() {
                 About this event
               </h2>
               {event?.description ? (
-                <p className="text-ink leading-relaxed whitespace-pre-wrap font-[family-name:var(--font-dm-sans)]">
+                <p className="text-ink leading-relaxed whitespace-pre-wrap font-[family-name:var(--font-geist-sans)]">
                   {event.description}
                 </p>
               ) : (
-                <p className="text-warm-gray italic font-[family-name:var(--font-dm-sans)]">
+                <p className="text-warm-gray italic font-[family-name:var(--font-geist-sans)]">
                   No description provided.
                 </p>
               )}
               {event?.date && (
-                <p className="mt-6 text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                <p className="mt-6 text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                   This event page expires on {formatExpiryDate(eventExpiresAt(event.date))}
                 </p>
               )}
@@ -1304,7 +1323,7 @@ export default function EventPageClient() {
                 <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-kode-mono)]">
                   Location
                 </h2>
-                <p className="text-ink font-[family-name:var(--font-dm-sans)] mb-4">
+                <p className="text-ink font-[family-name:var(--font-geist-sans)] mb-4">
                   {event.location}
                 </p>
                 <iframe
@@ -1333,11 +1352,11 @@ export default function EventPageClient() {
                       {rsvps?.length ?? 0}
                     </span>
                     {(event?.capacity ?? 0) > 0 ? (
-                      <span className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)]">
+                      <span className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
                         / {event?.capacity} attending
                       </span>
                     ) : (
-                      <span className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)]">attending</span>
+                      <span className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">attending</span>
                     )}
                   </div>
                   {capacityPct !== null && (
@@ -1362,14 +1381,14 @@ export default function EventPageClient() {
                 )}
 
                 {/* Public attendees note */}
-                <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)] leading-snug">
+                <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)] leading-snug">
                   Attendance is public and verifiable on-chain.
                 </p>
 
                 {/* Waitlist */}
                 {(waitlist?.length ?? 0) > 0 && (
                   <div className="border-t border-warm-gray/20 pt-4 flex flex-col gap-3">
-                    <p className="text-sm text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                    <p className="text-sm text-warm-gray font-[family-name:var(--font-geist-sans)]">
                       {waitlist?.length ?? 0} {(waitlist?.length ?? 0) === 1 ? 'person' : 'people'} on the waitlist
                     </p>
                     <ul className="space-y-3 max-h-40 overflow-y-auto pr-1">
@@ -1410,12 +1429,12 @@ export default function EventPageClient() {
                 {/* CTA */}
                 {displayStatus === 'cancelled' ? (
                   <div className="p-4 bg-warm-gray/10 border border-warm-gray/30 text-center">
-                    <p className="text-sm text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                    <p className="text-sm text-warm-gray font-[family-name:var(--font-geist-sans)]">
                       This event has been cancelled
                     </p>
                   </div>
                 ) : !isConnected ? (
-                  <p className="text-center text-sm font-semibold text-cobalt py-3 font-[family-name:var(--font-dm-sans)]">
+                  <p className="text-center text-sm font-semibold text-cobalt py-3 font-[family-name:var(--font-geist-sans)]">
                     Connect wallet to RSVP
                   </p>
                 ) : alreadyRsvpd ? (
@@ -1431,7 +1450,7 @@ export default function EventPageClient() {
                         <p className="text-sm text-ink">
                           Are you sure you want to cancel? This will remove your RSVP from the blockchain.
                         </p>
-                        <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)] leading-snug">
+                        <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)] leading-snug">
                           Your RSVP will be deleted from Arkiv immediately.
                         </p>
                         <div className="flex gap-2 pt-0.5">
@@ -1453,7 +1472,7 @@ export default function EventPageClient() {
                     ) : (
                       <button
                         onClick={() => setShowCancelConfirm(true)}
-                        className="text-xs text-warm-gray underline text-center font-[family-name:var(--font-dm-sans)] hover:text-ink transition-colors"
+                        className="text-xs text-warm-gray underline text-center font-[family-name:var(--font-geist-sans)] hover:text-ink transition-colors"
                       >
                         Cancel attendance
                       </button>
@@ -1488,7 +1507,7 @@ export default function EventPageClient() {
 
                 {/* Freed-spot notice */}
                 {cancelledWithWaitlist && (
-                  <p className="text-xs text-center text-cobalt font-[family-name:var(--font-dm-sans)] leading-snug">
+                  <p className="text-xs text-center text-cobalt font-[family-name:var(--font-geist-sans)] leading-snug">
                     Your spot has been freed. Waitlisted attendees can now join.
                   </p>
                 )}
@@ -1497,7 +1516,7 @@ export default function EventPageClient() {
               {/* 2. Community Card */}
               {event?.community && (
                 <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-4">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-geist-sans)]">
                     Community
                   </h3>
                   <Link
@@ -1525,7 +1544,7 @@ export default function EventPageClient() {
                     </span>
                   </Link>
                   {communityProfile?.description && (
-                    <p className="text-sm text-warm-gray leading-relaxed font-[family-name:var(--font-dm-sans)]">
+                    <p className="text-sm text-warm-gray leading-relaxed font-[family-name:var(--font-geist-sans)]">
                       {communityProfile.description.length > 100
                         ? communityProfile.description.slice(0, 100) + '…'
                         : communityProfile.description}
@@ -1546,7 +1565,7 @@ export default function EventPageClient() {
               {/* 3. Organizer Controls */}
               {isOrganizer && (
                 <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-geist-sans)]">
                     Organizer Controls
                   </h3>
 
@@ -1575,7 +1594,7 @@ export default function EventPageClient() {
                       showCancelEventConfirm ? (
                         <div className="border border-red-200 p-4 flex flex-col gap-3">
                           <p className="text-sm font-semibold text-ink">Cancel this event?</p>
-                          <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                          <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                             Are you sure? This cannot be undone.
                             {(rsvps?.length ?? 0) > 0 && (
                               <> All {rsvps.length} RSVP{rsvps.length !== 1 ? 's' : ''} will be marked cancelled.</>
@@ -1598,7 +1617,7 @@ export default function EventPageClient() {
                             </button>
                           </div>
                           {cancelEventStatus && (
-                            <p className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                            <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
                               {cancelEventStatus}
                             </p>
                           )}
@@ -1650,7 +1669,7 @@ export default function EventPageClient() {
                       ) : (
                         <p className="text-sm text-warm-gray italic mb-3">No one on the waitlist yet.</p>
                       )}
-                      <p className="text-xs text-warm-gray/70 font-[family-name:var(--font-dm-sans)] leading-snug">
+                      <p className="text-xs text-warm-gray/70 font-[family-name:var(--font-geist-sans)] leading-snug">
                         Waitlist members are stored on-chain and expire with the event.
                       </p>
                     </div>
@@ -1734,7 +1753,7 @@ export default function EventPageClient() {
                       )}
                     </>
                   ) : (
-                    <p className="text-sm text-warm-gray/70 italic font-[family-name:var(--font-dm-sans)]">
+                    <p className="text-sm text-warm-gray/70 italic font-[family-name:var(--font-geist-sans)]">
                       The &quot;Close event &amp; verify attendance&quot; option will appear after
                       the event date has passed.
                     </p>
@@ -1783,12 +1802,12 @@ export default function EventPageClient() {
               {event?.title || 'Untitled Event'}
             </h3>
             {day && (
-              <p className="text-cream/60 text-sm font-[family-name:var(--font-dm-sans)]">
+              <p className="text-cream/60 text-sm font-[family-name:var(--font-geist-sans)]">
                 {day}{time ? ` · ${time}` : ''}
               </p>
             )}
             {event?.location && (
-              <p className="text-cream/50 text-xs font-[family-name:var(--font-dm-sans)] mt-1">
+              <p className="text-cream/50 text-xs font-[family-name:var(--font-geist-sans)] mt-1">
                 {event.location}
               </p>
             )}
@@ -1819,7 +1838,7 @@ export default function EventPageClient() {
             </svg>
           </button>
 
-          <p className="text-cream/80 text-sm font-[family-name:var(--font-dm-sans)] mb-4">
+          <p className="text-cream/80 text-sm font-[family-name:var(--font-geist-sans)] mb-4">
             Point your camera at an attendee&apos;s QR ticket
           </p>
 
@@ -1850,7 +1869,7 @@ export default function EventPageClient() {
           {/* Status area */}
           <div className="mt-4 text-center min-h-[48px] flex flex-col items-center justify-center">
             {scanVerifying ? (
-              <p className="text-cream/70 text-sm font-[family-name:var(--font-dm-sans)] animate-pulse">
+              <p className="text-cream/70 text-sm font-[family-name:var(--font-geist-sans)] animate-pulse">
                 Verifying attendance…
               </p>
             ) : scanResult ? (
@@ -1864,17 +1883,17 @@ export default function EventPageClient() {
                     setScanError('');
                     startScanning();
                   }}
-                  className="text-xs text-cream/60 underline hover:text-cream transition-colors font-[family-name:var(--font-dm-sans)]"
+                  className="text-xs text-cream/60 underline hover:text-cream transition-colors font-[family-name:var(--font-geist-sans)]"
                 >
                   Scan next attendee
                 </button>
               </div>
             ) : scanError ? (
-              <p className="text-sm text-orange font-[family-name:var(--font-dm-sans)]">
+              <p className="text-sm text-orange font-[family-name:var(--font-geist-sans)]">
                 {scanError}
               </p>
             ) : (
-              <p className="text-cream/50 text-xs font-[family-name:var(--font-dm-sans)]">
+              <p className="text-cream/50 text-xs font-[family-name:var(--font-geist-sans)]">
                 Scanning…
               </p>
             )}

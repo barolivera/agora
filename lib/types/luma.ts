@@ -2,6 +2,7 @@ export interface LumaEventData {
   title: string;
   description: string;
   date: string;        // ISO datetime-local format for the form input
+  endTime?: string;    // HH:MM format (same day assumed)
   location: string;
   coverImageUrl: string;
   organizer: string;

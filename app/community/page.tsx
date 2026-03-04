@@ -30,6 +30,7 @@ export default async function CommunitiesPage() {
         .buildQuery()
         .where(eq('type', 'community'))
         .withPayload(true)
+        .limit(500)
         .fetch()
         .catch(() => null),
       publicClient
@@ -52,8 +53,11 @@ export default async function CommunitiesPage() {
 
     // Build slug → most-recent profile map
     const profilesBySlug = new Map<string, ArkivCommunity>();
-    for (const entity of profilesResult?.entities ?? []) {
+    const rawProfiles = profilesResult?.entities ?? [];
+    console.log(`[Communities] Raw community profiles from Arkiv: ${rawProfiles.length}`);
+    for (const entity of rawProfiles) {
       const profile = parseCommunity(entity);
+      console.log(`[Communities] Profile: slug="${profile.slug}", name="${profile.name}", entityKey="${profile.entityKey}"`);
       if (profile.slug && !profilesBySlug.has(profile.slug)) {
         profilesBySlug.set(profile.slug, profile);
       }
@@ -69,6 +73,9 @@ export default async function CommunitiesPage() {
 
     // Merge: all slugs that appear in events OR have a profile
     const allSlugs = new Set([...groups.keys(), ...profilesBySlug.keys()]);
+    console.log(`[Communities] Event slugs: [${[...groups.keys()].join(', ')}]`);
+    console.log(`[Communities] Profile slugs: [${[...profilesBySlug.keys()].join(', ')}]`);
+    console.log(`[Communities] Merged allSlugs: [${[...allSlugs].join(', ')}]`);
 
     communities = Array.from(allSlugs)
       .map((slug) => ({

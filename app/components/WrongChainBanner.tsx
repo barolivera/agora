@@ -15,7 +15,7 @@ export function WrongChainBanner() {
 
   return (
     <div className="w-full bg-orange text-cream flex items-center justify-between gap-4 px-6 py-3">
-      <p className="text-sm font-[family-name:var(--font-dm-sans)]">
+      <p className="text-sm font-[family-name:var(--font-geist-sans)]">
         You&apos;re on the wrong network. Switch to{' '}
         <strong className="font-semibold">Arkiv Kaolin</strong> to continue.
       </p>

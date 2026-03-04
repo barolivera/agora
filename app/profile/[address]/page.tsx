@@ -134,7 +134,7 @@ function CommunityCard({ slug, community }: { slug: string; community?: ArkivCom
           </span>
         </div>
       )}
-      <span className="text-sm font-medium text-ink group-hover:text-cobalt transition-colors truncate font-[family-name:var(--font-dm-sans)]">
+      <span className="text-sm font-medium text-ink group-hover:text-cobalt transition-colors truncate font-[family-name:var(--font-geist-sans)]">
         {name}
       </span>
     </Link>
@@ -503,7 +503,7 @@ export default function PublicProfilePage() {
                       <rect x="9" y="9" width="13" height="13" rx="2" />
                       <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                     </svg>
-                    {copied && <span className="text-[#D4E84C] text-xs font-[family-name:var(--font-dm-sans)]">Copied!</span>}
+                    {copied && <span className="text-[#D4E84C] text-xs font-[family-name:var(--font-geist-sans)]">Copied!</span>}
                   </button>
                 </div>
 
@@ -527,7 +527,7 @@ export default function PublicProfilePage() {
 
               {/* Bio */}
               {profile?.bio && (
-                <p className="text-cream/70 text-sm mt-3 leading-relaxed max-w-lg font-[family-name:var(--font-dm-sans)]">
+                <p className="text-cream/70 text-sm mt-3 leading-relaxed max-w-lg font-[family-name:var(--font-geist-sans)]">
                   {profile.bio}
                 </p>
               )}
@@ -572,7 +572,7 @@ export default function PublicProfilePage() {
               )}
 
               {/* Stats */}
-              <div className="flex items-center justify-center sm:justify-start gap-5 mt-5 text-sm text-cream/60 font-[family-name:var(--font-dm-sans)]">
+              <div className="flex items-center justify-center sm:justify-start gap-5 mt-5 text-sm text-cream/60 font-[family-name:var(--font-geist-sans)]">
                 <span>
                   <strong className="text-cream">{events.length}</strong> Events organized
                 </span>
@@ -599,7 +599,7 @@ export default function PublicProfilePage() {
               ))}
               {commonEvents.length > 4 && (
                 <div className="flex-shrink-0 w-28 flex items-center justify-center">
-                  <span className="text-sm text-cobalt font-semibold font-[family-name:var(--font-dm-sans)]">
+                  <span className="text-sm text-cobalt font-semibold font-[family-name:var(--font-geist-sans)]">
                     +{commonEvents.length - 4} more
                   </span>
                 </div>
@@ -618,7 +618,7 @@ export default function PublicProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)]">
+            <p className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
               No upcoming events
             </p>
           )}
@@ -634,7 +634,7 @@ export default function PublicProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)]">
+            <p className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
               No upcoming events
             </p>
           )}
@@ -650,7 +650,7 @@ export default function PublicProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)]">
+            <p className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
               No past events
             </p>
           )}
@@ -666,7 +666,7 @@ export default function PublicProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm font-[family-name:var(--font-dm-sans)]">
+            <p className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
               No attended events yet
             </p>
           )}

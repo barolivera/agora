@@ -12,14 +12,14 @@
   --color-warm-gray: #C8C0B4;
 
   /* Fonts */
-  --font-sans: var(--font-dm-sans);
+  --font-sans: var(--font-geist-sans);
   --font-heading: var(--font-kode-mono);
 }
 
 body {
   background: #F2EDE4;
   color: #1A1614;
-  font-family: var(--font-dm-sans), Arial, sans-serif;
+  font-family: var(--font-geist-sans), Arial, sans-serif;
 }
 
 @keyframes fadeIn {

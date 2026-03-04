@@ -12,7 +12,7 @@ export function ErrorMessage({
 }) {
   return (
     <div
-      className="flex flex-col gap-2 p-4 font-[family-name:var(--font-dm-sans)]"
+      className="flex flex-col gap-2 p-4 font-[family-name:var(--font-geist-sans)]"
       style={{ background: '#FEF4F2', borderLeft: `4px solid ${TERRACOTTA}` }}
       role="alert"
     >

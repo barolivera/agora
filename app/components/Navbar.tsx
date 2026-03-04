@@ -112,13 +112,13 @@ export function Navbar() {
                         <Link
                           href={`/profile/${account.address}`}
                           onClick={() => setWalletOpen(false)}
-                          className="px-4 py-3 text-sm text-cream/80 hover:bg-cream/5 hover:text-cream transition-colors font-[family-name:var(--font-dm-sans)]"
+                          className="px-4 py-3 text-sm text-cream/80 hover:bg-cream/5 hover:text-cream transition-colors font-[family-name:var(--font-geist-sans)]"
                         >
                           View profile
                         </Link>
                         <button
                           onClick={() => { disconnect(); setWalletOpen(false); }}
-                          className="px-4 py-3 text-sm text-left text-cream/80 hover:bg-cream/5 hover:text-cream transition-colors border-t border-cream/10 font-[family-name:var(--font-dm-sans)]"
+                          className="px-4 py-3 text-sm text-left text-cream/80 hover:bg-cream/5 hover:text-cream transition-colors border-t border-cream/10 font-[family-name:var(--font-geist-sans)]"
                         >
                           Disconnect
                         </button>

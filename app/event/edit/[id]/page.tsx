@@ -259,7 +259,7 @@ export default function EditEventPage() {
                   key={cat}
                   type="button"
                   onClick={() => setCategory(cat)}
-                  className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-dm-sans)] ${
+                  className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-geist-sans)] ${
                     category === cat
                       ? 'bg-ink text-cream'
                       : 'border border-warm-gray/40 text-warm-gray hover:text-ink hover:border-ink/30'
@@ -348,7 +348,7 @@ export default function EditEventPage() {
               ))}
             </datalist>
             {communityTag.trim() && (
-              <p className="mt-1.5 text-xs text-cobalt font-[family-name:var(--font-dm-sans)] leading-snug">
+              <p className="mt-1.5 text-xs text-cobalt font-[family-name:var(--font-geist-sans)] leading-snug">
                 Your event will appear at{' '}
                 <span className="font-mono">
                   agora.xyz/community/{normalizeCommunity(communityTag)}

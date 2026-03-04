@@ -61,7 +61,7 @@ function CommunityCard({ entry }: { entry: CommunityEntry }) {
 
       {/* Description */}
       {profile?.description && (
-        <p className="text-sm text-ink/60 line-clamp-2 leading-relaxed font-[family-name:var(--font-dm-sans)]">
+        <p className="text-sm text-ink/60 line-clamp-2 leading-relaxed font-[family-name:var(--font-geist-sans)]">
           {profile.description}
         </p>
       )}

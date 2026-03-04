@@ -10,6 +10,7 @@ import {
 import SubscribeButton from './SubscribeButton';
 import EditCommunityButton from './EditCommunityButton';
 import EventsWithSidebar from './EventsWithSidebar';
+import PendingEvents from './PendingEvents';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -112,10 +113,12 @@ function HeroSection({
   profile,
   name,
   subscriberCount,
+  eventOrganizers,
 }: {
   profile: ArkivCommunity | null;
   name: string;
   subscriberCount: number;
+  eventOrganizers: string[];
 }) {
   const displayName = profile?.name || deslugify(name);
   const firstLetter = displayName.charAt(0).toUpperCase();
@@ -160,7 +163,7 @@ function HeroSection({
                   {displayName}
                 </h1>
                 {profile?.description && (
-                  <p className="text-sm text-cream/80 leading-snug line-clamp-2 font-[family-name:var(--font-dm-sans)] max-w-lg">
+                  <p className="text-sm text-cream/80 leading-snug line-clamp-2 font-[family-name:var(--font-geist-sans)] max-w-lg">
                     {profile.description}
                   </p>
                 )}
@@ -176,7 +179,7 @@ function HeroSection({
                       className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
                     >
                       <GlobeIcon />
-                      <span className="font-[family-name:var(--font-dm-sans)]">
+                      <span className="font-[family-name:var(--font-geist-sans)]">
                         {profile.website.replace(/^https?:\/\//, '')}
                       </span>
                     </a>
@@ -193,7 +196,7 @@ function HeroSection({
                       className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
                     >
                       <XIcon />
-                      <span className="font-[family-name:var(--font-dm-sans)]">
+                      <span className="font-[family-name:var(--font-geist-sans)]">
                         {profile.twitter.startsWith('@') ? profile.twitter : `@${profile.twitter}`}
                       </span>
                     </a>
@@ -206,7 +209,7 @@ function HeroSection({
                       className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
                     >
                       <DiscordIcon />
-                      <span className="font-[family-name:var(--font-dm-sans)]">Discord</span>
+                      <span className="font-[family-name:var(--font-geist-sans)]">Discord</span>
                     </a>
                   )}
                   {profile.instagram && (
@@ -221,7 +224,7 @@ function HeroSection({
                       className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
                     >
                       <InstagramIcon />
-                      <span className="font-[family-name:var(--font-dm-sans)]">
+                      <span className="font-[family-name:var(--font-geist-sans)]">
                         {profile.instagram.startsWith('@') ? profile.instagram : `@${profile.instagram}`}
                       </span>
                     </a>
@@ -234,7 +237,7 @@ function HeroSection({
                       className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
                     >
                       <LinkedInIcon />
-                      <span className="font-[family-name:var(--font-dm-sans)]">LinkedIn</span>
+                      <span className="font-[family-name:var(--font-geist-sans)]">LinkedIn</span>
                     </a>
                   )}
                   {profile.youtube && (
@@ -245,7 +248,7 @@ function HeroSection({
                       className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
                     >
                       <YouTubeIcon />
-                      <span className="font-[family-name:var(--font-dm-sans)]">YouTube</span>
+                      <span className="font-[family-name:var(--font-geist-sans)]">YouTube</span>
                     </a>
                   )}
                 </div>
@@ -254,7 +257,7 @@ function HeroSection({
 
             {/* Right: buttons */}
             <div className="flex items-center gap-3 shrink-0">
-              <EditCommunityButton slug={name} createdBy={profile?.createdBy ?? ''} />
+              <EditCommunityButton slug={name} createdBy={profile?.createdBy ?? ''} eventOrganizers={eventOrganizers} />
               <SubscribeButton slug={name} />
             </div>
           </div>
@@ -345,7 +348,16 @@ export default async function CommunityPage({
         profile={communityProfile}
         name={name}
         subscriberCount={subscriberCount}
+        eventOrganizers={[...new Set(events.map((e) => e.organizer).filter(Boolean))]}
       />
+
+      {/* ── Pending Events (visible to community creator only) ── */}
+      <div className="max-w-6xl mx-auto px-6 pt-10">
+        <PendingEvents
+          events={events.filter((e) => e?.status === 'pending')}
+          communityCreatedBy={communityProfile?.createdBy ?? ''}
+        />
+      </div>
 
       {/* ── Content ───────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-6 py-10">

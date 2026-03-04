@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useWalletClient, useChainId } from 'wagmi';
 import { createWalletClient, custom } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
-import { jsonToPayload } from '@arkiv-network/sdk/utils';
+import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eventExpiresAt, secondsUntilExpiry } from '@/lib/expiration';
 import { ErrorMessage } from '@/app/components/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
-import { shortAddress } from '@/lib/arkiv';
+import { publicClient, parseCommunity, shortAddress, type ArkivCommunity } from '@/lib/arkiv';
+import { eq } from '@arkiv-network/sdk/query';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 import type { AIEnrichment } from '@/lib/types/luma';
 
@@ -52,16 +53,19 @@ function parsePreviewDate(dateStr: string): { day: string; month: string } | nul
 
 // ── Community helpers ──────────────────────────────────────────────────────────
 
-const COMMUNITY_SUGGESTIONS = [
-  'SheFi',
-  'ETHArgentina',
-  'Developer DAO',
-  'Ethereum BA',
-  'BuidlGuidl',
-];
+type CommunityOption = { slug: string; name: string; createdBy: string };
 
 function normalizeCommunity(raw: string): string {
   return raw.toLowerCase().replace(/\s+/g, '-').trim();
+}
+
+function slugify(raw: string): string {
+  return raw
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 // ── Shared input class ────────────────────────────────────────────────────────
@@ -75,7 +79,7 @@ const inputCls =
 
 function AIBadge() {
   return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-cobalt/15 text-cobalt rounded-sm font-[family-name:var(--font-dm-sans)]">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-cobalt/15 text-cobalt rounded-sm font-[family-name:var(--font-geist-sans)]">
       AI
     </span>
   );
@@ -213,6 +217,7 @@ function CreateEventContent() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
@@ -235,7 +240,42 @@ function CreateEventContent() {
   const [importPhase, setImportPhase] = useState<'idle' | 'scraping' | 'analyzing' | 'done'>('idle');
   const [tags, setTags] = useState<string[]>([]);
 
+  // Community dropdown state
+  const [communities, setCommunities] = useState<CommunityOption[]>([]);
+  const [communitiesLoading, setCommunitiesLoading] = useState(true);
+
+  // Inline "create community" modal state
+  const [showNewCommunity, setShowNewCommunity] = useState(false);
+  const [newCommunityName, setNewCommunityName] = useState('');
+  const [newCommunityBio, setNewCommunityBio] = useState('');
+  const [creatingCommunity, setCreatingCommunity] = useState(false);
+  const [newCommunityError, setNewCommunityError] = useState('');
+
   const names = useDisplayNames(address ? [address] : []);
+
+  // Load communities from Arkiv for the dropdown
+  useEffect(() => {
+    async function loadCommunities() {
+      try {
+        const result = await publicClient
+          .buildQuery()
+          .where(eq('type', 'community'))
+          .withPayload(true)
+          .limit(500)
+          .fetch();
+        const parsed = (result?.entities ?? []).map(parseCommunity);
+        const opts: CommunityOption[] = parsed
+          .filter((c) => c.slug)
+          .map((c) => ({ slug: c.slug, name: c.name || c.slug, createdBy: c.createdBy }));
+        setCommunities(opts);
+      } catch {
+        // silent — dropdown will be empty, user can still type
+      } finally {
+        setCommunitiesLoading(false);
+      }
+    }
+    loadCommunities();
+  }, []);
 
   // Auto-import from luma_url query param (e.g. from AI Agent page)
   useEffect(() => {
@@ -253,6 +293,63 @@ function CreateEventContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoImportDone]);
+
+  async function handleCreateCommunity() {
+    if (!newCommunityName.trim() || !address || !wagmiWalletClient) return;
+    setCreatingCommunity(true);
+    setNewCommunityError('');
+
+    try {
+      const arkivWalletClient = createWalletClient({
+        account: wagmiWalletClient.account,
+        chain: kaolin,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        transport: custom(wagmiWalletClient as any),
+      });
+
+      const slug = slugify(newCommunityName);
+      if (!slug) {
+        setNewCommunityError('Invalid community name.');
+        return;
+      }
+
+      const payload: Record<string, unknown> = {
+        name: newCommunityName.trim(),
+        slug,
+        description: newCommunityBio.trim(),
+        createdBy: address.toLowerCase(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await arkivWalletClient.createEntity({
+        payload: jsonToPayload(payload),
+        contentType: 'application/json',
+        attributes: [
+          { key: 'type', value: 'community' },
+          { key: 'slug', value: slug },
+        ],
+        expiresIn: ExpirationTime.fromDays(365),
+      });
+
+      // Add to dropdown and auto-select
+      const newOpt: CommunityOption = {
+        slug,
+        name: newCommunityName.trim(),
+        createdBy: address.toLowerCase(),
+      };
+      setCommunities((prev) => [...prev, newOpt]);
+      setCommunityTag(slug);
+
+      // Reset & close modal
+      setNewCommunityName('');
+      setNewCommunityBio('');
+      setShowNewCommunity(false);
+    } catch (err) {
+      setNewCommunityError(err instanceof Error ? err.message : 'Failed to create community');
+    } finally {
+      setCreatingCommunity(false);
+    }
+  }
 
   async function handleLumaImport() {
     if (!lumaUrl.trim()) return;
@@ -288,6 +385,7 @@ function CreateEventContent() {
       if (data.date) setDate(data.date);
       if (data.location) setLocation(data.location);
       if (data.coverImageUrl) setCoverImageUrl(data.coverImageUrl);
+      if (data.endTime) setEndTime(data.endTime);
       setImportedFromLuma(true);
 
       // Handle AI enrichment
@@ -349,6 +447,17 @@ function CreateEventContent() {
         transport: custom(wagmiWalletClient as any),
       });
 
+      // Determine approval status
+      const normalizedCommunity = normalizeCommunity(communityTag);
+      const selectedCommunity = communities.find((c) => c.slug === normalizedCommunity);
+      const isAutoApproved =
+        normalizedCommunity &&
+        selectedCommunity?.createdBy &&
+        address.toLowerCase() === selectedCommunity.createdBy.toLowerCase();
+      const eventStatus = normalizedCommunity
+        ? isAutoApproved ? 'approved' : 'pending'
+        : 'upcoming';
+
       const payload: Record<string, unknown> = {
         title,
         description,
@@ -356,7 +465,7 @@ function CreateEventContent() {
         location,
         capacity: Number(capacity) || 0,
         organizer: address.toLowerCase(),
-        status: 'upcoming',
+        status: eventStatus,
       };
       if (category) {
         payload.category = category;
@@ -367,12 +476,14 @@ function CreateEventContent() {
       if (lumaUrl.trim()) {
         payload.lumaUrl = lumaUrl.trim();
       }
-      const normalizedCommunity = normalizeCommunity(communityTag);
       if (normalizedCommunity) {
         payload.community = normalizedCommunity;
       }
       if (tags.length) {
         payload.tags = tags;
+      }
+      if (endTime.trim()) {
+        payload.endTime = endTime.trim();
       }
 
       const expiryDate = eventExpiresAt(date);
@@ -381,7 +492,7 @@ function CreateEventContent() {
         { key: 'type', value: 'event' },
         { key: 'organizer', value: address.toLowerCase() },
         { key: 'date', value: new Date(date).getTime().toString() },
-        { key: 'status', value: 'upcoming' },
+        { key: 'status', value: eventStatus },
       ];
       if (category) {
         attributes.push({ key: 'category', value: category });
@@ -463,7 +574,7 @@ function CreateEventContent() {
             </div>
 
             {importedFromLuma && (
-              <div className="mb-6 flex items-center gap-2 px-3 py-2 bg-cobalt/10 border border-cobalt/20 text-sm text-cobalt font-[family-name:var(--font-dm-sans)]">
+              <div className="mb-6 flex items-center gap-2 px-3 py-2 bg-cobalt/10 border border-cobalt/20 text-sm text-cobalt font-[family-name:var(--font-geist-sans)]">
                 <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
@@ -493,7 +604,7 @@ function CreateEventContent() {
                   className={inputCls}
                 />
                 {aiData?.translatedTitle && (
-                  <p className="mt-1.5 text-xs text-warm-gray flex items-center gap-1.5 font-[family-name:var(--font-dm-sans)]">
+                  <p className="mt-1.5 text-xs text-warm-gray flex items-center gap-1.5 font-[family-name:var(--font-geist-sans)]">
                     <AIBadge /> ES: {aiData.translatedTitle}
                   </p>
                 )}
@@ -512,16 +623,16 @@ function CreateEventContent() {
                   className={`${inputCls} resize-none`}
                 />
                 {aiData?.summary && (
-                  <p className="mt-1.5 text-xs text-warm-gray flex items-center gap-1.5 font-[family-name:var(--font-dm-sans)]">
+                  <p className="mt-1.5 text-xs text-warm-gray flex items-center gap-1.5 font-[family-name:var(--font-geist-sans)]">
                     <AIBadge /> Resumen: {aiData.summary}
                   </p>
                 )}
                 {aiData?.translatedDescription && (
                   <details className="mt-1.5">
-                    <summary className="text-xs text-warm-gray flex items-center gap-1.5 cursor-pointer font-[family-name:var(--font-dm-sans)]">
+                    <summary className="text-xs text-warm-gray flex items-center gap-1.5 cursor-pointer font-[family-name:var(--font-geist-sans)]">
                       <AIBadge /> Ver traducción al español
                     </summary>
-                    <p className="mt-1 text-xs text-warm-gray/80 pl-5 font-[family-name:var(--font-dm-sans)]">
+                    <p className="mt-1 text-xs text-warm-gray/80 pl-5 font-[family-name:var(--font-geist-sans)]">
                       {aiData.translatedDescription}
                     </p>
                   </details>
@@ -538,7 +649,7 @@ function CreateEventContent() {
                       key={cat}
                       type="button"
                       onClick={() => setCategory(cat)}
-                      className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-dm-sans)] flex items-center gap-1 ${
+                      className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-geist-sans)] flex items-center gap-1 ${
                         category === cat
                           ? 'bg-ink text-cream'
                           : 'border border-warm-gray/40 text-warm-gray hover:text-ink hover:border-ink/30'
@@ -552,37 +663,52 @@ function CreateEventContent() {
                 <input type="hidden" name="category" value={category} required />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-ink mb-1.5">
-                    Date & time <span className="text-orange">*</span>
-                  </label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className={inputCls}
-                  />
-                  <p className="mt-1.5 text-xs text-warm-gray/60 font-[family-name:var(--font-dm-sans)] leading-snug">
-                    This event will be automatically removed from Agora 30 days after it takes place — just like in real life.
-                  </p>
+              <div>
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-ink mb-1.5">
+                      Start <span className="text-orange">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                  <span className="pb-3 text-warm-gray font-[family-name:var(--font-geist-sans)]">—</span>
+                  <div className="w-36">
+                    <label className="block text-sm font-medium text-ink mb-1.5">
+                      End
+                      <span className="ml-1.5 text-xs font-normal text-warm-gray">(optional)</span>
+                    </label>
+                    <input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
                 </div>
+                <p className="mt-1.5 text-xs text-warm-gray/60 font-[family-name:var(--font-geist-sans)] leading-snug">
+                  This event will be automatically removed from Agora 30 days after it takes place — just like in real life.
+                </p>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-ink mb-1.5">
-                    Capacity <span className="text-orange">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    placeholder="50"
-                    value={capacity}
-                    onChange={(e) => setCapacity(e.target.value)}
-                    className={inputCls}
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1.5">
+                  Capacity <span className="text-orange">*</span>
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  placeholder="50"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  className={inputCls}
+                />
               </div>
 
               <div>
@@ -615,24 +741,38 @@ function CreateEventContent() {
 
               <div>
                 <label className="block text-sm font-medium text-ink mb-1.5">
-                  Community tag
-                  <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
+                  Community <span className="text-orange">*</span>
                 </label>
-                <input
-                  type="text"
-                  list="community-suggestions"
-                  placeholder="e.g. SheFi, ETHArgentina, Developer DAO"
+                <select
+                  required
                   value={communityTag}
-                  onChange={(e) => setCommunityTag(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value === '__create_new__') {
+                      setShowNewCommunity(true);
+                      // Keep previous selection so the <select> doesn't go blank
+                    } else {
+                      setCommunityTag(e.target.value);
+                      setShowNewCommunity(false);
+                    }
+                  }}
                   className={inputCls}
-                />
-                <datalist id="community-suggestions">
-                  {COMMUNITY_SUGGESTIONS.map((s) => (
-                    <option key={s} value={s} />
+                  disabled={communitiesLoading}
+                >
+                  <option value="">
+                    {communitiesLoading ? 'Loading communities…' : 'Select a community'}
+                  </option>
+                  {communities.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
                   ))}
-                </datalist>
+                  <option value="__create_new__" className="font-bold text-cobalt">
+                    + Create new community
+                  </option>
+                </select>
+
                 {communityTag.trim() && (
-                  <p className="mt-1.5 text-xs text-cobalt font-[family-name:var(--font-dm-sans)] leading-snug">
+                  <p className="mt-1.5 text-xs text-cobalt font-[family-name:var(--font-geist-sans)] leading-snug">
                     Your event will appear at{' '}
                     <span className="font-mono">
                       agora.xyz/community/{normalizeCommunity(communityTag)}
@@ -641,7 +781,7 @@ function CreateEventContent() {
                 )}
                 {aiData?.suggestedCommunities && aiData.suggestedCommunities.length > 0 && (
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-warm-gray flex items-center gap-1 font-[family-name:var(--font-dm-sans)]">
+                    <span className="text-xs text-warm-gray flex items-center gap-1 font-[family-name:var(--font-geist-sans)]">
                       <AIBadge /> Suggested:
                     </span>
                     {aiData.suggestedCommunities.map((comm) => (
@@ -649,7 +789,7 @@ function CreateEventContent() {
                         key={comm}
                         type="button"
                         onClick={() => setCommunityTag(comm)}
-                        className={`px-2.5 py-1 text-xs font-medium transition-colors font-[family-name:var(--font-dm-sans)] ${
+                        className={`px-2.5 py-1 text-xs font-medium transition-colors font-[family-name:var(--font-geist-sans)] ${
                           communityTag === comm
                             ? 'bg-cobalt text-cream'
                             : 'bg-cobalt/10 text-cobalt hover:bg-cobalt/20'
@@ -671,7 +811,7 @@ function CreateEventContent() {
                     {tags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-warm-gray/20 text-ink font-[family-name:var(--font-dm-sans)]"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-warm-gray/20 text-ink font-[family-name:var(--font-geist-sans)]"
                       >
                         {tag}
                         <button
@@ -702,6 +842,8 @@ function CreateEventContent() {
                       </svg>
                       Publishing to Arkiv…
                     </>
+                  ) : communityTag.trim() ? (
+                    'Submit to Community'
                   ) : (
                     'Publish event'
                   )}
@@ -731,6 +873,97 @@ function CreateEventContent() {
 
         </div>
       </div>
+
+      {/* ── Create-community overlay modal ─────────────────── */}
+      {showNewCommunity && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => {
+            setShowNewCommunity(false);
+            setNewCommunityName('');
+            setNewCommunityBio('');
+            setNewCommunityError('');
+            setCommunityTag('');
+          }}
+        >
+          <div
+            className="bg-cream rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-6">
+              Create a community
+            </h3>
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1.5">
+                  Name <span className="text-orange">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ethereum BA"
+                  value={newCommunityName}
+                  onChange={(e) => setNewCommunityName(e.target.value)}
+                  className={inputCls}
+                />
+                {newCommunityName.trim() && (
+                  <p className="mt-1.5 text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
+                    Slug: <span className="font-mono text-cobalt">{slugify(newCommunityName)}</span>
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1.5">
+                  Description
+                  <span className="ml-1.5 text-xs font-normal text-warm-gray">(optional)</span>
+                </label>
+                <textarea
+                  placeholder="What's this community about?"
+                  value={newCommunityBio}
+                  onChange={(e) => setNewCommunityBio(e.target.value)}
+                  rows={3}
+                  className={`${inputCls} resize-none`}
+                />
+              </div>
+              {newCommunityError && (
+                <p className="text-sm text-red-600">{newCommunityError}</p>
+              )}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCreateCommunity}
+                  disabled={creatingCommunity || !newCommunityName.trim()}
+                  className="bg-orange text-cream px-5 py-2.5 text-sm font-semibold rounded-lg hover:bg-orange-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {creatingCommunity ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      Creating…
+                    </>
+                  ) : (
+                    'Create & Select'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewCommunity(false);
+                    setNewCommunityName('');
+                    setNewCommunityBio('');
+                    setNewCommunityError('');
+                    setCommunityTag('');
+                  }}
+                  className="px-5 py-2.5 text-sm text-ink/60 hover:text-ink transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

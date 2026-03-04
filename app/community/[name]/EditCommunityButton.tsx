@@ -6,19 +6,22 @@ import { useAccount } from 'wagmi';
 export default function EditCommunityButton({
   slug,
   createdBy,
+  eventOrganizers = [],
 }: {
   slug: string;
   createdBy: string;
+  eventOrganizers?: string[];
 }) {
   const { address } = useAccount();
 
-  if (
-    !address ||
-    !createdBy ||
-    address.toLowerCase() !== createdBy.toLowerCase()
-  ) {
-    return null;
-  }
+  if (!address) return null;
+
+  const wallet = address.toLowerCase();
+  const isCreator = !!createdBy && wallet === createdBy.toLowerCase();
+  const isOrganizerOfUnclaimed =
+    !createdBy && eventOrganizers.some((o) => o.toLowerCase() === wallet);
+
+  if (!isCreator && !isOrganizerOfUnclaimed) return null;
 
   return (
     <Link

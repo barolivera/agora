@@ -15,6 +15,24 @@ function parseEventDate(dateStr: string): { day: string; month: string } | null 
   };
 }
 
+function formatCardTime(dateStr: string, endTime?: string): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const t = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  if (t === '12:00 AM') return '';
+  if (endTime) {
+    const [h, m] = endTime.split(':').map(Number);
+    if (!isNaN(h) && !isNaN(m)) {
+      const endDate = new Date(d);
+      endDate.setHours(h, m, 0, 0);
+      const et = endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      return `${t} — ${et}`;
+    }
+  }
+  return t;
+}
+
 function deslugify(slug: string): string {
   return slug
     .split('-')
@@ -34,6 +52,7 @@ export function EventCard({
   const bg = POSTER_BG[index % 3];
   const parsedDate = parseEventDate(event?.date ?? '');
   const status = event?.status === 'cancelled' ? 'cancelled' : getEventStatus(event?.date ?? '');
+  const timeRange = formatCardTime(event?.date ?? '', event?.endTime);
 
   return (
     <Link
@@ -53,7 +72,7 @@ export function EventCard({
               <span className="text-[48px] font-bold leading-[48px] text-cream font-[family-name:var(--font-kode-mono)]">
                 {parsedDate.day}
               </span>
-              <span className="text-[10px] font-bold tracking-[1px] uppercase text-cream font-[family-name:var(--font-dm-sans)]">
+              <span className="text-[10px] font-bold tracking-[1px] uppercase text-cream font-[family-name:var(--font-geist-sans)]">
                 {parsedDate.month}
               </span>
             </div>
@@ -67,11 +86,11 @@ export function EventCard({
           <div className="flex items-center gap-2">
             <StatusBadge status={status} />
             {event?.community ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cream/90 bg-cobalt/80 font-[family-name:var(--font-dm-sans)] truncate max-w-[140px]">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cream/90 bg-cobalt/80 font-[family-name:var(--font-geist-sans)] truncate max-w-[140px]">
                 {deslugify(event.community)}
               </span>
             ) : showIndependentBadge ? (
-              <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cream/50 border border-cream/20 font-[family-name:var(--font-dm-sans)]">
+              <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cream/50 border border-cream/20 font-[family-name:var(--font-geist-sans)]">
                 Independent
               </span>
             ) : null}
@@ -79,6 +98,16 @@ export function EventCard({
           <p className="text-xl font-bold leading-[1.1] text-cream font-[family-name:var(--font-kode-mono)] truncate">
             {event?.title || 'Untitled Event'}
           </p>
+          {timeRange && (
+            <div className="flex items-center gap-1">
+              <svg className="w-3.5 h-3.5 shrink-0 text-cream/70" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+              </svg>
+              <span className="text-xs text-cream/70 leading-4">
+                {timeRange}
+              </span>
+            </div>
+          )}
           {event?.location && (
             <div className="flex items-start gap-0.5">
               <svg className="w-4 h-4 shrink-0 text-cream" viewBox="0 0 16 16" fill="none">

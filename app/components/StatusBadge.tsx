@@ -12,7 +12,7 @@ export default function StatusBadge({ status }: { status: EventStatus }) {
   return (
     <span
       style={{ backgroundColor: s.bg, color: s.color }}
-      className="inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase font-[family-name:var(--font-dm-sans)]"
+      className="inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase font-[family-name:var(--font-geist-sans)]"
     >
       {s.label}
     </span>
