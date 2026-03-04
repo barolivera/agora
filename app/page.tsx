@@ -225,6 +225,15 @@ export default function HomePage() {
   const filteredEvents = (() => {
     let result = [...(events ?? [])];
 
+    // Always filter out junk: must have valid community tag + valid date
+    const beforeCount = result.length;
+    result = result.filter((e) => {
+      const hasCommunity = e?.community && e.community.trim() !== '';
+      const hasDate = e?.date && e.date.trim() !== '';
+      return hasCommunity && hasDate;
+    });
+    console.log(`[Home] Total events: ${beforeCount}, After filter: ${result.length}`);
+
     if (statusFilter !== 'all') {
       result = result.filter((e) => {
         if (!e) return false;

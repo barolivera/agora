@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useWalletClient, useChainId } from 'wagmi';
 import { createWalletClient, custom } from '@arkiv-network/sdk';
@@ -221,6 +221,7 @@ function CreateEventContent() {
   const [communityTag, setCommunityTag] = useState(searchParams.get('community') ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [autoImportDone, setAutoImportDone] = useState(false);
 
   // Luma import state
   const [lumaUrl, setLumaUrl] = useState('');
@@ -235,6 +236,23 @@ function CreateEventContent() {
   const [tags, setTags] = useState<string[]>([]);
 
   const names = useDisplayNames(address ? [address] : []);
+
+  // Auto-import from luma_url query param (e.g. from AI Agent page)
+  useEffect(() => {
+    const lumaParam = searchParams.get('luma_url');
+    if (lumaParam && !autoImportDone) {
+      setLumaUrl(lumaParam);
+      setAutoImportDone(true);
+    }
+  }, [searchParams, autoImportDone]);
+
+  // Trigger import once lumaUrl is set from query param
+  useEffect(() => {
+    if (autoImportDone && lumaUrl && !lumaLoading && !importedFromLuma) {
+      handleLumaImport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoImportDone]);
 
   async function handleLumaImport() {
     if (!lumaUrl.trim()) return;

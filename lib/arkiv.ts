@@ -109,6 +109,7 @@ export async function fetchEventsByStatus(status: string): Promise<ArkivEvent[]>
     .buildQuery()
     .where(and([eq('type', 'event'), eq('status', status)]))
     .withPayload(true)
+    .limit(500)
     .fetch();
   return result?.entities?.map(parseEvent) ?? [];
 }

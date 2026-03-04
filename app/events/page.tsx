@@ -68,9 +68,6 @@ export default function EventsPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Re-fetch whenever status filter changes.
-  // When a specific status is selected, use the multi-attribute Arkiv query
-  // (type="event" AND status=<status>) to demonstrate Arkiv's query model.
-  // When "all" is selected, fetch all event entities.
   useEffect(() => {
     let cancelled = false;
 
@@ -84,12 +81,31 @@ export default function EventsPage() {
             .buildQuery()
             .where(eq('type', 'event'))
             .withPayload(true)
+            .limit(500)
             .fetch();
+
+          // Debug: log raw entities to diagnose missing community events
+          console.log('[Events] Raw entities from Arkiv:', result?.entities?.length);
+          result?.entities?.forEach((e, i) => {
+            const json = e.toJson();
+            console.log(`[Events] #${i}`, {
+              key: e.key,
+              title: json?.title,
+              date: json?.date,
+              community: json?.community,
+              organizer: json?.organizer,
+            });
+          });
+
           fetched = result?.entities?.map(parseEvent) ?? [];
         } else {
-          // Multi-attribute Arkiv query: type="event" AND status=statusFilter
           fetched = await fetchEventsByStatus(statusFilter);
         }
+
+        console.log('[Events] Total parsed:', fetched.length,
+          '| With community:', fetched.filter(e => !!e.community).length,
+          '| With valid date:', fetched.filter(e => e.date && !isNaN(new Date(e.date).getTime())).length);
+
         if (!cancelled) setEvents(fetched);
       } catch (err) {
         if (!cancelled) setError(friendlyError(err));
@@ -105,10 +121,14 @@ export default function EventsPage() {
   const filteredEvents = (() => {
     let result = [...(events ?? [])];
 
-    // Feed filter: community-only vs all
-    if (feedFilter === 'community') {
-      result = result.filter((e) => !!e?.community);
-    }
+    // Always filter out junk: must have valid community tag + valid date
+    const beforeCount = result.length;
+    result = result.filter((e) => {
+      const hasCommunity = e?.community && e.community.trim() !== '';
+      const hasDate = e?.date && e.date.trim() !== '';
+      return hasCommunity && hasDate;
+    });
+    console.log(`Total events: ${beforeCount}, After filter: ${result.length}`);
 
     // Category filter
     if (categoryFilter) {
@@ -127,13 +147,12 @@ export default function EventsPage() {
       });
     }
 
-    if (sortOrder === 'soonest') {
-      result.sort((a, b) => {
-        const da = a?.date ? new Date(a.date).getTime() : 0;
-        const db = b?.date ? new Date(b.date).getTime() : 0;
-        return da - db;
-      });
-    }
+    // Sort by date: soonest first or newest first
+    result.sort((a, b) => {
+      const da = a?.date ? new Date(a.date).getTime() : 0;
+      const db = b?.date ? new Date(b.date).getTime() : 0;
+      return sortOrder === 'soonest' ? da - db : db - da;
+    });
 
     return result;
   })();
