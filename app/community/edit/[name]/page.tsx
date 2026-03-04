@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAccount, useWalletClient } from 'wagmi';
 import { createWalletClient, custom, type Hex } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eq } from '@arkiv-network/sdk/query';
-import { publicClient, parseCommunity } from '@/lib/arkiv';
+import { publicClient, parseCommunity, type ArkivCommunity } from '@/lib/arkiv';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -35,15 +36,23 @@ export default function EditCommunityPage() {
   const { data: wagmiWalletClient } = useWalletClient();
 
   const [profileLoading, setProfileLoading] = useState(true);
-  const [existingEntityKey, setExistingEntityKey] = useState<string | null>(null);
+  const [existingProfile, setExistingProfile] = useState<ArkivCommunity | null>(null);
+  const [notCreator, setNotCreator] = useState(false);
+
+  // Form state
   const [formName, setFormName] = useState('');
   const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
   const [website, setWebsite] = useState('');
   const [twitter, setTwitter] = useState('');
   const [discord, setDiscord] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [instagram, setInstagram] = useState('');
+  const [linkedin, setLinkedin] = useState('');
+  const [youtube, setYoutube] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
   // Fetch existing profile to pre-fill the form
@@ -64,14 +73,27 @@ export default function EditCommunityPage() {
         const entity = result?.entities?.[0];
         if (entity) {
           const profile = parseCommunity(entity);
-          setExistingEntityKey(profile.entityKey || null);
+          setExistingProfile(profile);
           setFormName(profile.name || deslugify(name));
           setDescription(profile.description ?? '');
+          setLocation(profile.location ?? '');
           setLogoUrl(profile.logoUrl ?? '');
           setCoverUrl(profile.coverUrl ?? '');
           setWebsite(profile.website ?? '');
           setTwitter(profile.twitter ?? '');
           setDiscord(profile.discord ?? '');
+          setInstagram(profile.instagram ?? '');
+          setLinkedin(profile.linkedin ?? '');
+          setYoutube(profile.youtube ?? '');
+
+          // Permission check: only creator can edit
+          if (
+            profile.createdBy &&
+            address &&
+            profile.createdBy.toLowerCase() !== address.toLowerCase()
+          ) {
+            setNotCreator(true);
+          }
         } else {
           setFormName(deslugify(name));
         }
@@ -83,7 +105,9 @@ export default function EditCommunityPage() {
     }
 
     loadProfile();
-  }, [name]);
+  }, [name, address]);
+
+  // ── Early returns ──────────────────────────────────────────────────────────
 
   if (!isConnected) {
     return (
@@ -111,11 +135,35 @@ export default function EditCommunityPage() {
     );
   }
 
+  if (notCreator) {
+    return (
+      <main className="min-h-screen bg-cream flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <p className="text-4xl mb-4" role="img" aria-label="lock">🔒</p>
+          <h1 className="text-2xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-3">
+            Not authorized
+          </h1>
+          <p className="text-warm-gray text-sm mb-6 font-[family-name:var(--font-dm-sans)]">
+            Only the community creator can edit this page.
+          </p>
+          <Link
+            href={`/community/${name}`}
+            className="text-sm text-cobalt hover:text-cobalt-light transition-colors font-[family-name:var(--font-dm-sans)]"
+          >
+            Back to {deslugify(name)} →
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // ── Submit handler ─────────────────────────────────────────────────────────
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!address || !wagmiWalletClient || !name) return;
 
-    setLoading(true);
+    setSaving(true);
     setError('');
 
     try {
@@ -135,33 +183,31 @@ export default function EditCommunityPage() {
         createdBy: address,
         updatedAt: new Date().toISOString(),
       };
+      if (location.trim()) payload.location = location.trim();
       if (logoUrl.trim()) payload.logoUrl = logoUrl.trim();
       if (coverUrl.trim()) payload.coverUrl = coverUrl.trim();
       if (website.trim()) payload.website = website.trim();
       if (twitter.trim()) payload.twitter = twitter.trim();
       if (discord.trim()) payload.discord = discord.trim();
+      if (instagram.trim()) payload.instagram = instagram.trim();
+      if (linkedin.trim()) payload.linkedin = linkedin.trim();
+      if (youtube.trim()) payload.youtube = youtube.trim();
 
-      // Communities expire after 1 year. They should be renewed
-      // by the community when they create new events.
-      // This keeps the Arkiv database clean and prevents abandoned
-      // communities from living forever.
       const communityExpiresIn = ExpirationTime.fromDays(365);
       const communityAttributes = [
         { key: 'type', value: 'community' },
         { key: 'slug', value: name },
       ];
 
-      if (existingEntityKey) {
-        console.log(`[Arkiv] Updating existing community entity: ${existingEntityKey}`);
+      if (existingProfile?.entityKey) {
         await arkivWalletClient.updateEntity({
-          entityKey: existingEntityKey as Hex,
+          entityKey: existingProfile.entityKey as Hex,
           payload: jsonToPayload(payload),
           contentType: 'application/json',
           attributes: communityAttributes,
           expiresIn: communityExpiresIn,
         });
       } else {
-        console.log('[Arkiv] No existing entity found — creating new community entity');
         await arkivWalletClient.createEntity({
           payload: jsonToPayload(payload),
           contentType: 'application/json',
@@ -170,51 +216,49 @@ export default function EditCommunityPage() {
         });
       }
 
-      router.push(`/community/${name}`);
+      setSaved(true);
+      setTimeout(() => router.push(`/community/${name}`), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Transaction failed');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-cream">
       <div className="max-w-xl mx-auto px-6 py-14">
         <p className="text-xs font-bold tracking-[0.2em] uppercase text-warm-gray/50 mb-6">
-          <a href={`/community/${name}`} className="hover:text-warm-gray transition-colors">
+          <Link href={`/community/${name}`} className="hover:text-warm-gray transition-colors">
             ← Back to {deslugify(name)}
-          </a>
+          </Link>
         </p>
 
         <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
           Edit community
         </h1>
-        <p className="text-warm-gray mb-6">
-          agora.xyz/community/{name}
+        <p className="text-warm-gray text-sm mb-10 font-[family-name:var(--font-dm-sans)]">
+          Update your community profile on Agora.
         </p>
 
-        {/* Open editing warning */}
-        <div className="mb-8 p-4 border border-warm-gray/40 bg-warm-gray/10 text-sm text-ink/70 leading-relaxed">
-          <span className="font-semibold text-ink">Community profiles are open</span> — anyone can edit.
-          Decentralized and community-owned.
-        </div>
-
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm">
+          <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-700 text-xs">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Community name <span className="text-orange">*</span>
             </label>
             <input
               type="text"
               required
+              maxLength={80}
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
               className={inputCls}
@@ -222,8 +266,8 @@ export default function EditCommunityPage() {
           </div>
 
           {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Description <span className="text-orange">*</span>
             </label>
             <textarea
@@ -231,15 +275,30 @@ export default function EditCommunityPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
+              maxLength={500}
               className={`${inputCls} resize-none`}
             />
           </div>
 
+          {/* Location */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-ink uppercase tracking-widest">
+              Location
+            </label>
+            <input
+              type="text"
+              placeholder="City, Country"
+              maxLength={80}
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className={inputCls}
+            />
+          </div>
+
           {/* Logo URL */}
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Logo URL
-              <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
             </label>
             <input
               type="url"
@@ -249,7 +308,7 @@ export default function EditCommunityPage() {
               className={inputCls}
             />
             {logoUrl.trim() && (
-              <div className="mt-2">
+              <div className="mt-1">
                 <img
                   src={logoUrl}
                   alt="Logo preview"
@@ -265,10 +324,9 @@ export default function EditCommunityPage() {
           </div>
 
           {/* Cover image URL */}
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Cover image URL
-              <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
             </label>
             <input
               type="url"
@@ -279,71 +337,142 @@ export default function EditCommunityPage() {
             />
           </div>
 
-          {/* Website */}
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">
-              Website
-              <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
-            </label>
-            <input
-              type="url"
-              placeholder="https://…"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-              className={inputCls}
-            />
+          {/* Social links section */}
+          <div className="pt-2 border-t border-warm-gray/30">
+            <p className="text-xs font-semibold text-ink uppercase tracking-widest mb-4">
+              Social links
+            </p>
+            <div className="flex flex-col gap-4">
+              {/* Website */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                  Website
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://…"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Twitter / X */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                  Twitter / X
+                </label>
+                <input
+                  type="text"
+                  placeholder="@handle"
+                  maxLength={100}
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Instagram */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                  Instagram
+                </label>
+                <input
+                  type="text"
+                  placeholder="@handle"
+                  maxLength={100}
+                  value={instagram}
+                  onChange={(e) => setInstagram(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* LinkedIn */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                  LinkedIn
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://linkedin.com/in/…"
+                  maxLength={200}
+                  value={linkedin}
+                  onChange={(e) => setLinkedin(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* YouTube */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                  YouTube
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://youtube.com/@…"
+                  maxLength={200}
+                  value={youtube}
+                  onChange={(e) => setYoutube(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Discord */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-warm-gray font-[family-name:var(--font-dm-sans)]">
+                  Discord invite URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://discord.gg/…"
+                  value={discord}
+                  onChange={(e) => setDiscord(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Twitter */}
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">
-              Twitter / X
-              <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
-            </label>
-            <input
-              type="text"
-              placeholder="@ethargentina"
-              value={twitter}
-              onChange={(e) => setTwitter(e.target.value)}
-              className={inputCls}
-            />
-          </div>
+          {/* Error */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs">
+              {error}
+            </div>
+          )}
 
-          {/* Discord */}
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">
-              Discord invite URL
-              <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
-            </label>
-            <input
-              type="url"
-              placeholder="https://discord.gg/…"
-              value={discord}
-              onChange={(e) => setDiscord(e.target.value)}
-              className={inputCls}
-            />
-          </div>
-
-          <div className="pt-2">
+          {/* Actions */}
+          <div className="flex items-center gap-5 pt-2">
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-orange text-cream py-3.5 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed hover:bg-orange-light transition-colors flex items-center justify-center gap-2"
+              disabled={saving || saved}
+              className="px-6 py-3 bg-orange text-cream text-sm font-semibold hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {loading ? (
+              {saved ? (
+                'Community saved on-chain ✓'
+              ) : saving ? (
                 <>
                   <svg className="animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                   </svg>
-                  Publishing to Arkiv…
+                  Saving…
                 </>
               ) : (
                 'Save changes'
               )}
             </button>
+            <Link
+              href={`/community/${name}`}
+              className="text-sm text-warm-gray hover:text-ink transition-colors"
+            >
+              Cancel
+            </Link>
           </div>
         </form>
+
+        <p className="mt-8 text-xs text-warm-gray/60 font-[family-name:var(--font-dm-sans)]">
+          Community profiles expire after 1 year and renew when you edit them.
+        </p>
       </div>
     </div>
   );

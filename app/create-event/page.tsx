@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAccount, useWalletClient, useChainId } from 'wagmi';
 import { createWalletClient, custom } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
@@ -11,6 +11,7 @@ import { ErrorMessage } from '@/app/components/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 import { shortAddress } from '@/lib/arkiv';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
+import type { AIEnrichment } from '@/lib/types/luma';
 
 const KAOLIN_CHAIN_ID = 60138453025;
 
@@ -69,6 +70,16 @@ const inputCls =
   'w-full border border-warm-gray/50 px-4 py-3 text-sm bg-cream text-ink ' +
   'placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40 ' +
   'focus:border-cobalt transition-colors';
+
+// ── AI badge ─────────────────────────────────────────────────────────────────
+
+function AIBadge() {
+  return (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-cobalt/15 text-cobalt rounded-sm font-[family-name:var(--font-dm-sans)]">
+      AI
+    </span>
+  );
+}
 
 // ── Live preview card ─────────────────────────────────────────────────────────
 
@@ -193,7 +204,7 @@ function PreviewCard({
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function CreateEventPage() {
+function CreateEventContent() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { data: wagmiWalletClient } = useWalletClient();
@@ -206,11 +217,82 @@ export default function CreateEventPage() {
   const [capacity, setCapacity] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [category, setCategory] = useState('');
-  const [communityTag, setCommunityTag] = useState('');
+  const searchParams = useSearchParams();
+  const [communityTag, setCommunityTag] = useState(searchParams.get('community') ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Luma import state
+  const [lumaUrl, setLumaUrl] = useState('');
+  const [lumaLoading, setLumaLoading] = useState(false);
+  const [lumaError, setLumaError] = useState('');
+  const [importedFromLuma, setImportedFromLuma] = useState(false);
+
+  // AI enrichment state
+  const [aiData, setAiData] = useState<AIEnrichment | null>(null);
+  const [aiEnriched, setAiEnriched] = useState(false);
+  const [importPhase, setImportPhase] = useState<'idle' | 'scraping' | 'analyzing' | 'done'>('idle');
+  const [tags, setTags] = useState<string[]>([]);
+
   const names = useDisplayNames(address ? [address] : []);
+
+  async function handleLumaImport() {
+    if (!lumaUrl.trim()) return;
+    setLumaLoading(true);
+    setLumaError('');
+    setAiData(null);
+    setAiEnriched(false);
+    setTags([]);
+    setImportPhase('scraping');
+
+    // After 1.5s switch to "analyzing" phase if still loading
+    const phaseTimer = setTimeout(() => {
+      setImportPhase((prev) => (prev === 'scraping' ? 'analyzing' : prev));
+    }, 1500);
+
+    try {
+      const res = await fetch('/api/import-luma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: lumaUrl.trim() }),
+      });
+      clearTimeout(phaseTimer);
+      const data = await res.json();
+      if (!res.ok) {
+        setLumaError(data.error || 'Could not import this event. Check the link and try again.');
+        setImportPhase('idle');
+        return;
+      }
+
+      // Auto-fill form fields from scraped data
+      if (data.title) setTitle(data.title);
+      if (data.description) setDescription(data.description);
+      if (data.date) setDate(data.date);
+      if (data.location) setLocation(data.location);
+      if (data.coverImageUrl) setCoverImageUrl(data.coverImageUrl);
+      setImportedFromLuma(true);
+
+      // Handle AI enrichment
+      if (data.ai) {
+        if (data.ai.category && !category) {
+          setCategory(data.ai.category);
+        }
+        if (data.ai.tags?.length) {
+          setTags(data.ai.tags);
+        }
+        setAiData(data.ai);
+        setAiEnriched(true);
+      }
+
+      setImportPhase('done');
+    } catch {
+      clearTimeout(phaseTimer);
+      setLumaError('Could not import this event. Check the link and try again.');
+      setImportPhase('idle');
+    } finally {
+      setLumaLoading(false);
+    }
+  }
 
   if (!isConnected) {
     return (
@@ -264,9 +346,15 @@ export default function CreateEventPage() {
       if (coverImageUrl.trim()) {
         payload.coverImageUrl = coverImageUrl.trim();
       }
+      if (lumaUrl.trim()) {
+        payload.lumaUrl = lumaUrl.trim();
+      }
       const normalizedCommunity = normalizeCommunity(communityTag);
       if (normalizedCommunity) {
         payload.community = normalizedCommunity;
+      }
+      if (tags.length) {
+        payload.tags = tags;
       }
 
       const expiryDate = eventExpiresAt(date);
@@ -313,6 +401,60 @@ export default function CreateEventPage() {
               Your event lives on Arkiv — owned by you, forever.
             </p>
 
+            {/* ── Luma import ─────────────────────────────── */}
+            <div className="mb-8 border border-orange/40 bg-cream p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-orange" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <span className="text-sm font-semibold text-ink font-[family-name:var(--font-kode-mono)]">
+                  Import from Luma
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  placeholder="Paste a lu.ma or luma.com event link..."
+                  value={lumaUrl}
+                  onChange={(e) => { setLumaUrl(e.target.value); setLumaError(''); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleLumaImport(); } }}
+                  className={`${inputCls} flex-1`}
+                />
+                <button
+                  type="button"
+                  onClick={handleLumaImport}
+                  disabled={lumaLoading || !lumaUrl.trim()}
+                  className="px-5 py-3 bg-orange text-cream text-sm font-semibold whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-light transition-colors flex items-center gap-2"
+                >
+                  {lumaLoading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      {importPhase === 'analyzing' ? 'AI Agent is analyzing…' : 'Reading event from Luma…'}
+                    </>
+                  ) : (
+                    'Import'
+                  )}
+                </button>
+              </div>
+              {lumaError && (
+                <p className="mt-2 text-sm text-red-600">{lumaError}</p>
+              )}
+            </div>
+
+            {importedFromLuma && (
+              <div className="mb-6 flex items-center gap-2 px-3 py-2 bg-cobalt/10 border border-cobalt/20 text-sm text-cobalt font-[family-name:var(--font-dm-sans)]">
+                <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                {aiEnriched
+                  ? 'AI Agent enhanced this event — review suggestions before publishing'
+                  : 'Imported from Luma — review and edit before publishing'}
+              </div>
+            )}
+
             {error && (
               <div className="mb-6">
                 <ErrorMessage message={error} onRetry={() => setError('')} />
@@ -332,6 +474,11 @@ export default function CreateEventPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   className={inputCls}
                 />
+                {aiData?.translatedTitle && (
+                  <p className="mt-1.5 text-xs text-warm-gray flex items-center gap-1.5 font-[family-name:var(--font-dm-sans)]">
+                    <AIBadge /> ES: {aiData.translatedTitle}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -346,6 +493,21 @@ export default function CreateEventPage() {
                   rows={4}
                   className={`${inputCls} resize-none`}
                 />
+                {aiData?.summary && (
+                  <p className="mt-1.5 text-xs text-warm-gray flex items-center gap-1.5 font-[family-name:var(--font-dm-sans)]">
+                    <AIBadge /> Resumen: {aiData.summary}
+                  </p>
+                )}
+                {aiData?.translatedDescription && (
+                  <details className="mt-1.5">
+                    <summary className="text-xs text-warm-gray flex items-center gap-1.5 cursor-pointer font-[family-name:var(--font-dm-sans)]">
+                      <AIBadge /> Ver traducción al español
+                    </summary>
+                    <p className="mt-1 text-xs text-warm-gray/80 pl-5 font-[family-name:var(--font-dm-sans)]">
+                      {aiData.translatedDescription}
+                    </p>
+                  </details>
+                )}
               </div>
 
               <div>
@@ -358,13 +520,14 @@ export default function CreateEventPage() {
                       key={cat}
                       type="button"
                       onClick={() => setCategory(cat)}
-                      className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-dm-sans)] ${
+                      className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-dm-sans)] flex items-center gap-1 ${
                         category === cat
                           ? 'bg-ink text-cream'
                           : 'border border-warm-gray/40 text-warm-gray hover:text-ink hover:border-ink/30'
                       }`}
                     >
                       {cat}
+                      {aiData?.category === cat && <AIBadge />}
                     </button>
                   ))}
                 </div>
@@ -458,7 +621,54 @@ export default function CreateEventPage() {
                     </span>
                   </p>
                 )}
+                {aiData?.suggestedCommunities && aiData.suggestedCommunities.length > 0 && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-warm-gray flex items-center gap-1 font-[family-name:var(--font-dm-sans)]">
+                      <AIBadge /> Suggested:
+                    </span>
+                    {aiData.suggestedCommunities.map((comm) => (
+                      <button
+                        key={comm}
+                        type="button"
+                        onClick={() => setCommunityTag(comm)}
+                        className={`px-2.5 py-1 text-xs font-medium transition-colors font-[family-name:var(--font-dm-sans)] ${
+                          communityTag === comm
+                            ? 'bg-cobalt text-cream'
+                            : 'bg-cobalt/10 text-cobalt hover:bg-cobalt/20'
+                        }`}
+                      >
+                        {comm}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {tags.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-1.5 flex items-center gap-1.5">
+                    Tags <AIBadge />
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-warm-gray/20 text-ink font-[family-name:var(--font-dm-sans)]"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}
+                          className="text-warm-gray hover:text-ink ml-0.5"
+                          aria-label={`Remove tag ${tag}`}
+                        >
+                          &times;
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="pt-2">
                 <button
@@ -504,5 +714,13 @@ export default function CreateEventPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CreateEventPage() {
+  return (
+    <Suspense>
+      <CreateEventContent />
+    </Suspense>
   );
 }

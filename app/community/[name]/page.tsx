@@ -8,6 +8,7 @@ import {
   type ArkivCommunity,
 } from '@/lib/arkiv';
 import SubscribeButton from './SubscribeButton';
+import EditCommunityButton from './EditCommunityButton';
 import EventsWithSidebar from './EventsWithSidebar';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -38,47 +39,16 @@ export async function generateMetadata({
   };
 }
 
-// ── Cover section (hero banner with overlaid title) ────────────────────────────
+// ── Cover section (hero banner) ─────────────────────────────────────────────────
 
-function CoverSection({
-  coverUrl,
-  displayName,
-}: {
-  coverUrl?: string;
-  displayName: string;
-}) {
+function CoverSection({ coverUrl }: { coverUrl?: string }) {
   return (
-    <div className="relative h-56 overflow-hidden">
-      {/* Background: image or gradient */}
-      {coverUrl ? (
-        <img
-          src={coverUrl}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      ) : (
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(135deg, #1A1614 55%, #0247E2 100%)',
-          }}
-        />
-      )}
-
-      {/* Semi-transparent overlay */}
-      <div className="absolute inset-0 bg-ink/55" />
-
-      {/* Community name anchored to bottom */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <div className="max-w-6xl mx-auto px-6 pb-5">
-          <h1
-            className="text-4xl sm:text-5xl font-bold text-cream font-[family-name:var(--font-kode-mono)] leading-none"
-            style={{ textShadow: '0 2px 12px rgba(26,22,20,0.6)' }}
-          >
-            {displayName}
-          </h1>
-        </div>
-      </div>
+    <div className="relative h-64 overflow-hidden">
+      <img
+        src={coverUrl || '/default-community-cover.png'}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+      />
     </div>
   );
 }
@@ -110,6 +80,32 @@ function DiscordIcon() {
   );
 }
 
+function InstagramIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
+
+function LinkedInIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+    </svg>
+  );
+}
+
+function YouTubeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  );
+}
+
 // ── Hero section (profile row below cover) ─────────────────────────────────────
 
 function HeroSection({
@@ -126,8 +122,8 @@ function HeroSection({
 
   return (
     <section className="bg-ink">
-      {/* Cover banner with name overlay */}
-      <CoverSection coverUrl={profile?.coverUrl} displayName={displayName} />
+      {/* Cover banner */}
+      <CoverSection coverUrl={profile?.coverUrl} />
 
       {/* Profile section */}
       <div className="max-w-6xl mx-auto px-6 pt-6 pb-6">
@@ -160,9 +156,9 @@ function HeroSection({
             {/* Left: name + description + social links */}
             <div className="flex flex-col gap-2.5 flex-1 min-w-0">
               <div className="flex flex-col gap-1">
-                <p className="text-2xl font-bold text-cream font-[family-name:var(--font-kode-mono)] leading-tight">
+                <h1 className="text-3xl font-bold text-cream font-[family-name:var(--font-kode-mono)] leading-tight">
                   {displayName}
-                </p>
+                </h1>
                 {profile?.description && (
                   <p className="text-sm text-cream/80 leading-snug line-clamp-2 font-[family-name:var(--font-dm-sans)] max-w-lg">
                     {profile.description}
@@ -170,8 +166,8 @@ function HeroSection({
                 )}
               </div>
 
-              {(profile?.website || profile?.twitter || profile?.discord) && (
-                <div className="flex items-center gap-5">
+              {(profile?.website || profile?.twitter || profile?.discord || profile?.instagram || profile?.linkedin || profile?.youtube) && (
+                <div className="flex items-center gap-5 flex-wrap">
                   {profile.website && (
                     <a
                       href={profile.website}
@@ -213,12 +209,54 @@ function HeroSection({
                       <span className="font-[family-name:var(--font-dm-sans)]">Discord</span>
                     </a>
                   )}
+                  {profile.instagram && (
+                    <a
+                      href={
+                        profile.instagram.startsWith('http')
+                          ? profile.instagram
+                          : `https://instagram.com/${profile.instagram.replace(/^@/, '')}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                    >
+                      <InstagramIcon />
+                      <span className="font-[family-name:var(--font-dm-sans)]">
+                        {profile.instagram.startsWith('@') ? profile.instagram : `@${profile.instagram}`}
+                      </span>
+                    </a>
+                  )}
+                  {profile.linkedin && (
+                    <a
+                      href={profile.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                    >
+                      <LinkedInIcon />
+                      <span className="font-[family-name:var(--font-dm-sans)]">LinkedIn</span>
+                    </a>
+                  )}
+                  {profile.youtube && (
+                    <a
+                      href={profile.youtube}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                    >
+                      <YouTubeIcon />
+                      <span className="font-[family-name:var(--font-dm-sans)]">YouTube</span>
+                    </a>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Right: subscribe button */}
-            <SubscribeButton slug={name} />
+            {/* Right: buttons */}
+            <div className="flex items-center gap-3 shrink-0">
+              <EditCommunityButton slug={name} createdBy={profile?.createdBy ?? ''} />
+              <SubscribeButton slug={name} />
+            </div>
           </div>
         </div>
       </div>

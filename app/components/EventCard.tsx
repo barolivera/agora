@@ -15,7 +15,22 @@ function parseEventDate(dateStr: string): { day: string; month: string } | null 
   };
 }
 
-export function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
+function deslugify(slug: string): string {
+  return slug
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+export function EventCard({
+  event,
+  index,
+  showIndependentBadge = false,
+}: {
+  event: ArkivEvent;
+  index: number;
+  showIndependentBadge?: boolean;
+}) {
   const bg = POSTER_BG[index % 3];
   const parsedDate = parseEventDate(event?.date ?? '');
   const status = event?.status === 'cancelled' ? 'cancelled' : getEventStatus(event?.date ?? '');
@@ -48,8 +63,19 @@ export function EventCard({ event, index }: { event: ArkivEvent; index: number }
 
       {/* Bottom info strip */}
       <div className="bg-[#191919] border-t border-[rgba(128,128,128,0.2)] h-[142px] shrink-0 px-5 flex items-center">
-        <div className="flex flex-col gap-3 w-[318px] max-w-full">
-          <StatusBadge status={status} />
+        <div className="flex flex-col gap-2.5 w-[318px] max-w-full">
+          <div className="flex items-center gap-2">
+            <StatusBadge status={status} />
+            {event?.community ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cream/90 bg-cobalt/80 font-[family-name:var(--font-dm-sans)] truncate max-w-[140px]">
+                {deslugify(event.community)}
+              </span>
+            ) : showIndependentBadge ? (
+              <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cream/50 border border-cream/20 font-[family-name:var(--font-dm-sans)]">
+                Independent
+              </span>
+            ) : null}
+          </div>
           <p className="text-xl font-bold leading-[1.1] text-cream font-[family-name:var(--font-kode-mono)] truncate">
             {event?.title || 'Untitled Event'}
           </p>

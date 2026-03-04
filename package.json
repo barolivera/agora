@@ -10,6 +10,7 @@
     "seed": "SEED_PRIVATE_KEY=your_key_here tsx scripts/seed-events.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@arkiv-network/sdk": "^0.6.0",
     "@rainbow-me/rainbowkit": "^2.2.10",
     "jsqr": "^1.4.0",

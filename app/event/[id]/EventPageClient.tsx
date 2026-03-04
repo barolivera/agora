@@ -73,20 +73,263 @@ function deslugify(slug: string): string {
     .join(' ');
 }
 
-function googleCalendarUrl(event: ArkivEvent): string {
+// ── Calendar helpers ──────────────────────────────────────────────────────────
+
+function calendarDates(event: ArkivEvent) {
   const start = new Date(event.date);
-  if (isNaN(start.getTime())) return '#';
+  if (isNaN(start.getTime())) return null;
   const end = new Date(start);
   end.setHours(end.getHours() + 2);
-  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  return { start, end };
+}
+
+function googleCalendarUrl(event: ArkivEvent): string {
+  const d = calendarDates(event);
+  if (!d) return '#';
+  const fmt = (dt: Date) => dt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: event.title,
-    dates: `${fmt(start)}/${fmt(end)}`,
+    dates: `${fmt(d.start)}/${fmt(d.end)}`,
     location: event.location ?? '',
     details: event.description ?? '',
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function outlookCalendarUrl(event: ArkivEvent): string {
+  const d = calendarDates(event);
+  if (!d) return '#';
+  const params = new URLSearchParams({
+    subject: event.title,
+    startdt: d.start.toISOString(),
+    enddt: d.end.toISOString(),
+    body: event.description ?? '',
+    location: event.location ?? '',
+    path: '/calendar/action/compose',
+  });
+  return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
+}
+
+function yahooCalendarUrl(event: ArkivEvent): string {
+  const d = calendarDates(event);
+  if (!d) return '#';
+  const fmt = (dt: Date) => dt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const params = new URLSearchParams({
+    title: event.title,
+    st: fmt(d.start),
+    et: fmt(d.end),
+    desc: event.description ?? '',
+    in_loc: event.location ?? '',
+    v: '60',
+  });
+  return `https://calendar.yahoo.com/?${params.toString()}`;
+}
+
+function downloadIcs(event: ArkivEvent) {
+  const d = calendarDates(event);
+  if (!d) return;
+  const fmt = (dt: Date) => dt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'BEGIN:VEVENT',
+    `DTSTART:${fmt(d.start)}`,
+    `DTEND:${fmt(d.end)}`,
+    `SUMMARY:${event.title}`,
+    `DESCRIPTION:${(event.description ?? '').replace(/\n/g, '\\n')}`,
+    `LOCATION:${event.location ?? ''}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${event.title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Add to calendar modal ────────────────────────────────────────────────────
+
+function ShareModal({
+  event,
+  onClose,
+}: {
+  event: ArkivEvent;
+  onClose: () => void;
+}) {
+  const [linkCopied, setLinkCopied] = useState(false);
+  const eventUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(eventUrl);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }
+
+  const title = encodeURIComponent(event.title ?? 'Check out this event');
+
+  const socials = [
+    {
+      label: 'Twitter / X',
+      href: `https://twitter.com/intent/tweet?text=${title}&url=${encodeURIComponent(eventUrl)}`,
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Telegram',
+      href: `https://t.me/share/url?url=${encodeURIComponent(eventUrl)}&text=${title}`,
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+        </svg>
+      ),
+    },
+    {
+      label: 'WhatsApp',
+      href: `https://wa.me/?text=${title}%20${encodeURIComponent(eventUrl)}`,
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z" />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70"
+      onClick={onClose}
+    >
+      <div
+        className="bg-ink border border-warm-gray/20 w-full max-w-sm mx-4 p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-sm font-bold uppercase tracking-[0.15em] text-cream font-[family-name:var(--font-kode-mono)]">
+            Share this event
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center text-warm-gray hover:text-cream transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-2 mb-4">
+          {socials.map((s) => (
+            <a
+              key={s.label}
+              href={s.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)]"
+            >
+              <span className="shrink-0 text-warm-gray">{s.icon}</span>
+              {s.label}
+            </a>
+          ))}
+          <button
+            onClick={copyLink}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)]"
+          >
+            <span className="shrink-0 text-warm-gray">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            </span>
+            {linkCopied ? 'Copied!' : 'Copy link'}
+          </button>
+        </div>
+
+        <input
+          type="text"
+          readOnly
+          value={eventUrl}
+          onClick={copyLink}
+          className="w-full px-3 py-2 text-xs text-warm-gray bg-ink border border-warm-gray/20 cursor-pointer hover:border-cream/40 transition-colors font-[family-name:var(--font-kode-mono)] truncate"
+        />
+      </div>
+    </div>
+  );
+}
+
+function CalendarModal({
+  event,
+  onClose,
+}: {
+  event: ArkivEvent;
+  onClose: () => void;
+}) {
+  const options = [
+    { label: 'Google Calendar', href: googleCalendarUrl(event), external: true },
+    { label: 'Apple / iCal', href: '#', external: false, action: () => downloadIcs(event) },
+    { label: 'Outlook.com', href: outlookCalendarUrl(event), external: true },
+    { label: 'Yahoo Calendar', href: yahooCalendarUrl(event), external: true },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70"
+      onClick={onClose}
+    >
+      <div
+        className="bg-ink border border-warm-gray/20 w-full max-w-sm mx-4 p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-sm font-bold uppercase tracking-[0.15em] text-cream font-[family-name:var(--font-kode-mono)]">
+            Add to calendar
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center text-warm-gray hover:text-cream transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex flex-col gap-2">
+          {options.map((opt) =>
+            opt.external ? (
+              <a
+                key={opt.label}
+                href={opt.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onClose}
+                className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)] text-center"
+              >
+                {opt.label}
+              </a>
+            ) : (
+              <button
+                key={opt.label}
+                onClick={() => { opt.action?.(); onClose(); }}
+                className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-dm-sans)] text-center"
+              >
+                {opt.label}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -245,7 +488,8 @@ export default function EventPageClient() {
   const [loading, setLoading] = useState(true);
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Organizer verify panel state
   const [showVerifyPanel, setShowVerifyPanel] = useState(false);
@@ -644,10 +888,8 @@ export default function EventPageClient() {
     }
   }
 
-  async function handleShare() {
-    await navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 4000);
+  function handleShare() {
+    setShareOpen(true);
   }
 
   // ── QR Ticket handlers ──────────────────────────────────────────────────────
@@ -1011,16 +1253,20 @@ export default function EventPageClient() {
                 onClick={handleShare}
                 className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-warm-gray/40 hover:border-ink/40 transition-colors"
               >
-                {copied ? 'Copied!' : 'Share event'}
+                Share event
               </button>
-              <a
-                href={googleCalendarUrl(event)}
-                target="_blank"
-                rel="noopener noreferrer"
+              {shareOpen && event && (
+                <ShareModal event={event} onClose={() => setShareOpen(false)} />
+              )}
+              <button
+                onClick={() => setCalendarOpen(true)}
                 className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-warm-gray/40 hover:border-ink/40 transition-colors"
               >
                 Add to calendar
-              </a>
+              </button>
+              {calendarOpen && (
+                <CalendarModal event={event} onClose={() => setCalendarOpen(false)} />
+              )}
               {alreadyRsvpd && (
                 <button
                   onClick={handleViewTicket}
@@ -1636,12 +1882,6 @@ export default function EventPageClient() {
         </div>
       )}
 
-      {/* Toast */}
-      {copied && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-ink text-cream text-sm font-mono shadow-xl whitespace-nowrap">
-          Link copied! Share it anywhere — the preview will show your event poster
-        </div>
-      )}
     </div>
   );
 }

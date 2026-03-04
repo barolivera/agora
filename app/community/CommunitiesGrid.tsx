@@ -29,15 +29,15 @@ function CommunityCard({ entry }: { entry: CommunityEntry }) {
       className="group relative flex flex-col gap-4 p-6 border border-warm-gray/40 bg-cream hover:border-cobalt transition-colors"
     >
       {/* Subscribe button */}
-      <div
-        className="absolute top-4 right-4 z-10"
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-      >
-        <SubscribeButton slug={slug} compact />
-      </div>
+        <div
+          className="absolute top-4 right-4 z-10"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
+          <SubscribeButton slug={slug} compact />
+        </div>
 
-      {/* Logo / placeholder */}
-      <div className="flex items-center gap-4 pr-24">
+        {/* Logo / placeholder */}
+        <div className="flex items-center gap-4 pr-24">
         {profile?.logoUrl ? (
           <img
             src={profile.logoUrl}

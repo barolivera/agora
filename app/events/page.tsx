@@ -61,6 +61,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [feedFilter, setFeedFilter] = useState<'community' | 'all'>('community');
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'live' | 'ended'>('all');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'soonest'>('newest');
@@ -104,6 +105,11 @@ export default function EventsPage() {
   const filteredEvents = (() => {
     let result = [...(events ?? [])];
 
+    // Feed filter: community-only vs all
+    if (feedFilter === 'community') {
+      result = result.filter((e) => !!e?.community);
+    }
+
     // Category filter
     if (categoryFilter) {
       result = result.filter((e) => e?.category === categoryFilter);
@@ -133,20 +139,21 @@ export default function EventsPage() {
   })();
 
   function clearAll() {
+    setFeedFilter('community');
     setStatusFilter('all');
     setCategoryFilter('');
     setSortOrder('newest');
     setSearchQuery('');
   }
 
-  const hasActiveFilters = statusFilter !== 'all' || categoryFilter !== '' || searchQuery.trim() !== '';
+  const hasActiveFilters = feedFilter !== 'community' || statusFilter !== 'all' || categoryFilter !== '' || searchQuery.trim() !== '';
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-16">
 
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
-          All Events
+          Events
         </h1>
         <Link
           href="/create-event"
@@ -154,6 +161,28 @@ export default function EventsPage() {
         >
           Create an event
         </Link>
+      </div>
+
+      {/* ── Feed toggle: Community / All ── */}
+      <div className="flex items-center gap-1 mb-6">
+        {(['community', 'all'] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFeedFilter(f)}
+            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-colors font-[family-name:var(--font-kode-mono)] ${
+              feedFilter === f
+                ? 'bg-ink text-cream'
+                : 'text-ink/40 hover:text-ink'
+            }`}
+          >
+            {f === 'community' ? 'Community Events' : 'All Events'}
+          </button>
+        ))}
+        {feedFilter === 'all' && (
+          <span className="ml-2 text-[10px] text-warm-gray font-[family-name:var(--font-dm-sans)]">
+            Includes independent events
+          </span>
+        )}
       </div>
 
       {error && (
@@ -250,7 +279,7 @@ export default function EventsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEvents.map((event, i) => (
-            <EventCard key={event?.entityKey} event={event} index={i} />
+            <EventCard key={event?.entityKey} event={event} index={i} showIndependentBadge={feedFilter === 'all'} />
           ))}
         </div>
       )}

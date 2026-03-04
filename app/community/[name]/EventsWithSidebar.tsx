@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Calendar from '@/app/components/Calendar';
-import { shortAddress, type ArkivEvent, type ArkivCommunity } from '@/lib/arkiv';
+import { type ArkivEvent, type ArkivCommunity } from '@/lib/arkiv';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -24,14 +24,17 @@ function isUpcoming(event: ArkivEvent): boolean {
   return d >= today;
 }
 
-function parseEventDate(dateStr: string): { day: string; month: string } | null {
+function formatEventDateTime(dateStr: string): string | null {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return null;
-  return {
-    day: String(d.getDate()).padStart(2, '0'),
-    month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-  };
+  const day = d.getDate();
+  const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+  const hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const h12 = hours % 12 || 12;
+  return `${day} ${month} - ${h12}.${minutes} ${ampm}`;
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -56,36 +59,48 @@ function LocationPinIcon() {
   );
 }
 
+// ── Horizontal event card colors ────────────────────────────────────────────
+
+const CARD_BG = ['#1A1614', '#E8491C'] as const;
+
 // ── Event card ─────────────────────────────────────────────────────────────────
 
-function EventCard({ event }: { event: ArkivEvent }) {
-  const parsedDate = parseEventDate(event?.date ?? '');
+function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
+  const dateLabel = formatEventDateTime(event?.date ?? '');
+  const bg = CARD_BG[index % CARD_BG.length];
 
   return (
     <Link
       href={`/event/${event?.entityKey}`}
-      className="flex items-center gap-5 h-[134px] px-8 bg-orange text-cream rounded transition-opacity hover:opacity-[0.93]"
+      className="flex items-stretch h-[162px] rounded-[6px] overflow-hidden text-cream transition-opacity hover:opacity-[0.93]"
+      style={{ backgroundColor: bg }}
     >
-      {/* Date badge */}
-      <div className="shrink-0 bg-[#191919] flex items-center justify-center p-3 rounded-[3px]">
-        <div className="flex flex-col gap-1 w-[58px]">
-          <span className="text-5xl leading-[48px] font-bold font-[family-name:var(--font-kode-mono)]">
-            {parsedDate?.day ?? '--'}
-          </span>
-          <span className="text-[10px] leading-[15px] tracking-[0.1em] uppercase font-bold font-[family-name:var(--font-dm-sans)]">
-            {parsedDate?.month ?? '---'}
-          </span>
-        </div>
+      {/* Cover image */}
+      <div className="shrink-0 w-[133px] m-[14px] mr-0 rounded-[2px] overflow-hidden">
+        {event?.coverImageUrl ? (
+          <img
+            src={event.coverImageUrl}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-ink/30" />
+        )}
       </div>
 
-      {/* Event info */}
-      <div className="flex flex-col gap-3 min-w-0">
-        <div>
-          <p className="font-bold text-[22px] leading-snug font-[family-name:var(--font-kode-mono)] line-clamp-2">
+      {/* Text content */}
+      <div className="flex flex-col gap-3 justify-center px-7 py-5 min-w-0">
+        {dateLabel && (
+          <p className="text-xs font-bold uppercase tracking-[1px] font-[family-name:var(--font-dm-sans)]">
+            {dateLabel}
+          </p>
+        )}
+        <div className="flex flex-col gap-1">
+          <p className="text-lg font-bold leading-snug font-[family-name:var(--font-kode-mono)] line-clamp-2">
             {event?.title || 'Untitled Event'}
           </p>
           {event?.community && (
-            <p className="text-base font-[family-name:var(--font-dm-sans)] mt-1 opacity-85">
+            <p className="text-base font-medium font-[family-name:var(--font-dm-sans)]">
               By {deslugify(event.community)}
             </p>
           )}
@@ -174,6 +189,7 @@ const tabCls = (active: boolean) =>
 
 export default function EventsWithSidebar({
   events,
+  name,
   subscriberAddresses,
   subscriberCount,
   initialTab = 'upcoming',
@@ -269,7 +285,7 @@ export default function EventsWithSidebar({
                   Be the first to create an event for this community.
                 </p>
                 <Link
-                  href="/create-event"
+                  href={name ? `/create-event?community=${encodeURIComponent(name)}` : '/create-event'}
                   className="bg-orange text-cream px-5 py-2.5 text-sm font-semibold hover:bg-orange-light transition-colors"
                 >
                   Create an event →
@@ -283,8 +299,8 @@ export default function EventsWithSidebar({
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            {displayed.map((event) => (
-              <EventCard key={event?.entityKey} event={event} />
+            {displayed.map((event, i) => (
+              <EventCard key={event?.entityKey} event={event} index={i} />
             ))}
           </div>
         )}

@@ -145,11 +145,15 @@ export type ArkivCommunity = {
   name: string;
   slug: string;
   description: string;
+  location?: string;
   logoUrl?: string;
   coverUrl?: string;
   website?: string;
   twitter?: string;
   discord?: string;
+  instagram?: string;
+  linkedin?: string;
+  youtube?: string;
   createdBy: string;
   updatedAt: string;
 };
@@ -161,11 +165,15 @@ export function parseCommunity(entity: Entity): ArkivCommunity {
     name: data?.name ?? '',
     slug: data?.slug ?? '',
     description: data?.description ?? '',
+    location: data?.location ?? undefined,
     logoUrl: data?.logoUrl ?? undefined,
     coverUrl: data?.coverUrl ?? undefined,
     website: data?.website ?? undefined,
     twitter: data?.twitter ?? undefined,
     discord: data?.discord ?? undefined,
+    instagram: data?.instagram ?? undefined,
+    linkedin: data?.linkedin ?? undefined,
+    youtube: data?.youtube ?? undefined,
     createdBy: data?.createdBy ?? '',
     updatedAt: data?.updatedAt ?? '',
   };
