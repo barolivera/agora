@@ -29,7 +29,7 @@ export default function RootLayout({
         <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
       </head>
       <body
-        className={`${kodeMono.variable} ${GeistSans.variable} antialiased`}
+        className={`${kodeMono.variable} ${GeistSans.variable} antialiased overflow-x-hidden`}
       >
         <Providers>
           <Navbar />

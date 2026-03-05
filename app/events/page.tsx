@@ -215,7 +215,7 @@ export default function EventsPage() {
       <SearchInput value={searchQuery} onChange={setSearchQuery} />
 
       {/* ── Filters ── */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}

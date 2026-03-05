@@ -277,11 +277,11 @@ export default function HomePage() {
       <section className="relative bg-[#211f24] overflow-hidden" style={{ minHeight: '605px' }}>
 
         {/* Full-bleed background image */}
-        <div className="absolute -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2" style={{ width: '1512px', height: '605px' }} aria-hidden="true">
+        <div className="absolute inset-0" aria-hidden="true">
           <img
             src="https://www.figma.com/api/mcp/asset/34d3f32d-8ca5-4f14-95f3-7b7793941ec0"
             alt=""
-            className="absolute block max-w-none size-full pointer-events-none select-none"
+            className="w-full h-full object-cover pointer-events-none select-none"
           />
         </div>
 
@@ -347,7 +347,7 @@ export default function HomePage() {
 
         {/* ── Filters ── */}
         {!loading && (
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
             <div className="flex items-center gap-2">
                 <select
                   value={statusFilter}
