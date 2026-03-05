@@ -266,10 +266,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-cream">
 
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="relative bg-[#211f24] overflow-hidden">
+      <section className="relative bg-cream md:bg-[#211f24] overflow-hidden">
 
-        {/* Background image */}
-        <div className="absolute inset-0" aria-hidden="true">
+        {/* Background image — desktop only */}
+        <div className="absolute inset-0 hidden md:block" aria-hidden="true">
           <div className="absolute inset-0 bg-[#211f24]" />
           <img
             src="/hero-bg.png"
