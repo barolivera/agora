@@ -6,10 +6,9 @@ import { createWalletClient, custom, type Hex } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eq } from '@arkiv-network/sdk/query';
-import { publicClient } from '@/lib/arkiv';
+import { publicClient, KAOLIN_CHAIN_ID } from '@/lib/arkiv';
 import { friendlyError } from '@/lib/errorUtils';
 
-const KAOLIN_CHAIN_ID = 60138453025;
 
 interface Props {
   slug: string;
@@ -144,11 +143,11 @@ export default function SubscribeButton({ slug, compact }: Props) {
   if (!isConnected) return null;
 
   const subscribedCls = compact
-    ? 'inline-flex items-center px-3 py-1 text-xs font-semibold border border-ink/30 text-ink/60 rounded-full hover:border-ink/50 transition-colors font-[family-name:var(--font-kode-mono)] disabled:opacity-50'
+    ? 'inline-flex items-center px-3 py-1 text-xs font-semibold border border-ink/30 text-ink/80 rounded-full hover:border-ink/50 transition-colors font-[family-name:var(--font-kode-mono)] disabled:opacity-50'
     : 'inline-flex items-center px-4 py-2 text-xs font-semibold border border-cobalt text-cobalt hover:bg-cobalt/10 transition-colors tracking-wide uppercase disabled:opacity-50';
 
   const unsubscribedCls = compact
-    ? 'inline-flex items-center px-3 py-1 text-xs font-semibold border border-ink/30 text-ink/60 rounded-full hover:border-ink/50 hover:text-ink transition-colors font-[family-name:var(--font-kode-mono)] disabled:opacity-50'
+    ? 'inline-flex items-center px-3 py-1 text-xs font-semibold border border-ink/30 text-ink/80 rounded-full hover:border-ink/50 hover:text-ink transition-colors font-[family-name:var(--font-kode-mono)] disabled:opacity-50'
     : 'inline-flex items-center px-4 py-2 text-xs font-semibold bg-cobalt text-cream hover:bg-cobalt-light transition-colors tracking-wide uppercase disabled:opacity-50';
 
   return (

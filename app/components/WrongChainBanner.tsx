@@ -1,9 +1,7 @@
 'use client';
 
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
-
-// Arkiv Kaolin chain ID (matches providers.tsx config)
-const KAOLIN_CHAIN_ID = 60138453025;
+import { KAOLIN_CHAIN_ID } from '@/lib/arkiv';
 
 export function WrongChainBanner() {
   const { isConnected } = useAccount();

@@ -5,15 +5,9 @@ import Link from 'next/link';
 import Calendar from '@/app/components/Calendar';
 import { type ArkivEvent, type ArkivCommunity } from '@/lib/arkiv';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
+import { deslugify } from '@/lib/utils';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-function deslugify(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
 
 function isUpcoming(event: ArkivEvent): boolean {
   if (!event?.date) return true;
@@ -128,7 +122,7 @@ function MembersCard({
       </h2>
 
       {subscriberCount === 0 ? (
-        <p className="text-sm text-ink/60 font-[family-name:var(--font-geist-sans)]">
+        <p className="text-sm text-ink/80 font-[family-name:var(--font-geist-sans)]">
           Be the first to subscribe.
         </p>
       ) : (
@@ -154,7 +148,7 @@ function MembersCard({
               ))}
               {subscriberCount > 8 && (
                 <div
-                  className="w-8 h-8 rounded-full bg-warm-gray/30 flex items-center justify-center text-[10px] font-semibold text-ink/60 border border-warm-gray/30"
+                  className="w-8 h-8 rounded-full bg-warm-gray/30 flex items-center justify-center text-[10px] font-semibold text-ink/80 border border-warm-gray/30"
                   style={{ marginLeft: -8 }}
                 >
                   +{subscriberCount - 8}
@@ -162,7 +156,7 @@ function MembersCard({
               )}
             </div>
           )}
-          <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+          <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
             {subscriberCount.toLocaleString()}{' '}
             {subscriberCount === 1 ? 'subscriber' : 'subscribers'}
           </p>
@@ -178,7 +172,7 @@ type Filter = 'upcoming' | 'past';
 
 const tabCls = (active: boolean) =>
   `px-[11px] py-[7px] text-[11px] font-bold uppercase tracking-[0.15em] transition-colors font-[family-name:var(--font-kode-mono)] ${
-    active ? 'bg-ink text-cream' : 'text-ink/60 hover:text-ink'
+    active ? 'bg-ink text-cream' : 'text-ink/80 hover:text-ink'
   }`;
 
 export default function EventsWithSidebar({
@@ -278,7 +272,7 @@ export default function EventsWithSidebar({
                 <p className="text-lg text-ink font-[family-name:var(--font-kode-mono)] mb-2">
                   No upcoming events yet.
                 </p>
-                <p className="text-ink/60 text-sm mb-6 max-w-xs leading-relaxed font-[family-name:var(--font-geist-sans)]">
+                <p className="text-ink/80 text-sm mb-6 max-w-xs leading-relaxed font-[family-name:var(--font-geist-sans)]">
                   Be the first to create an event for this community.
                 </p>
                 <Link

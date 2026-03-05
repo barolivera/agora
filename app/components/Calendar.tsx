@@ -55,18 +55,18 @@ export default function Calendar({
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={prevMonth}
-          className="w-6 h-6 flex items-center justify-center text-ink/60 hover:text-ink transition-colors text-lg leading-none"
-          aria-label="Mes anterior"
+          className="w-6 h-6 flex items-center justify-center text-ink/80 hover:text-ink transition-colors text-lg leading-none"
+          aria-label="Previous month"
         >
           ‹
         </button>
-        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink/60 font-[family-name:var(--font-kode-mono)]">
+        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink/80 font-[family-name:var(--font-kode-mono)]">
           {MESES[viewMonth]} {viewYear}
         </span>
         <button
           onClick={nextMonth}
-          className="w-6 h-6 flex items-center justify-center text-ink/60 hover:text-ink transition-colors text-lg leading-none"
-          aria-label="Mes siguiente"
+          className="w-6 h-6 flex items-center justify-center text-ink/80 hover:text-ink transition-colors text-lg leading-none"
+          aria-label="Next month"
         >
           ›
         </button>
@@ -77,7 +77,7 @@ export default function Calendar({
         {DIAS_CORTOS.map((d) => (
           <div
             key={d}
-            className="text-center text-[9px] font-bold uppercase tracking-wider text-ink/60 py-0.5"
+            className="text-center text-[9px] font-bold uppercase tracking-wider text-ink/80 py-0.5"
           >
             {d}
           </div>
@@ -109,7 +109,7 @@ export default function Calendar({
                   ? 'bg-cobalt text-cream font-semibold'
                   : hasEvent
                   ? 'text-ink hover:bg-cobalt/10 cursor-pointer'
-                  : 'text-ink/60 cursor-default',
+                  : 'text-ink/80 cursor-default',
               ].join(' ')}
               aria-label={dateStr}
               aria-pressed={isSelected}

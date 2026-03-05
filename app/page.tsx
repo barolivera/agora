@@ -8,6 +8,7 @@ import { getEventStatus } from '@/lib/expiration';
 import { EventCard, CardSkeleton } from '@/app/components/EventCard';
 import { ErrorMessage } from '@/app/components/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
+import { deslugify } from '@/lib/utils';
 
 const CATEGORY_OPTIONS = [
   'Meetup', 'Workshop', 'Hackathon', 'Conference',
@@ -26,7 +27,7 @@ function SearchInput({
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="relative w-full mb-6">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink/60">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink/80">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5" />
           <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
@@ -38,13 +39,13 @@ function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search events by title or location..."
-        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-ink/60 text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-geist-sans)] focus:outline-none focus:border-ink"
+        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-ink/80 text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-geist-sans)] focus:outline-none focus:border-ink"
       />
       {value && (
         <button
           type="button"
           onClick={() => { onChange(''); inputRef.current?.focus(); }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/60 hover:text-ink transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/80 hover:text-ink transition-colors"
           aria-label="Clear search"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -58,13 +59,6 @@ function SearchInput({
 }
 
 // ── Community types & card ────────────────────────────────────────────────────
-
-function deslugify(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
 
 type CommunityEntry = {
   slug: string;
@@ -107,14 +101,14 @@ function CommunityCard({ entry }: { entry: CommunityEntry }) {
 
       {/* Description */}
       {profile?.description && (
-        <p className="text-sm text-ink/60 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-ink/80 line-clamp-2 leading-relaxed">
           {profile.description}
         </p>
       )}
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-auto pt-1">
-        <p className="text-xs text-ink/60">
+        <p className="text-xs text-ink/80">
           {count} {count === 1 ? 'event' : 'events'}
         </p>
         <span className="text-xs font-semibold text-cobalt tracking-wide uppercase opacity-0 group-hover:opacity-100 transition-opacity">
@@ -234,8 +228,6 @@ export default function HomePage() {
       const notPending = e?.status !== 'pending';
       return hasCommunity && hasDate && notPending;
     });
-    console.log(`[Home] Total events: ${beforeCount}, After filter: ${result.length}`);
-
     if (statusFilter !== 'all') {
       result = result.filter((e) => {
         if (!e) return false;
@@ -276,16 +268,7 @@ export default function HomePage() {
       {/* ── Hero ─────────────────────────────────────────── */}
       <section className="relative bg-cream md:bg-[#211f24] overflow-hidden md:min-h-[605px]">
 
-        {/* Full-bleed background image — desktop only */}
-        <div className="absolute inset-0 hidden md:block" aria-hidden="true">
-          <img
-            src="https://www.figma.com/api/mcp/asset/34d3f32d-8ca5-4f14-95f3-7b7793941ec0"
-            alt=""
-            className="w-full h-full object-cover pointer-events-none select-none"
-          />
-        </div>
-
-        {/* Content — sits directly on background */}
+        {/* Content */}
         <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 md:pt-[149px] md:pb-[80px]">
           <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-6">
@@ -384,7 +367,7 @@ export default function HomePage() {
                     } ${
                       sortOrder === s
                         ? 'bg-ink text-cream'
-                        : 'bg-transparent border border-ink/20 text-ink/60 hover:text-ink hover:border-ink/40'
+                        : 'bg-transparent border border-ink/20 text-ink/80 hover:text-ink hover:border-ink/40'
                     }`}
                   >
                     {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -406,7 +389,7 @@ export default function HomePage() {
             <p className="text-2xl text-ink font-[family-name:var(--font-kode-mono)] mb-3">
               The agora awaits.
             </p>
-            <p className="text-ink/60 text-sm mb-8 max-w-xs leading-relaxed">
+            <p className="text-ink/80 text-sm mb-8 max-w-xs leading-relaxed">
               No events yet — be the first to gather your community.
             </p>
             <Link
@@ -418,7 +401,7 @@ export default function HomePage() {
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="flex flex-col items-center text-center py-20 border border-dashed border-warm-gray/50">
-            <p className="text-ink/60 text-sm mb-4">
+            <p className="text-ink/80 text-sm mb-4">
               {searchQuery.trim()
                 ? 'No events match your search.'
                 : 'No events match your filters.'}

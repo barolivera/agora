@@ -24,7 +24,7 @@ function SearchInput({
   return (
     <div className="relative w-full mb-6">
       {/* Magnifier icon */}
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink/60">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink/80">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5" />
           <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
@@ -36,14 +36,14 @@ function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search events by title or location..."
-        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-ink/60 text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-geist-sans)] focus:outline-none focus:border-ink"
+        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-ink/80 text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-geist-sans)] focus:outline-none focus:border-ink"
       />
       {/* Clear button */}
       {value && (
         <button
           type="button"
           onClick={() => { onChange(''); inputRef.current?.focus(); }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/60 hover:text-ink transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/80 hover:text-ink transition-colors"
           aria-label="Clear search"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -84,27 +84,10 @@ export default function EventsPage() {
             .limit(500)
             .fetch();
 
-          // Debug: log raw entities to diagnose missing community events
-          console.log('[Events] Raw entities from Arkiv:', result?.entities?.length);
-          result?.entities?.forEach((e, i) => {
-            const json = e.toJson();
-            console.log(`[Events] #${i}`, {
-              key: e.key,
-              title: json?.title,
-              date: json?.date,
-              community: json?.community,
-              organizer: json?.organizer,
-            });
-          });
-
           fetched = result?.entities?.map(parseEvent) ?? [];
         } else {
           fetched = await fetchEventsByStatus(statusFilter);
         }
-
-        console.log('[Events] Total parsed:', fetched.length,
-          '| With community:', fetched.filter(e => !!e.community).length,
-          '| With valid date:', fetched.filter(e => e.date && !isNaN(new Date(e.date).getTime())).length);
 
         if (!cancelled) setEvents(fetched);
       } catch (err) {
@@ -129,8 +112,6 @@ export default function EventsPage() {
       const notPending = e?.status !== 'pending';
       return hasCommunity && hasDate && notPending;
     });
-    console.log(`Total events: ${beforeCount}, After filter: ${result.length}`);
-
     // Category filter
     if (categoryFilter) {
       result = result.filter((e) => e?.category === categoryFilter);
@@ -192,14 +173,14 @@ export default function EventsPage() {
             className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-colors font-[family-name:var(--font-kode-mono)] ${
               feedFilter === f
                 ? 'bg-ink text-cream'
-                : 'text-ink/60 hover:text-ink'
+                : 'text-ink/80 hover:text-ink'
             }`}
           >
             {f === 'community' ? 'Community Events' : 'All Events'}
           </button>
         ))}
         {feedFilter === 'all' && (
-          <span className="ml-2 text-[10px] text-ink/60 font-[family-name:var(--font-geist-sans)]">
+          <span className="ml-2 text-[10px] text-ink/80 font-[family-name:var(--font-geist-sans)]">
             Includes independent events
           </span>
         )}
@@ -252,7 +233,7 @@ export default function EventsPage() {
               } ${
                 sortOrder === s
                   ? 'bg-ink text-cream'
-                  : 'bg-transparent border border-ink/20 text-ink/60 hover:text-ink hover:border-ink/40'
+                  : 'bg-transparent border border-ink/20 text-ink/80 hover:text-ink hover:border-ink/40'
               }`}
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -272,7 +253,7 @@ export default function EventsPage() {
           <p className="text-2xl text-ink font-[family-name:var(--font-kode-mono)] mb-3">
             No events yet.
           </p>
-          <p className="text-ink/60 text-sm mb-8">
+          <p className="text-ink/80 text-sm mb-8">
             Be the first to create one.
           </p>
           <Link
@@ -284,7 +265,7 @@ export default function EventsPage() {
         </div>
       ) : filteredEvents.length === 0 ? (
         <div className="flex flex-col items-center text-center py-20 border border-dashed border-warm-gray/50">
-          <p className="text-ink/60 text-sm mb-4">
+          <p className="text-ink/80 text-sm mb-4">
             {searchQuery.trim()
               ? 'No events match your search.'
               : 'No events match your filters.'}

@@ -3,13 +3,7 @@
 import Link from 'next/link';
 import { type ArkivCommunity } from '@/lib/arkiv';
 import SubscribeButton from '@/app/community/[name]/SubscribeButton';
-
-function deslugify(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
+import { deslugify } from '@/lib/utils';
 
 export type CommunityEntry = {
   slug: string;
@@ -61,7 +55,7 @@ function CommunityCard({ entry }: { entry: CommunityEntry }) {
 
       {/* Description */}
       {profile?.description && (
-        <p className="text-sm text-ink/60 line-clamp-2 leading-relaxed font-[family-name:var(--font-geist-sans)]">
+        <p className="text-sm text-ink/80 line-clamp-2 leading-relaxed font-[family-name:var(--font-geist-sans)]">
           {profile.description}
         </p>
       )}
@@ -77,7 +71,7 @@ export default function CommunitiesGrid({ communities }: { communities: Communit
         <p className="text-2xl text-ink font-[family-name:var(--font-kode-mono)] mb-3">
           No communities yet.
         </p>
-        <p className="text-ink/60 text-sm mb-8 max-w-xs leading-relaxed">
+        <p className="text-ink/80 text-sm mb-8 max-w-xs leading-relaxed">
           Create a community or tag an event with a community name to get started.
         </p>
         <div className="flex flex-wrap gap-3 justify-center">

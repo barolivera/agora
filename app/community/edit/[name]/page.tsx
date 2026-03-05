@@ -9,20 +9,8 @@ import { kaolin } from '@arkiv-network/sdk/chains';
 import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, parseCommunity, type ArkivCommunity } from '@/lib/arkiv';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function deslugify(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
-
-const inputCls =
-  'w-full border border-warm-gray/50 px-4 py-3 text-sm bg-cream text-ink ' +
-  'placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40 ' +
-  'focus:border-cobalt transition-colors';
+import { deslugify } from '@/lib/utils';
+import { inputCls } from '@/lib/constants';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -113,14 +101,14 @@ export default function EditCommunityPage() {
     return (
       <main className="max-w-lg mx-auto py-24 px-6 text-center">
         <div className="w-12 h-12 bg-warm-gray/30 flex items-center justify-center mx-auto mb-5">
-          <svg className="w-6 h-6 text-ink/60" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
+          <svg className="w-6 h-6 text-ink/80" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18-3a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6m18 0V5.25A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25V6" />
           </svg>
         </div>
         <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           Connect your wallet to continue
         </p>
-        <p className="text-sm text-ink/60">
+        <p className="text-sm text-ink/80">
           You need a wallet to edit a community on Arkiv.
         </p>
       </main>
@@ -143,7 +131,7 @@ export default function EditCommunityPage() {
           <h1 className="text-2xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-3">
             Not authorized
           </h1>
-          <p className="text-ink/60 text-sm mb-6 font-[family-name:var(--font-geist-sans)]">
+          <p className="text-ink/80 text-sm mb-6 font-[family-name:var(--font-geist-sans)]">
             Only the community creator can edit this page.
           </p>
           <Link
@@ -197,6 +185,7 @@ export default function EditCommunityPage() {
       const communityAttributes = [
         { key: 'type', value: 'community' },
         { key: 'slug', value: name },
+        { key: 'createdBy', value: address.toLowerCase() },
       ];
 
       if (existingProfile?.entityKey) {
@@ -230,7 +219,7 @@ export default function EditCommunityPage() {
   return (
     <div className="min-h-screen bg-cream">
       <div className="max-w-xl mx-auto px-6 py-14">
-        <p className="text-xs font-bold tracking-[0.2em] uppercase text-ink/60 mb-6">
+        <p className="text-xs font-bold tracking-[0.2em] uppercase text-ink/80 mb-6">
           <Link href={`/community/${name}`} className="hover:text-ink transition-colors">
             ← Back to {deslugify(name)}
           </Link>
@@ -239,7 +228,7 @@ export default function EditCommunityPage() {
         <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
           Edit community
         </h1>
-        <p className="text-ink/60 text-sm mb-10 font-[family-name:var(--font-geist-sans)]">
+        <p className="text-ink/80 text-sm mb-10 font-[family-name:var(--font-geist-sans)]">
           Update your community profile on Agora.
         </p>
 
@@ -345,7 +334,7 @@ export default function EditCommunityPage() {
             <div className="flex flex-col gap-4">
               {/* Website */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   Website
                 </label>
                 <input
@@ -359,7 +348,7 @@ export default function EditCommunityPage() {
 
               {/* Twitter / X */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   Twitter / X
                 </label>
                 <input
@@ -374,7 +363,7 @@ export default function EditCommunityPage() {
 
               {/* Instagram */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   Instagram
                 </label>
                 <input
@@ -389,7 +378,7 @@ export default function EditCommunityPage() {
 
               {/* LinkedIn */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   LinkedIn
                 </label>
                 <input
@@ -404,7 +393,7 @@ export default function EditCommunityPage() {
 
               {/* YouTube */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   YouTube
                 </label>
                 <input
@@ -419,7 +408,7 @@ export default function EditCommunityPage() {
 
               {/* Discord */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   Discord invite URL
                 </label>
                 <input
@@ -463,14 +452,14 @@ export default function EditCommunityPage() {
             </button>
             <Link
               href={`/community/${name}`}
-              className="text-sm text-ink/60 hover:text-ink transition-colors"
+              className="text-sm text-ink/80 hover:text-ink transition-colors"
             >
               Cancel
             </Link>
           </div>
         </form>
 
-        <p className="mt-8 text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+        <p className="mt-8 text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
           Community profiles expire after 1 year and renew when you edit them.
         </p>
       </div>

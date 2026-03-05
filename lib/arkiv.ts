@@ -18,6 +18,8 @@ import { createPublicClient, http, type Entity, type Hex } from '@arkiv-network/
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { and, eq } from '@arkiv-network/sdk/query';
 
+export const KAOLIN_CHAIN_ID = 60138453025;
+
 export const publicClient = createPublicClient({
   chain: kaolin,
   transport: http('https://kaolin.hoodi.arkiv.network/rpc'),

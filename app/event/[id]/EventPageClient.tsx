@@ -22,6 +22,7 @@ import {
   parseWaitlist,
   parseCommunity,
   shortAddress,
+  KAOLIN_CHAIN_ID,
   type ArkivEvent,
   type ArkivRSVP,
   type ArkivAttendance,
@@ -30,26 +31,8 @@ import {
 } from '@/lib/arkiv';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 import SubscribeButton from '@/app/community/[name]/SubscribeButton';
-
-const KAOLIN_CHAIN_ID = 60138453025;
-
-// Gradient combos keyed to the new editorial palette
-const CARD_GRADIENTS: [string, string][] = [
-  ['#E8491C', '#C8C0B4'], // orange → warm-gray
-  ['#0247E2', '#F2EDE4'], // cobalt → cream
-  ['#1A1614', '#E8491C'], // ink → orange
-  ['#D4E84C', '#E8491C'], // yellow → orange
-  ['#3D72F5', '#F2EDE4'], // cobalt-light → cream
-];
-
-function titleGradient(title: string): string {
-  let hash = 0;
-  for (let i = 0; i < title.length; i++) {
-    hash = (hash * 31 + title.charCodeAt(i)) & 0xffffffff;
-  }
-  const [from, to] = CARD_GRADIENTS[Math.abs(hash) % CARD_GRADIENTS.length];
-  return `linear-gradient(135deg, ${from}, ${to})`;
-}
+import { deslugify } from '@/lib/utils';
+import { titleGradient } from '@/lib/constants';
 
 function formatDay(dateStr: string): string {
   if (!dateStr) return '';
@@ -76,12 +59,7 @@ function formatTime(dateStr: string, endTime?: string): string {
   return t;
 }
 
-function deslugify(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
+
 
 // ── Calendar helpers ──────────────────────────────────────────────────────────
 
@@ -431,7 +409,7 @@ function AttendeesStack({
   const count = rsvps.length;
   const visible = rsvps.slice(0, 6);
 
-  // Build summary text: up to 2 resolved names + "y X más"
+  // Build summary text: up to 2 resolved names + "and X more"
   const namedAttendees = useMemo(() => {
     const result: string[] = [];
     for (const rsvp of rsvps) {
@@ -467,7 +445,7 @@ function AttendeesStack({
         })}
         {count > 6 && (
           <div
-            className="w-10 h-10 rounded-full border-2 border-cream bg-warm-gray/30 flex items-center justify-center text-xs font-bold text-ink/70 font-[family-name:var(--font-kode-mono)]"
+            className="w-10 h-10 rounded-full border-2 border-cream bg-warm-gray/30 flex items-center justify-center text-xs font-bold text-ink/80 font-[family-name:var(--font-kode-mono)]"
             style={{ marginLeft: -12 }}
           >
             +{count - 6}
@@ -481,11 +459,11 @@ function AttendeesStack({
           <>
             <span className="font-semibold text-ink">{namedAttendees.join(', ')}</span>
             {remaining > 0 && (
-              <> y <span className="font-semibold text-ink">{remaining}</span> más</>
+              <> and <span className="font-semibold text-ink">{remaining}</span> more</>
             )}
           </>
         ) : (
-          <span className="text-ink/60">{count} {count === 1 ? 'asistente' : 'asistentes'}</span>
+          <span className="text-ink/80">{count} {count === 1 ? 'attendee' : 'attendees'}</span>
         )}
       </p>
 
@@ -525,6 +503,9 @@ export default function EventPageClient() {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifyDone, setVerifyDone] = useState(false);
 
+  // Attendees modal
+  const [showAttendeesModal, setShowAttendeesModal] = useState(false);
+
   // Waitlist
   const [waitlist, setWaitlist] = useState<ArkivWaitlist[]>([]);
   const [waitlistLoading, setWaitlistLoading] = useState(false);
@@ -556,6 +537,20 @@ export default function EventPageClient() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Close overlay modals on Escape
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      if (showScanner) { setShowScanner(false); return; }
+      if (showTicketModal) { setShowTicketModal(false); return; }
+      if (showAttendeesModal) { setShowAttendeesModal(false); return; }
+      if (calendarOpen) { setCalendarOpen(false); return; }
+      if (shareOpen) { setShareOpen(false); return; }
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [showScanner, showTicketModal, showAttendeesModal, calendarOpen, shareOpen]);
 
   // Collect all addresses to resolve display names in one batch
   const allAddresses = [
@@ -660,6 +655,7 @@ export default function EventPageClient() {
         attributes: [
           { key: 'type', value: 'rsvp' },
           { key: 'eventId', value: id },
+          { key: 'attendee', value: address.toLowerCase() },
         ],
         expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
       });
@@ -700,6 +696,7 @@ export default function EventPageClient() {
         attributes: [
           { key: 'type', value: 'waitlist' },
           { key: 'eventId', value: id },
+          { key: 'attendee', value: address.toLowerCase() },
         ],
         expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
       });
@@ -780,6 +777,7 @@ export default function EventPageClient() {
             attributes: [
               { key: 'type', value: 'rsvp' },
               { key: 'eventId', value: id },
+              { key: 'attendee', value: first.attendee.toLowerCase() },
             ],
             expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
           });
@@ -827,7 +825,7 @@ export default function EventPageClient() {
           attributes: [
             { key: 'type', value: 'attendance' },
             { key: 'eventId', value: id },
-            { key: 'attendee', value: attendee },
+            { key: 'attendee', value: attendee.toLowerCase() },
             { key: 'verified', value: 'true' },
           ],
           expiresIn: ExpirationTime.fromDays(3650),
@@ -925,6 +923,7 @@ export default function EventPageClient() {
           attributes: [
             { key: 'type', value: 'waitlist' },
             { key: 'eventId', value: entry.eventId },
+            { key: 'attendee', value: entry.attendee?.toLowerCase() ?? '' },
             { key: 'status', value: 'cancelled' },
           ],
           expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
@@ -1117,7 +1116,7 @@ export default function EventPageClient() {
         attributes: [
           { key: 'type', value: 'attendance' },
           { key: 'eventId', value: id },
-          { key: 'attendee', value: parsed.attendee },
+          { key: 'attendee', value: parsed.attendee.toLowerCase() },
           { key: 'verified', value: 'true' },
         ],
         expiresIn: ExpirationTime.fromDays(3650),
@@ -1149,10 +1148,10 @@ export default function EventPageClient() {
   if (!event) {
     return (
       <main className="max-w-2xl mx-auto py-20 px-6 text-center">
-        <p className="text-ink/60 font-[family-name:var(--font-kode-mono)] text-lg mb-2">
+        <p className="text-ink/80 font-[family-name:var(--font-kode-mono)] text-lg mb-2">
           Event not found
         </p>
-        {error && <p className="text-sm text-ink/60">{error}</p>}
+        {error && <p className="text-sm text-ink/80">{error}</p>}
       </main>
     );
   }
@@ -1275,31 +1274,65 @@ export default function EventPageClient() {
 
             {/* Attendance / RSVP */}
             <div className="border-t border-warm-gray/20 pt-5 flex flex-col gap-4">
-              <div>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-3xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
-                    {rsvps?.length ?? 0}
-                  </span>
-                  {(event?.capacity ?? 0) > 0 ? (
-                    <span className="text-ink text-sm font-[family-name:var(--font-geist-sans)]">
-                      / {event?.capacity} attending
-                    </span>
-                  ) : (
-                    <span className="text-ink text-sm font-[family-name:var(--font-geist-sans)]">attending</span>
-                  )}
-                </div>
-                {capacityPct !== null && (
-                  <div className="h-1.5 bg-warm-gray/30 overflow-hidden">
-                    <div
-                      className="h-full bg-orange transition-all duration-500"
-                      style={{ width: `${capacityPct}%` }}
-                    />
+
+              {/* Luma-style attendees */}
+              {(rsvps?.length ?? 0) > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAttendeesModal(true)}
+                  className="flex flex-col gap-2.5 text-left cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  <p className="text-sm font-bold text-ink font-[family-name:var(--font-geist-sans)]">
+                    {rsvps?.length ?? 0} attending
+                  </p>
+                  <div className="flex items-center">
+                    {(rsvps ?? []).slice(0, 6).map((rsvp, i) => {
+                      const addr = rsvp.attendee ?? '';
+                      const { name } = displayName(addr, names);
+                      return (
+                        <div
+                          key={rsvp.entityKey}
+                          className="relative"
+                          style={{ marginLeft: i === 0 ? 0 : -12, zIndex: 6 - i }}
+                        >
+                          <AttendeeAvatar addr={addr} label={name} />
+                        </div>
+                      );
+                    })}
+                    {(rsvps?.length ?? 0) > 6 && (
+                      <div
+                        className="w-10 h-10 rounded-full border-2 border-cream bg-warm-gray/30 flex items-center justify-center text-xs font-bold text-ink/80 font-[family-name:var(--font-kode-mono)]"
+                        style={{ marginLeft: -12 }}
+                      >
+                        +{(rsvps?.length ?? 0) - 6}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                  <p className="text-sm text-ink/80 font-[family-name:var(--font-geist-sans)] leading-snug">
+                    {(() => {
+                      const named: string[] = [];
+                      for (const r of rsvps ?? []) {
+                        if (named.length >= 2) break;
+                        const nick = names.get(r.attendee?.toLowerCase());
+                        if (nick) named.push(nick);
+                      }
+                      const rest = (rsvps?.length ?? 0) - named.length;
+                      if (named.length > 0) {
+                        return (
+                          <>
+                            <span className="font-semibold text-ink">{named.join(', ')}</span>
+                            {rest > 0 && <> and <span className="font-semibold text-ink">{rest}</span> more</>}
+                          </>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </p>
+                </button>
+              )}
 
               {(waitlist?.length ?? 0) > 0 && (
-                <p className="text-sm text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                <p className="text-sm text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   {waitlist?.length ?? 0} {(waitlist?.length ?? 0) === 1 ? 'person' : 'people'} on the waitlist
                 </p>
               )}
@@ -1314,8 +1347,14 @@ export default function EventPageClient() {
                 </div>
               ) : displayStatus === 'cancelled' ? (
                 <div className="p-4 bg-warm-gray/10 border border-warm-gray/30 text-center">
-                  <p className="text-sm text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                  <p className="text-sm text-ink/80 font-[family-name:var(--font-geist-sans)]">
                     This event has been cancelled
+                  </p>
+                </div>
+              ) : displayStatus === 'ended' ? (
+                <div className="p-4 bg-warm-gray/10 border border-warm-gray/30 text-center">
+                  <p className="text-sm text-ink/80 font-[family-name:var(--font-geist-sans)]">
+                    This event has ended
                   </p>
                 </div>
               ) : !isConnected ? (
@@ -1335,7 +1374,7 @@ export default function EventPageClient() {
                       <p className="text-sm text-ink">
                         Are you sure you want to cancel? This will remove your RSVP from the blockchain.
                       </p>
-                      <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)] leading-snug">
+                      <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)] leading-snug">
                         Your RSVP will be deleted from Arkiv immediately.
                       </p>
                       <div className="flex gap-2 pt-0.5">
@@ -1348,7 +1387,7 @@ export default function EventPageClient() {
                         </button>
                         <button
                           onClick={() => setShowCancelConfirm(false)}
-                          className="px-3 py-1.5 text-xs text-ink/60 border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors"
+                          className="px-3 py-1.5 text-xs text-ink/80 border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors"
                         >
                           Keep RSVP
                         </button>
@@ -1357,7 +1396,7 @@ export default function EventPageClient() {
                   ) : (
                     <button
                       onClick={() => setShowCancelConfirm(true)}
-                      className="text-xs text-ink/60 underline text-center font-[family-name:var(--font-geist-sans)] hover:text-ink transition-colors"
+                      className="text-xs text-ink/80 underline text-center font-[family-name:var(--font-geist-sans)] hover:text-ink transition-colors"
                     >
                       Cancel attendance
                     </button>
@@ -1396,7 +1435,7 @@ export default function EventPageClient() {
                 </p>
               )}
 
-              <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)] leading-snug">
+              <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)] leading-snug">
                 Attendance is public and verifiable on-chain.
               </p>
             </div>
@@ -1426,7 +1465,7 @@ export default function EventPageClient() {
                       {displayName(event.organizer, names).name}
                     </span>
                     {displayName(event.organizer, names).isResolved && (
-                      <span className="text-xs text-ink/60 font-mono block truncate">
+                      <span className="text-xs text-ink/80 font-mono block truncate">
                         {shortAddress(event.organizer)}
                       </span>
                     )}
@@ -1437,13 +1476,13 @@ export default function EventPageClient() {
                     <div className="flex items-center gap-3 flex-wrap">
                       <Link
                         href={`/event/edit/${id}`}
-                        className="px-4 py-2 text-xs font-semibold border border-ink/60 text-ink/60 hover:border-ink hover:text-ink transition-colors"
+                        className="px-4 py-2 text-xs font-semibold border border-ink/60 text-ink/80 hover:border-ink hover:text-ink transition-colors"
                       >
                         Edit event
                       </Link>
                       <button
                         onClick={handleOpenScanner}
-                        className="px-4 py-2 text-xs font-semibold border border-ink/60 text-ink/60 hover:border-ink hover:text-ink transition-colors"
+                        className="px-4 py-2 text-xs font-semibold border border-ink/60 text-ink/80 hover:border-ink hover:text-ink transition-colors"
                       >
                         Scan QR
                       </button>
@@ -1460,7 +1499,7 @@ export default function EventPageClient() {
                     {showCancelEventConfirm && (
                       <div className="border border-red-200 p-4 flex flex-col gap-3">
                         <p className="text-sm font-semibold text-ink">Cancel this event?</p>
-                        <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                        <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                           Are you sure? This cannot be undone.
                           {(rsvps?.length ?? 0) > 0 && (
                             <> All {rsvps.length} RSVP{rsvps.length !== 1 ? 's' : ''} will be marked cancelled.</>
@@ -1477,13 +1516,13 @@ export default function EventPageClient() {
                           <button
                             onClick={() => setShowCancelEventConfirm(false)}
                             disabled={cancelEventLoading}
-                            className="px-3 py-1.5 text-xs text-ink/60 border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors disabled:opacity-40"
+                            className="px-3 py-1.5 text-xs text-ink/80 border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors disabled:opacity-40"
                           >
                             Keep event
                           </button>
                         </div>
                         {cancelEventStatus && (
-                          <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                          <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                             {cancelEventStatus}
                           </p>
                         )}
@@ -1514,7 +1553,7 @@ export default function EventPageClient() {
                                     {displayName(entry?.attendee ?? '', names).name}
                                   </span>
                                   {displayName(entry?.attendee ?? '', names).isResolved && (
-                                    <span className="text-sm text-ink/60 font-mono truncate block">
+                                    <span className="text-sm text-ink/80 font-mono truncate block">
                                       {shortAddress(entry?.attendee ?? '')}
                                     </span>
                                   )}
@@ -1523,9 +1562,9 @@ export default function EventPageClient() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-sm text-ink/60 italic mb-3">No one on the waitlist yet.</p>
+                          <p className="text-sm text-ink/80 italic mb-3">No one on the waitlist yet.</p>
                         )}
-                        <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)] leading-snug">
+                        <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)] leading-snug">
                           Waitlist members are stored on-chain and expire with the event.
                         </p>
                       </div>
@@ -1546,11 +1585,11 @@ export default function EventPageClient() {
                           </button>
                         ) : (
                           <div className="space-y-4">
-                            <p className="text-sm text-ink/60">
+                            <p className="text-sm text-ink/80">
                               Select who actually attended:
                             </p>
                             {(rsvps?.length ?? 0) === 0 ? (
-                              <p className="text-sm text-ink/60 italic">No RSVPs to verify.</p>
+                              <p className="text-sm text-ink/80 italic">No RSVPs to verify.</p>
                             ) : (
                               <ul className="space-y-2.5">
                                 {(rsvps ?? []).map((rsvp) => {
@@ -1579,7 +1618,7 @@ export default function EventPageClient() {
                                       >
                                         <span className="text-sm text-ink block">{displayName(addr, names).name}</span>
                                         {displayName(addr, names).isResolved && (
-                                          <span className="text-sm text-ink/60 block">{shortAddress(addr)}</span>
+                                          <span className="text-sm text-ink/80 block">{shortAddress(addr)}</span>
                                         )}
                                       </label>
                                     </li>
@@ -1599,7 +1638,7 @@ export default function EventPageClient() {
                               </button>
                               <button
                                 onClick={() => setShowVerifyPanel(false)}
-                                className="text-sm text-ink/60 hover:text-ink transition-colors"
+                                className="text-sm text-ink/80 hover:text-ink transition-colors"
                               >
                                 Cancel
                               </button>
@@ -1608,7 +1647,7 @@ export default function EventPageClient() {
                         )}
                       </>
                     ) : (
-                      <p className="text-sm text-ink/70 italic font-[family-name:var(--font-geist-sans)]">
+                      <p className="text-sm text-ink/80 italic font-[family-name:var(--font-geist-sans)]">
                         The &quot;Close event &amp; verify attendance&quot; option will appear after
                         the event date has passed.
                       </p>
@@ -1652,7 +1691,7 @@ export default function EventPageClient() {
               {/* Date */}
               {day && (
                 <div className="flex items-center gap-2.5 text-sm">
-                  <svg className="w-5 h-5 shrink-0 text-ink/60" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <svg className="w-5 h-5 shrink-0 text-ink/80" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                   </svg>
                   <span className="text-ink font-[family-name:var(--font-geist-sans)]">{day}</span>
@@ -1662,7 +1701,7 @@ export default function EventPageClient() {
               {/* Time */}
               {time && (
                 <div className="flex items-center gap-2.5 text-sm">
-                  <svg className="w-5 h-5 shrink-0 text-ink/60" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <svg className="w-5 h-5 shrink-0 text-ink/80" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                   </svg>
                   <span className="text-ink font-[family-name:var(--font-geist-sans)]">{time}</span>
@@ -1672,7 +1711,7 @@ export default function EventPageClient() {
               {/* Location */}
               {event?.location && (
                 <div className="flex items-center gap-2.5 text-sm">
-                  <svg className="w-5 h-5 shrink-0 text-ink/60" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <svg className="w-5 h-5 shrink-0 text-ink/80" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                   </svg>
                   <span className="text-ink font-[family-name:var(--font-geist-sans)]">{event.location}</span>
@@ -1720,7 +1759,7 @@ export default function EventPageClient() {
                   {event.description}
                 </p>
               ) : (
-                <p className="text-ink/60 italic font-[family-name:var(--font-geist-sans)]">
+                <p className="text-ink/80 italic font-[family-name:var(--font-geist-sans)]">
                   No description provided.
                 </p>
               )}
@@ -1745,7 +1784,7 @@ export default function EventPageClient() {
               )}
 
               {event?.date && (
-                <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   This event page expires on {formatExpiryDate(eventExpiresAt(event.date))}
                 </p>
               )}
@@ -1883,6 +1922,101 @@ export default function EventPageClient() {
               <p className="text-cream/50 text-xs font-[family-name:var(--font-geist-sans)]">
                 Scanning…
               </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Attendees modal */}
+      {showAttendeesModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowAttendeesModal(false)}
+        >
+          <div
+            className="bg-cream rounded-2xl p-6 max-w-md w-full max-h-[70vh] overflow-y-auto relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setShowAttendeesModal(false)}
+              className="absolute top-4 right-4 text-ink/40 hover:text-ink transition-colors"
+              aria-label="Close"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+                <line x1="20" y1="4" x2="4" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+              </svg>
+            </button>
+
+            {/* Attending section */}
+            <h3 className="text-lg font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-4">
+              {rsvps?.length ?? 0} attending
+            </h3>
+            {(rsvps?.length ?? 0) > 0 ? (
+              <ul className="space-y-1">
+                {[...(rsvps ?? [])]
+                  .sort((a, b) => {
+                    const na = displayName(a.attendee ?? '', names).name.toLowerCase();
+                    const nb = displayName(b.attendee ?? '', names).name.toLowerCase();
+                    return na.localeCompare(nb);
+                  })
+                  .map((rsvp) => {
+                    const addr = rsvp.attendee ?? '';
+                    const { name } = displayName(addr, names);
+                    return (
+                      <li key={rsvp.entityKey}>
+                        <Link
+                          href={`/profile/${addr}`}
+                          className="flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg hover:bg-ink/5 transition-colors cursor-pointer"
+                        >
+                          <AttendeeAvatar addr={addr} label={name} size={36} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-ink truncate font-[family-name:var(--font-geist-sans)]">{name}</p>
+                            <p className="text-sm text-ink/50 truncate font-[family-name:var(--font-geist-sans)]">{shortAddress(addr)}</p>
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+              </ul>
+            ) : (
+              <p className="text-sm text-ink/50 font-[family-name:var(--font-geist-sans)]">No attendees yet</p>
+            )}
+
+            {/* Waitlist section */}
+            {(waitlist?.length ?? 0) > 0 && (
+              <>
+                <h3 className="text-lg font-bold text-ink font-[family-name:var(--font-kode-mono)] mt-6 mb-4">
+                  Waitlist ({waitlist?.length ?? 0})
+                </h3>
+                <ul className="space-y-1">
+                  {[...(waitlist ?? [])]
+                    .sort((a, b) => {
+                      const na = displayName(a.attendee ?? '', names).name.toLowerCase();
+                      const nb = displayName(b.attendee ?? '', names).name.toLowerCase();
+                      return na.localeCompare(nb);
+                    })
+                    .map((entry) => {
+                      const addr = entry.attendee ?? '';
+                      const { name } = displayName(addr, names);
+                      return (
+                        <li key={entry.entityKey}>
+                          <Link
+                            href={`/profile/${addr}`}
+                            className="flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg hover:bg-ink/5 transition-colors cursor-pointer"
+                          >
+                            <AttendeeAvatar addr={addr} label={name} size={36} />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-ink truncate font-[family-name:var(--font-geist-sans)]">{name}</p>
+                              <p className="text-sm text-ink/50 truncate font-[family-name:var(--font-geist-sans)]">{shortAddress(addr)}</p>
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                </ul>
+              </>
             )}
           </div>
         </div>

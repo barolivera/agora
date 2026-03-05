@@ -6,15 +6,10 @@ import { useAccount, useWalletClient } from 'wagmi';
 import { createWalletClient, custom } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
+import { deslugify } from '@/lib/utils';
+import { inputCls } from '@/lib/constants';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function deslugify(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
 
 function slugify(raw: string): string {
   return raw
@@ -24,11 +19,6 @@ function slugify(raw: string): string {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
 }
-
-const inputCls =
-  'w-full border border-warm-gray/50 px-4 py-3 text-sm bg-cream text-ink ' +
-  'placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40 ' +
-  'focus:border-cobalt transition-colors';
 
 // ── Form ──────────────────────────────────────────────────────────────────────
 
@@ -56,14 +46,14 @@ function CreateCommunityForm() {
     return (
       <main className="max-w-lg mx-auto py-24 px-6 text-center">
         <div className="w-12 h-12 bg-warm-gray/30 flex items-center justify-center mx-auto mb-5">
-          <svg className="w-6 h-6 text-ink/60" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
+          <svg className="w-6 h-6 text-ink/80" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18-3a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6m18 0V5.25A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25V6" />
           </svg>
         </div>
         <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           Connect your wallet to continue
         </p>
-        <p className="text-sm text-ink/60">
+        <p className="text-sm text-ink/80">
           You need a wallet to create a community on Arkiv.
         </p>
       </main>
@@ -104,6 +94,7 @@ function CreateCommunityForm() {
         attributes: [
           { key: 'type', value: 'community' },
           { key: 'slug', value: slug },
+          { key: 'createdBy', value: address.toLowerCase() },
         ],
         // Communities expire after 1 year. They should be renewed
         // by the community when they create new events.
@@ -126,7 +117,7 @@ function CreateCommunityForm() {
         <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
           Create a community
         </h1>
-        <p className="text-ink/60 mb-10">
+        <p className="text-ink/80 mb-10">
           Your community lives on Arkiv — open, on-chain, and community-owned.
         </p>
 
@@ -177,7 +168,7 @@ function CreateCommunityForm() {
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">
               Logo URL
-              <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
+              <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
             <input
               type="url"
@@ -206,7 +197,7 @@ function CreateCommunityForm() {
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">
               Cover image URL
-              <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
+              <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
             <input
               type="url"
@@ -221,7 +212,7 @@ function CreateCommunityForm() {
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">
               Website
-              <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
+              <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
             <input
               type="url"
@@ -236,7 +227,7 @@ function CreateCommunityForm() {
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">
               Twitter / X
-              <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
+              <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
             <input
               type="text"
@@ -251,7 +242,7 @@ function CreateCommunityForm() {
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">
               Discord invite URL
-              <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
+              <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
             <input
               type="url"

@@ -45,13 +45,7 @@ export function getEventStatus(eventDate: string): 'upcoming' | 'live' | 'ended'
   const now = new Date();
   const date = parseDate(eventDate);
 
-  console.log('Input date:', eventDate);
-  console.log('Parsed:', isNaN(date.getTime()) ? 'Invalid Date' : date.toISOString());
-  console.log('Now:', now.toISOString());
-  console.log('Hours diff:', (date.getTime() - now.getTime()) / (1000 * 60 * 60));
-
   if (isNaN(date.getTime())) {
-    console.warn('[getEventStatus] Unparseable date — defaulting to "upcoming":', eventDate);
     return 'upcoming';
   }
 

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ArkivEvent } from '@/lib/arkiv';
+import { deslugify } from '@/lib/utils';
 import { getEventStatus } from '@/lib/expiration';
 import StatusBadge from '@/app/components/StatusBadge';
 
@@ -15,13 +16,6 @@ function formatEventDate(dateStr: string): string | null {
     day: 'numeric',
     year: 'numeric',
   });
-}
-
-function deslugify(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
 }
 
 export function EventCard({

@@ -127,6 +127,7 @@ async function main() {
       attributes: [
         { key: 'type', value: 'community' },
         { key: 'slug', value: community.slug },
+        { key: 'createdBy', value: walletClient.account.address.toLowerCase() },
       ],
       expiresIn: ExpirationTime.fromDays(3650),
     });

@@ -8,6 +8,7 @@ import { kaolin } from '@arkiv-network/sdk/chains';
 import { jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eventExpiresAt, secondsUntilExpiry } from '@/lib/expiration';
 import { publicClient } from '@/lib/arkiv';
+import { inputCls } from '@/lib/constants';
 
 const COMMUNITY_SUGGESTIONS = [
   'SheFi',
@@ -37,11 +38,6 @@ function toDatetimeLocal(dateStr: string): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-
-const inputCls =
-  'w-full border border-warm-gray/50 px-4 py-3 text-sm bg-cream text-ink ' +
-  'placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40 ' +
-  'focus:border-cobalt transition-colors';
 
 export default function EditEventPage() {
   const params = useParams();
@@ -110,10 +106,10 @@ export default function EditEventPage() {
   if (loadError) {
     return (
       <main className="max-w-lg mx-auto py-24 px-6 text-center">
-        <p className="text-ink/60 font-[family-name:var(--font-kode-mono)] text-lg mb-2">
+        <p className="text-ink/80 font-[family-name:var(--font-kode-mono)] text-lg mb-2">
           Event not found
         </p>
-        <p className="text-sm text-ink/60">{loadError}</p>
+        <p className="text-sm text-ink/80">{loadError}</p>
       </main>
     );
   }
@@ -124,7 +120,7 @@ export default function EditEventPage() {
         <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           Connect your wallet to continue
         </p>
-        <p className="text-sm text-ink/60">
+        <p className="text-sm text-ink/80">
           You need a connected wallet to edit this event.
         </p>
       </main>
@@ -137,7 +133,7 @@ export default function EditEventPage() {
         <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           You don&apos;t have permission to edit this event
         </p>
-        <p className="text-sm text-ink/60 mt-2">
+        <p className="text-sm text-ink/80 mt-2">
           Only the event organizer can make changes.
         </p>
       </main>
@@ -210,7 +206,7 @@ export default function EditEventPage() {
         <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
           Edit event
         </h1>
-        <p className="text-ink/60 mb-10">
+        <p className="text-ink/80 mb-10">
           Changes will be saved on-chain to Arkiv.
         </p>
 
@@ -262,7 +258,7 @@ export default function EditEventPage() {
                   className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-geist-sans)] ${
                     category === cat
                       ? 'bg-ink text-cream'
-                      : 'border border-warm-gray/40 text-ink/60 hover:text-ink hover:border-ink/30'
+                      : 'border border-warm-gray/40 text-ink/80 hover:text-ink hover:border-ink/30'
                   }`}
                 >
                   {cat}
@@ -318,7 +314,7 @@ export default function EditEventPage() {
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">
               Cover image URL
-              <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
+              <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
             <input
               type="url"
@@ -332,7 +328,7 @@ export default function EditEventPage() {
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">
               Community tag
-              <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
+              <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
             <input
               type="text"
@@ -378,7 +374,7 @@ export default function EditEventPage() {
             <button
               type="button"
               onClick={() => router.push(`/event/${id}`)}
-              className="px-5 py-3.5 text-sm text-ink/60 hover:text-ink transition-colors border border-warm-gray/40 hover:border-warm-gray"
+              className="px-5 py-3.5 text-sm text-ink/80 hover:text-ink transition-colors border border-warm-gray/40 hover:border-warm-gray"
             >
               Cancel
             </button>

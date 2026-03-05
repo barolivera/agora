@@ -11,15 +11,7 @@ import SubscribeButton from './SubscribeButton';
 import EditCommunityButton from './EditCommunityButton';
 import EventsWithSidebar from './EventsWithSidebar';
 import PendingEvents from './PendingEvents';
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-function deslugify(slug: string): string {
-  return slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
+import { deslugify } from '@/lib/utils';
 
 // ── Metadata ───────────────────────────────────────────────────────────────────
 
