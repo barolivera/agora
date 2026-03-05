@@ -44,7 +44,7 @@ export async function generateMetadata({
 
 function CoverSection({ coverUrl }: { coverUrl?: string }) {
   return (
-    <div className="relative h-[293px] overflow-hidden rounded-b-sm">
+    <div className="relative z-0 h-[293px] overflow-hidden rounded-b-sm">
       <img
         src={coverUrl || '/default-community-cover.png'}
         alt=""
@@ -130,7 +130,7 @@ function HeroSection({
         <CoverSection coverUrl={profile?.coverUrl} />
 
         {/* Profile section — logo overlaps cover bottom */}
-        <div className="-mt-10 pb-8 flex flex-col gap-6">
+        <div className="relative z-10 -mt-10 pb-8 flex flex-col gap-6">
 
           {/* Avatar */}
           <div className="shrink-0">
@@ -140,13 +140,12 @@ function HeroSection({
                 alt={displayName}
                 width={80}
                 height={80}
-                className="w-20 h-20 rounded-xl object-cover"
-                style={{ border: '3px solid #F2EDE4' }}
+                className="w-20 h-20 rounded-xl object-cover ring-4 ring-ink"
               />
             ) : (
               <div
-                className="w-20 h-20 rounded-xl flex items-center justify-center text-2xl font-bold text-cream font-[family-name:var(--font-kode-mono)]"
-                style={{ border: '3px solid #F2EDE4', backgroundColor: '#0247E2' }}
+                className="w-20 h-20 rounded-xl flex items-center justify-center text-2xl font-bold text-cream font-[family-name:var(--font-kode-mono)] ring-4 ring-ink"
+                style={{ backgroundColor: '#0247E2' }}
               >
                 {firstLetter}
               </div>

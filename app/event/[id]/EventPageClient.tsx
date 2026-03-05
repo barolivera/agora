@@ -761,6 +761,32 @@ export default function EventPageClient() {
       }
 
       if (wasAtCapacity && hasWaitlist) {
+        const sorted = [...(waitlist ?? [])].sort(
+          (a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
+        );
+        const first = sorted[0];
+        if (first?.entityKey && first?.attendee) {
+          await arkivWalletClient.deleteEntity({ entityKey: first.entityKey as Hex });
+          setWaitlist(prev => prev.filter(w => w.entityKey !== first.entityKey));
+
+          await arkivWalletClient.createEntity({
+            payload: jsonToPayload({
+              eventId: id,
+              attendee: first.attendee,
+              confirmedAt: new Date().toISOString(),
+              eventOrganizer: event.organizer,
+            }),
+            contentType: 'application/json',
+            attributes: [
+              { key: 'type', value: 'rsvp' },
+              { key: 'eventId', value: id },
+            ],
+            expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
+          });
+
+          await fetchAttendees();
+          await fetchWaitlist();
+        }
         setCancelledWithWaitlist(true);
       }
       setShowCancelConfirm(false);
@@ -1464,7 +1490,7 @@ export default function EventPageClient() {
                       </div>
                     )}
 
-                    {atCapacity && (
+                    {(waitlist?.length ?? 0) > 0 && (
                       <div className="border-t border-warm-gray/20 pt-4">
                         <p className="text-sm font-semibold text-ink mb-3">
                           Waitlist{(waitlist?.length ?? 0) > 0 ? ` (${waitlist?.length ?? 0})` : ''}
