@@ -111,7 +111,7 @@ export default function MyCommunitiesPage() {
   if (!isConnected) {
     return (
       <main className="max-w-4xl mx-auto py-20 px-6 text-center">
-        <p className="text-warm-gray">Connect your wallet to see your communities</p>
+        <p className="text-ink/60">Connect your wallet to see your communities</p>
       </main>
     );
   }
@@ -137,7 +137,7 @@ export default function MyCommunitiesPage() {
         </div>
       ) : communities.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-warm-gray mb-4">
+          <p className="text-ink/60 mb-4">
             You haven&#39;t subscribed to any communities yet.
           </p>
           <Link
@@ -184,7 +184,7 @@ export default function MyCommunitiesPage() {
 
                 {/* Description */}
                 {profile?.description && (
-                  <p className="text-sm text-warm-gray line-clamp-2 leading-relaxed">
+                  <p className="text-sm text-ink/60 line-clamp-2 leading-relaxed">
                     {profile.description}
                   </p>
                 )}
@@ -192,7 +192,7 @@ export default function MyCommunitiesPage() {
                 {/* Next event */}
                 {nextEvent ? (
                   <div className="mt-auto pt-3 border-t border-warm-gray/20">
-                    <p className="text-xs font-semibold text-warm-gray/60 uppercase tracking-wide mb-1">
+                    <p className="text-xs font-semibold text-ink/60 uppercase tracking-wide mb-1">
                       Next event
                     </p>
                     <span
@@ -204,7 +204,7 @@ export default function MyCommunitiesPage() {
                     >
                       {nextEvent.title}
                       {nextEvent.date && (
-                        <span className="text-warm-gray ml-2">
+                        <span className="text-ink/60 ml-2">
                           · {formatDate(nextEvent.date)}
                         </span>
                       )}

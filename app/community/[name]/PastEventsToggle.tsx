@@ -9,7 +9,7 @@ export default function PastEventsToggle({ children }: { children: React.ReactNo
     <div>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-ink/40 hover:text-ink/70 transition-colors font-[family-name:var(--font-kode-mono)]"
+        className="flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-ink/60 hover:text-ink transition-colors font-[family-name:var(--font-kode-mono)]"
       >
         <svg
           className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}

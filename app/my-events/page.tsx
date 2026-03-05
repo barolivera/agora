@@ -108,7 +108,7 @@ export default function MyEventsPage() {
   if (!isConnected) {
     return (
       <main className="max-w-3xl mx-auto py-20 text-center">
-        <p className="text-warm-gray">Connect your wallet to see your events</p>
+        <p className="text-ink/60">Connect your wallet to see your events</p>
       </main>
     );
   }
@@ -144,7 +144,7 @@ export default function MyEventsPage() {
         </div>
       ) : events.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-warm-gray mb-4">You haven&#39;t created any events yet</p>
+          <p className="text-ink/60 mb-4">You haven&#39;t created any events yet</p>
           <Link
             href="/create-event"
             className="text-sm font-medium text-cobalt underline underline-offset-2 hover:text-cobalt-light"
@@ -176,7 +176,7 @@ export default function MyEventsPage() {
                       <h2 className="font-semibold text-ink truncate font-[family-name:var(--font-kode-mono)]">
                         {event.title}
                       </h2>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-warm-gray">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-ink/60">
                         {event.category && (
                           <span className="text-[10px] font-semibold uppercase tracking-widest text-cobalt font-[family-name:var(--font-geist-sans)]">
                             {event.category}
@@ -189,7 +189,7 @@ export default function MyEventsPage() {
                         <StatusBadge status={status} />
                       </div>
                     </div>
-                    <span className="text-sm text-warm-gray whitespace-nowrap shrink-0">
+                    <span className="text-sm text-ink/60 whitespace-nowrap shrink-0">
                       {event.attendeeCount}{event.capacity > 0 ? ` / ${event.capacity}` : ''} attending
                     </span>
                   </div>
@@ -199,7 +199,7 @@ export default function MyEventsPage() {
                 {canDelete && (
                   <div className="px-5 pb-4 pt-0 border-t border-warm-gray/10">
                     {isDeleting ? (
-                      <p className="text-xs text-warm-gray pt-3 font-[family-name:var(--font-geist-sans)]">
+                      <p className="text-xs text-ink/60 pt-3 font-[family-name:var(--font-geist-sans)]">
                         {deleteStatus}
                       </p>
                     ) : isConfirming ? (
@@ -216,7 +216,7 @@ export default function MyEventsPage() {
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(null)}
-                            className="text-xs text-warm-gray hover:text-ink transition-colors"
+                            className="text-xs text-ink/60 hover:text-ink transition-colors"
                           >
                             Cancel
                           </button>

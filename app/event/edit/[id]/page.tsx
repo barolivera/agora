@@ -110,10 +110,10 @@ export default function EditEventPage() {
   if (loadError) {
     return (
       <main className="max-w-lg mx-auto py-24 px-6 text-center">
-        <p className="text-warm-gray font-[family-name:var(--font-kode-mono)] text-lg mb-2">
+        <p className="text-ink/60 font-[family-name:var(--font-kode-mono)] text-lg mb-2">
           Event not found
         </p>
-        <p className="text-sm text-warm-gray/70">{loadError}</p>
+        <p className="text-sm text-ink/60">{loadError}</p>
       </main>
     );
   }
@@ -124,7 +124,7 @@ export default function EditEventPage() {
         <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           Connect your wallet to continue
         </p>
-        <p className="text-sm text-warm-gray">
+        <p className="text-sm text-ink/60">
           You need a connected wallet to edit this event.
         </p>
       </main>
@@ -137,7 +137,7 @@ export default function EditEventPage() {
         <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           You don&apos;t have permission to edit this event
         </p>
-        <p className="text-sm text-warm-gray mt-2">
+        <p className="text-sm text-ink/60 mt-2">
           Only the event organizer can make changes.
         </p>
       </main>
@@ -210,7 +210,7 @@ export default function EditEventPage() {
         <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
           Edit event
         </h1>
-        <p className="text-warm-gray mb-10">
+        <p className="text-ink/60 mb-10">
           Changes will be saved on-chain to Arkiv.
         </p>
 
@@ -262,7 +262,7 @@ export default function EditEventPage() {
                   className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-geist-sans)] ${
                     category === cat
                       ? 'bg-ink text-cream'
-                      : 'border border-warm-gray/40 text-warm-gray hover:text-ink hover:border-ink/30'
+                      : 'border border-warm-gray/40 text-ink/60 hover:text-ink hover:border-ink/30'
                   }`}
                 >
                   {cat}
@@ -318,7 +318,7 @@ export default function EditEventPage() {
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">
               Cover image URL
-              <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
+              <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
             </label>
             <input
               type="url"
@@ -332,7 +332,7 @@ export default function EditEventPage() {
           <div>
             <label className="block text-sm font-medium text-ink mb-1.5">
               Community tag
-              <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
+              <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
             </label>
             <input
               type="text"
@@ -378,7 +378,7 @@ export default function EditEventPage() {
             <button
               type="button"
               onClick={() => router.push(`/event/${id}`)}
-              className="px-5 py-3.5 text-sm text-warm-gray hover:text-ink transition-colors border border-warm-gray/40 hover:border-warm-gray"
+              className="px-5 py-3.5 text-sm text-ink/60 hover:text-ink transition-colors border border-warm-gray/40 hover:border-warm-gray"
             >
               Cancel
             </button>

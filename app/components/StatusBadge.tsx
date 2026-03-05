@@ -1,10 +1,11 @@
-export type EventStatus = 'upcoming' | 'live' | 'ended' | 'cancelled';
+export type EventStatus = 'upcoming' | 'live' | 'ended' | 'cancelled' | 'pending';
 
 const STATUS_STYLES: Record<EventStatus, { bg: string; color: string; label: string }> = {
   upcoming: { bg: '#0075FF', color: '#FAFAFA', label: 'Upcoming' },
   live:     { bg: '#03AE33', color: '#ffffff', label: '● Live' },
   ended:    { bg: '#FF3D00', color: '#FAFAFA', label: 'Ended' },
   cancelled:{ bg: '#ef4444', color: '#ffffff', label: 'Cancelled' },
+  pending:  { bg: '#F59E0B', color: '#422006', label: 'Pending Review' },
 };
 
 export default function StatusBadge({ status }: { status: EventStatus }) {

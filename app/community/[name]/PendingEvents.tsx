@@ -132,7 +132,7 @@ export default function PendingEvents({
                 >
                   {event.title || 'Untitled Event'}
                 </Link>
-                <p className="text-xs text-warm-gray mt-0.5 font-[family-name:var(--font-geist-sans)]">
+                <p className="text-xs text-ink/60 mt-0.5 font-[family-name:var(--font-geist-sans)]">
                   {event.date ? new Date(event.date).toLocaleDateString('en-US', {
                     month: 'short', day: 'numeric', year: 'numeric',
                   }) : 'No date'}
@@ -152,7 +152,7 @@ export default function PendingEvents({
                 <button
                   onClick={() => handleReject(event)}
                   disabled={isProcessing}
-                  className="px-4 py-2 text-xs font-semibold border border-warm-gray/40 text-warm-gray hover:text-ink hover:border-ink/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-xs font-semibold border border-warm-gray/40 text-ink/60 hover:text-ink hover:border-ink/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Reject
                 </button>

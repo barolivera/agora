@@ -81,7 +81,7 @@ function EventRow({ event, muted = false }: { event: ArkivEvent; muted?: boolean
         {d && (
           <div className="absolute bottom-0.5 left-0.5 bg-cream/90 backdrop-blur-sm px-1.5 py-0.5 flex items-center gap-0.5">
             <span className="text-xs font-bold text-ink font-[family-name:var(--font-kode-mono)] leading-none">{d.day}</span>
-            <span className="text-[7px] font-bold tracking-wider text-warm-gray uppercase">{d.month}</span>
+            <span className="text-[7px] font-bold tracking-wider text-ink/60 uppercase">{d.month}</span>
           </div>
         )}
       </div>
@@ -90,7 +90,7 @@ function EventRow({ event, muted = false }: { event: ArkivEvent; muted?: boolean
           {event.title || 'Untitled'}
         </h3>
         {event.location && (
-          <p className="text-xs text-warm-gray mt-1 truncate">
+          <p className="text-xs text-ink/60 mt-1 truncate">
             <span className="mr-1">📍</span>{event.location}
           </p>
         )}
@@ -112,7 +112,7 @@ function SmallEventCard({ event }: { event: ArkivEvent }) {
       <p className="text-xs font-semibold text-ink group-hover:text-cobalt mt-1.5 truncate font-[family-name:var(--font-kode-mono)] transition-colors">
         {event.title || 'Untitled'}
       </p>
-      {d && <p className="text-[10px] text-warm-gray mt-0.5">{d.full}</p>}
+      {d && <p className="text-[10px] text-ink/60 mt-0.5">{d.full}</p>}
     </Link>
   );
 }
@@ -576,7 +576,7 @@ export default function PublicProfilePage() {
                 <span>
                   <strong className="text-cream">{events.length}</strong> Events organized
                 </span>
-                <span className="text-cream/20">·</span>
+                <span className="text-cream/50">·</span>
                 <span>
                   <strong className="text-cream">{attendances.length}</strong> Events attended
                 </span>
@@ -618,7 +618,7 @@ export default function PublicProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
+            <p className="text-ink/60 text-sm font-[family-name:var(--font-geist-sans)]">
               No upcoming events
             </p>
           )}
@@ -634,7 +634,7 @@ export default function PublicProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
+            <p className="text-ink/60 text-sm font-[family-name:var(--font-geist-sans)]">
               No upcoming events
             </p>
           )}
@@ -650,7 +650,7 @@ export default function PublicProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
+            <p className="text-ink/60 text-sm font-[family-name:var(--font-geist-sans)]">
               No past events
             </p>
           )}
@@ -666,7 +666,7 @@ export default function PublicProfilePage() {
               ))}
             </div>
           ) : (
-            <p className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
+            <p className="text-ink/60 text-sm font-[family-name:var(--font-geist-sans)]">
               No attended events yet
             </p>
           )}

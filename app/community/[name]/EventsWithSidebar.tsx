@@ -59,21 +59,15 @@ function LocationPinIcon() {
   );
 }
 
-// ── Horizontal event card colors ────────────────────────────────────────────
-
-const CARD_BG = ['#1A1614', '#E8491C'] as const;
-
 // ── Event card ─────────────────────────────────────────────────────────────────
 
-function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
+function EventCard({ event }: { event: ArkivEvent }) {
   const dateLabel = formatEventDateTime(event?.date ?? '');
-  const bg = CARD_BG[index % CARD_BG.length];
 
   return (
     <Link
       href={`/event/${event?.entityKey}`}
-      className="flex items-stretch h-[162px] rounded-[6px] overflow-hidden text-cream transition-opacity hover:opacity-[0.93]"
-      style={{ backgroundColor: bg }}
+      className="flex items-stretch h-[162px] rounded-[6px] overflow-hidden border border-warm-gray/15 bg-white/50 transition-opacity hover:opacity-[0.93]"
     >
       {/* Cover image */}
       <div className="shrink-0 w-[133px] m-[14px] mr-0 rounded-[2px] overflow-hidden">
@@ -84,29 +78,29 @@ function EventCard({ event, index }: { event: ArkivEvent; index: number }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-ink/30" />
+          <div className="w-full h-full bg-ink/10" />
         )}
       </div>
 
       {/* Text content */}
       <div className="flex flex-col gap-3 justify-center px-7 py-5 min-w-0">
         {dateLabel && (
-          <p className="text-xs font-bold uppercase tracking-[1px] font-[family-name:var(--font-geist-sans)]">
+          <p className="text-xs font-bold uppercase tracking-[1px] text-ink font-[family-name:var(--font-geist-sans)]">
             {dateLabel}
           </p>
         )}
         <div className="flex flex-col gap-1">
-          <p className="text-lg font-bold leading-snug font-[family-name:var(--font-kode-mono)] line-clamp-2">
+          <p className="text-lg font-bold leading-snug text-ink font-[family-name:var(--font-kode-mono)] line-clamp-2">
             {event?.title || 'Untitled Event'}
           </p>
           {event?.community && (
-            <p className="text-base font-medium font-[family-name:var(--font-geist-sans)]">
+            <p className="text-base font-medium text-ink font-[family-name:var(--font-geist-sans)]">
               By {deslugify(event.community)}
             </p>
           )}
         </div>
         {event?.location && (
-          <div className="flex items-center gap-1 text-xs font-[family-name:var(--font-geist-sans)]">
+          <div className="flex items-center gap-1 text-xs text-ink font-[family-name:var(--font-geist-sans)]">
             <LocationPinIcon />
             <span>{event.location}</span>
           </div>
@@ -134,7 +128,7 @@ function MembersCard({
       </h2>
 
       {subscriberCount === 0 ? (
-        <p className="text-sm text-warm-gray/60 font-[family-name:var(--font-geist-sans)]">
+        <p className="text-sm text-ink/60 font-[family-name:var(--font-geist-sans)]">
           Be the first to subscribe.
         </p>
       ) : (
@@ -168,7 +162,7 @@ function MembersCard({
               )}
             </div>
           )}
-          <p className="text-xs text-ink/40 font-[family-name:var(--font-geist-sans)]">
+          <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
             {subscriberCount.toLocaleString()}{' '}
             {subscriberCount === 1 ? 'subscriber' : 'subscribers'}
           </p>
@@ -184,7 +178,7 @@ type Filter = 'upcoming' | 'past';
 
 const tabCls = (active: boolean) =>
   `px-[11px] py-[7px] text-[11px] font-bold uppercase tracking-[0.15em] transition-colors font-[family-name:var(--font-kode-mono)] ${
-    active ? 'bg-ink text-cream' : 'text-ink/40 hover:text-ink'
+    active ? 'bg-ink text-cream' : 'text-ink/60 hover:text-ink'
   }`;
 
 export default function EventsWithSidebar({
@@ -284,7 +278,7 @@ export default function EventsWithSidebar({
                 <p className="text-lg text-ink font-[family-name:var(--font-kode-mono)] mb-2">
                   No upcoming events yet.
                 </p>
-                <p className="text-warm-gray text-sm mb-6 max-w-xs leading-relaxed font-[family-name:var(--font-geist-sans)]">
+                <p className="text-ink/60 text-sm mb-6 max-w-xs leading-relaxed font-[family-name:var(--font-geist-sans)]">
                   Be the first to create an event for this community.
                 </p>
                 <Link
@@ -302,8 +296,8 @@ export default function EventsWithSidebar({
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            {displayed.map((event, i) => (
-              <EventCard key={event?.entityKey} event={event} index={i} />
+            {displayed.map((event) => (
+              <EventCard key={event?.entityKey} event={event} />
             ))}
           </div>
         )}

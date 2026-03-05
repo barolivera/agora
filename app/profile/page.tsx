@@ -128,7 +128,7 @@ export default function EditProfilePage() {
           <h1 className="text-2xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-3">
             Connect your wallet
           </h1>
-          <p className="text-warm-gray text-sm">
+          <p className="text-ink/60 text-sm">
             Connect your wallet to set up your public profile.
           </p>
         </div>
@@ -152,7 +152,7 @@ export default function EditProfilePage() {
   }
 
   const inputClass =
-    'border border-warm-gray/50 bg-cream px-4 py-3 text-sm text-ink placeholder:text-warm-gray/40 focus:outline-none focus:border-ink transition-colors w-full';
+    'border border-warm-gray/50 bg-cream px-4 py-3 text-sm text-ink placeholder:text-ink/50 focus:outline-none focus:border-ink transition-colors w-full';
 
   return (
     <main className="min-h-screen bg-cream">
@@ -161,7 +161,7 @@ export default function EditProfilePage() {
         <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
           {existingProfile ? 'Edit profile' : 'Set up your profile'}
         </h1>
-        <p className="text-warm-gray text-sm mb-10 font-[family-name:var(--font-geist-sans)]">
+        <p className="text-ink/60 text-sm mb-10 font-[family-name:var(--font-geist-sans)]">
           Your public profile on Agora — visible to anyone who views your events.
         </p>
 
@@ -224,7 +224,7 @@ export default function EditProfilePage() {
               placeholder="https://…"
               className={inputClass}
             />
-            <p className="text-xs text-warm-gray/60 font-[family-name:var(--font-geist-sans)]">
+            <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
               Leave blank to use your Ethereum identicon
             </p>
           </div>
@@ -236,7 +236,7 @@ export default function EditProfilePage() {
             </p>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
+                <label className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
                   𝕏 Twitter / X
                 </label>
                 <input
@@ -249,7 +249,7 @@ export default function EditProfilePage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
+                <label className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
                   💬 Discord
                 </label>
                 <input
@@ -262,7 +262,7 @@ export default function EditProfilePage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
+                <label className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
                   🟣 Farcaster
                 </label>
                 <input
@@ -296,7 +296,7 @@ export default function EditProfilePage() {
             {existingProfile && address && (
               <Link
                 href={`/profile/${address}`}
-                className="text-sm text-warm-gray hover:text-ink transition-colors"
+                className="text-sm text-ink/60 hover:text-ink transition-colors"
               >
                 View public profile →
               </Link>
@@ -305,7 +305,7 @@ export default function EditProfilePage() {
 
         </form>
 
-        <p className="mt-8 text-xs text-warm-gray/60 font-[family-name:var(--font-geist-sans)]">
+        <p className="mt-8 text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
           Your profile expires after 1 year and renews when you edit it.
         </p>
 

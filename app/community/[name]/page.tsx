@@ -44,7 +44,7 @@ export async function generateMetadata({
 
 function CoverSection({ coverUrl }: { coverUrl?: string }) {
   return (
-    <div className="relative h-64 overflow-hidden">
+    <div className="relative h-[293px] overflow-hidden rounded-b-sm">
       <img
         src={coverUrl || '/default-community-cover.png'}
         alt=""
@@ -125,12 +125,12 @@ function HeroSection({
 
   return (
     <section className="bg-ink">
-      {/* Cover banner */}
-      <CoverSection coverUrl={profile?.coverUrl} />
+      <div className="max-w-6xl mx-auto px-6">
+        {/* Cover banner — contained within max-w container */}
+        <CoverSection coverUrl={profile?.coverUrl} />
 
-      {/* Profile section */}
-      <div className="max-w-6xl mx-auto px-6 pt-6 pb-6">
-        <div className="flex flex-col gap-6">
+        {/* Profile section — logo overlaps cover bottom */}
+        <div className="-mt-10 pb-8 flex flex-col gap-6">
 
           {/* Avatar */}
           <div className="shrink-0">
@@ -159,11 +159,11 @@ function HeroSection({
             {/* Left: name + description + social links */}
             <div className="flex flex-col gap-2.5 flex-1 min-w-0">
               <div className="flex flex-col gap-1">
-                <h1 className="text-3xl font-bold text-cream font-[family-name:var(--font-kode-mono)] leading-tight">
+                <h1 className="text-2xl font-bold text-cream font-[family-name:var(--font-kode-mono)] leading-[30px]">
                   {displayName}
                 </h1>
                 {profile?.description && (
-                  <p className="text-sm text-cream/80 leading-snug line-clamp-2 font-[family-name:var(--font-geist-sans)] max-w-lg">
+                  <p className="text-sm text-[#fafafa] leading-snug line-clamp-2 font-[family-name:var(--font-geist-sans)] max-w-lg">
                     {profile.description}
                   </p>
                 )}

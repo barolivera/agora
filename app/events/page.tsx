@@ -24,7 +24,7 @@ function SearchInput({
   return (
     <div className="relative w-full mb-6">
       {/* Magnifier icon */}
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-warm-gray">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink/60">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5" />
           <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
@@ -36,14 +36,14 @@ function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search events by title or location..."
-        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-warm-gray text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-geist-sans)] focus:outline-none focus:border-ink"
+        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-ink/60 text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-geist-sans)] focus:outline-none focus:border-ink"
       />
       {/* Clear button */}
       {value && (
         <button
           type="button"
           onClick={() => { onChange(''); inputRef.current?.focus(); }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-gray hover:text-ink transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/60 hover:text-ink transition-colors"
           aria-label="Clear search"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -192,14 +192,14 @@ export default function EventsPage() {
             className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-colors font-[family-name:var(--font-kode-mono)] ${
               feedFilter === f
                 ? 'bg-ink text-cream'
-                : 'text-ink/40 hover:text-ink'
+                : 'text-ink/60 hover:text-ink'
             }`}
           >
             {f === 'community' ? 'Community Events' : 'All Events'}
           </button>
         ))}
         {feedFilter === 'all' && (
-          <span className="ml-2 text-[10px] text-warm-gray font-[family-name:var(--font-geist-sans)]">
+          <span className="ml-2 text-[10px] text-ink/60 font-[family-name:var(--font-geist-sans)]">
             Includes independent events
           </span>
         )}
@@ -272,7 +272,7 @@ export default function EventsPage() {
           <p className="text-2xl text-ink font-[family-name:var(--font-kode-mono)] mb-3">
             No events yet.
           </p>
-          <p className="text-warm-gray text-sm mb-8">
+          <p className="text-ink/60 text-sm mb-8">
             Be the first to create one.
           </p>
           <Link
@@ -284,7 +284,7 @@ export default function EventsPage() {
         </div>
       ) : filteredEvents.length === 0 ? (
         <div className="flex flex-col items-center text-center py-20 border border-dashed border-warm-gray/50">
-          <p className="text-warm-gray text-sm mb-4">
+          <p className="text-ink/60 text-sm mb-4">
             {searchQuery.trim()
               ? 'No events match your search.'
               : 'No events match your filters.'}

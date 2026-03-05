@@ -356,17 +356,26 @@ function CalendarModal({
 function PageSkeleton() {
   return (
     <div className="min-h-screen bg-cream">
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="flex flex-col md:flex-row gap-12">
-          <div className="flex-1 min-w-0 space-y-6 animate-pulse">
-            <div className="w-full aspect-video bg-warm-gray/30" />
-            <div className="h-8 bg-warm-gray/30 w-3/4" />
-            <div className="h-4 bg-warm-gray/30 w-1/2" />
-            <div className="h-4 bg-warm-gray/30 w-full" />
-            <div className="h-4 bg-warm-gray/30 w-5/6" />
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-[44fr_56fr] gap-8 animate-pulse">
+          <div className="space-y-6">
+            <div className="w-full aspect-square bg-warm-gray/30 rounded-xl" />
+            <div className="h-32 bg-warm-gray/30" />
+            <div className="h-20 bg-warm-gray/30" />
           </div>
-          <div className="md:w-[340px] shrink-0">
-            <div className="h-72 bg-warm-gray/30 animate-pulse" />
+          <div className="space-y-5">
+            <div className="flex gap-2.5">
+              <div className="h-6 bg-warm-gray/30 w-20" />
+              <div className="h-6 bg-warm-gray/30 w-16" />
+            </div>
+            <div className="h-9 bg-warm-gray/30 w-3/4" />
+            <div className="h-5 bg-warm-gray/30 w-1/2" />
+            <div className="h-5 bg-warm-gray/30 w-1/3" />
+            <div className="h-5 bg-warm-gray/30 w-2/3" />
+            <div className="flex gap-3 pt-2">
+              <div className="h-9 bg-warm-gray/30 w-28" />
+              <div className="h-9 bg-warm-gray/30 w-36" />
+            </div>
           </div>
         </div>
       </div>
@@ -476,7 +485,7 @@ function AttendeesStack({
             )}
           </>
         ) : (
-          <span className="text-warm-gray">{count} {count === 1 ? 'asistente' : 'asistentes'}</span>
+          <span className="text-ink/60">{count} {count === 1 ? 'asistente' : 'asistentes'}</span>
         )}
       </p>
 
@@ -1114,10 +1123,10 @@ export default function EventPageClient() {
   if (!event) {
     return (
       <main className="max-w-2xl mx-auto py-20 px-6 text-center">
-        <p className="text-warm-gray font-[family-name:var(--font-kode-mono)] text-lg mb-2">
+        <p className="text-ink/60 font-[family-name:var(--font-kode-mono)] text-lg mb-2">
           Event not found
         </p>
-        {error && <p className="text-sm text-warm-gray/70">{error}</p>}
+        {error && <p className="text-sm text-ink/60">{error}</p>}
       </main>
     );
   }
@@ -1143,6 +1152,7 @@ export default function EventPageClient() {
   const eventPassed = event?.date ? new Date(event.date) < new Date() : false;
 
   const displayStatus: EventStatus =
+    event?.status === 'pending' ? 'pending' :
     event?.status === 'cancelled' ? 'cancelled' : getEventStatus(event?.date ?? '');
 
   const verifiedAddresses = new Set(
@@ -1160,365 +1170,41 @@ export default function EventPageClient() {
 
   return (
     <div className="min-h-screen bg-cream">
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="flex flex-col md:flex-row gap-12 items-start">
+      <div className="max-w-5xl mx-auto px-6 py-12">
 
-          {/* ── LEFT COLUMN (60%) ──────────────────────────────── */}
-          <div className="flex-1 min-w-0">
 
-            {/* 1. Event Poster / Header Image */}
-            <div className="relative w-full aspect-video overflow-hidden mb-8">
+        {/* ════════════════════════════════════════════════════════
+            TWO-COLUMN LAYOUT
+            Left: image, community, attendance, organizer
+            Right: info, about, location
+            ════════════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 md:grid-cols-[44fr_56fr] gap-8">
+
+          {/* ── Left column ── */}
+          <div className="flex flex-col gap-6">
+            {/* Event image */}
+            <div className="w-full aspect-square rounded-xl overflow-hidden">
               {event?.coverImageUrl ? (
-                <>
-                  <img
-                    src={event.coverImageUrl}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                </>
-              ) : (
-                <>
-                  <div className="absolute inset-0" style={{ background: gradient }} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-                </>
-              )}
-              <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col gap-3">
-                <StatusBadge status={displayStatus} />
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-cream leading-tight font-[family-name:var(--font-kode-mono)] drop-shadow-sm">
-                  {event?.title || 'Untitled Event'}
-                </h1>
-                {event?.category && (
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-cream/70 font-[family-name:var(--font-geist-sans)]">
-                    {event.category}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* 2. Event Info Bar */}
-            <div className="flex flex-wrap gap-x-8 gap-y-3 mb-6">
-              {day && (
-                <div className="flex items-center gap-2.5 text-sm">
-                  <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-ink font-[family-name:var(--font-geist-sans)]">{day}</span>
-                </div>
-              )}
-              {time && (
-                <div className="flex items-center gap-2.5 text-sm">
-                  <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-ink font-[family-name:var(--font-geist-sans)]">{time}</span>
-                </div>
-              )}
-              {event?.location && (
-                <div className="flex items-center gap-2.5 text-sm">
-                  <svg className="w-4 h-4 shrink-0 text-warm-gray" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-ink font-[family-name:var(--font-geist-sans)]">{event.location}</span>
-                </div>
-              )}
-            </div>
-
-            {/* 3. Organizer Row */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6 pb-6 border-b border-warm-gray/20">
-              {event?.organizer && (
-                <Link
-                  href={`/profile/${event.organizer}`}
-                  className="flex items-center gap-2.5 group"
-                >
-                  <img
-                    src={`https://effigy.im/a/${event.organizer}.svg`}
-                    alt=""
-                    width={28}
-                    height={28}
-                    className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                  <div className="min-w-0">
-                    <span className="text-sm text-warm-gray font-mono group-hover:text-ink transition-colors block truncate">
-                      {displayName(event.organizer, names).name}
-                    </span>
-                    {displayName(event.organizer, names).isResolved && (
-                      <span className="text-sm text-ink/60 font-mono block truncate">
-                        {shortAddress(event.organizer)}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              )}
-              {event?.community && (
-                <Link
-                  href={`/community/${event.community}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-cobalt border border-cobalt/30 hover:bg-cobalt/5 transition-colors"
-                >
-                  Part of {deslugify(event.community)}
-                </Link>
-              )}
-            </div>
-
-            {/* 4. Action Buttons Row */}
-            <div className="flex flex-wrap items-center gap-3 mb-8">
-              <button
-                onClick={handleShare}
-                className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-warm-gray/40 hover:border-ink/40 transition-colors"
-              >
-                Share event
-              </button>
-              {shareOpen && event && (
-                <ShareModal event={event} onClose={() => setShareOpen(false)} />
-              )}
-              <button
-                onClick={() => setCalendarOpen(true)}
-                className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-warm-gray/40 hover:border-ink/40 transition-colors"
-              >
-                Add to calendar
-              </button>
-              {calendarOpen && (
-                <CalendarModal event={event} onClose={() => setCalendarOpen(false)} />
-              )}
-              {alreadyRsvpd && (
-                <button
-                  onClick={handleViewTicket}
-                  className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-warm-gray/40 hover:border-ink/40 transition-colors"
-                >
-                  View ticket
-                </button>
-              )}
-            </div>
-
-            {/* 5. About This Event */}
-            <div className="mb-10">
-              <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-kode-mono)]">
-                About this event
-              </h2>
-              {event?.description ? (
-                <p className="text-ink leading-relaxed whitespace-pre-wrap font-[family-name:var(--font-geist-sans)]">
-                  {event.description}
-                </p>
-              ) : (
-                <p className="text-warm-gray italic font-[family-name:var(--font-geist-sans)]">
-                  No description provided.
-                </p>
-              )}
-              {event?.date && (
-                <p className="mt-6 text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
-                  This event page expires on {formatExpiryDate(eventExpiresAt(event.date))}
-                </p>
-              )}
-            </div>
-
-            {/* 6. Location */}
-            {event?.location && (
-              <div className="mb-10">
-                <h2 className="text-xl font-semibold text-ink mb-4 font-[family-name:var(--font-kode-mono)]">
-                  Location
-                </h2>
-                <p className="text-ink font-[family-name:var(--font-geist-sans)] mb-4">
-                  {event.location}
-                </p>
-                <iframe
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(event.location)}&output=embed`}
-                  className="w-full border border-warm-gray/30"
-                  style={{ height: 200, border: 'none' }}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Event location map"
+                <img
+                  src={event.coverImageUrl}
+                  alt={event?.title || ''}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="w-full h-full" style={{ background: gradient }} />
+              )}
+            </div>
 
-          {/* ── RIGHT COLUMN (40%, sticky) ─────────────────────── */}
-          <div className="w-full md:w-[380px] md:max-w-[380px] shrink-0">
-            <div className="md:sticky md:top-6 flex flex-col gap-6">
-
-              {/* 1. RSVP Card */}
-              <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
-
-                {/* Count + capacity bar */}
-                <div>
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
-                      {rsvps?.length ?? 0}
-                    </span>
-                    {(event?.capacity ?? 0) > 0 ? (
-                      <span className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">
-                        / {event?.capacity} attending
-                      </span>
-                    ) : (
-                      <span className="text-warm-gray text-sm font-[family-name:var(--font-geist-sans)]">attending</span>
-                    )}
-                  </div>
-                  {capacityPct !== null && (
-                    <div className="h-1.5 bg-warm-gray/30 overflow-hidden">
-                      <div
-                        className="h-full bg-orange transition-all duration-500"
-                        style={{ width: `${capacityPct}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Attendees — stacked avatars */}
-                {(rsvps?.length ?? 0) === 0 ? (
-                  <p className="text-sm text-warm-gray">No attendees yet — be the first!</p>
-                ) : (
-                  <AttendeesStack
-                    rsvps={rsvps ?? []}
-                    names={names}
-                    verifiedAddresses={verifiedAddresses}
-                  />
-                )}
-
-                {/* Public attendees note */}
-                <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)] leading-snug">
-                  Attendance is public and verifiable on-chain.
-                </p>
-
-                {/* Waitlist */}
-                {(waitlist?.length ?? 0) > 0 && (
-                  <div className="border-t border-warm-gray/20 pt-4 flex flex-col gap-3">
-                    <p className="text-sm text-warm-gray font-[family-name:var(--font-geist-sans)]">
-                      {waitlist?.length ?? 0} {(waitlist?.length ?? 0) === 1 ? 'person' : 'people'} on the waitlist
-                    </p>
-                    <ul className="space-y-3 max-h-40 overflow-y-auto pr-1">
-                      {(waitlist ?? []).map((entry) => (
-                        <li key={entry?.entityKey} className="flex items-center gap-2.5">
-                          <img
-                            src={`https://effigy.im/a/${entry?.attendee}.svg`}
-                            alt=""
-                            width={24}
-                            height={24}
-                            className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                          <div className="truncate flex-1 min-w-0">
-                            <span className="text-sm text-ink font-mono truncate block">
-                              {displayName(entry?.attendee ?? '', names).name}
-                            </span>
-                            {displayName(entry?.attendee ?? '', names).isResolved && (
-                              <span className="text-sm text-ink/60 font-mono truncate block">
-                                {shortAddress(entry?.attendee ?? '')}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs font-semibold text-cobalt shrink-0">
-                            Waitlist
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Error */}
-                {error && <ErrorMessage message={error} />}
-
-                {/* CTA */}
-                {displayStatus === 'cancelled' ? (
-                  <div className="p-4 bg-warm-gray/10 border border-warm-gray/30 text-center">
-                    <p className="text-sm text-warm-gray font-[family-name:var(--font-geist-sans)]">
-                      This event has been cancelled
-                    </p>
-                  </div>
-                ) : !isConnected ? (
-                  <p className="text-center text-sm font-semibold text-cobalt py-3 font-[family-name:var(--font-geist-sans)]">
-                    Connect wallet to RSVP
-                  </p>
-                ) : alreadyRsvpd ? (
-                  <div className="flex flex-col gap-2">
-                    <button
-                      disabled
-                      className="w-full py-3 text-sm font-semibold bg-ink/10 text-ink border border-ink/20 cursor-default"
-                    >
-                      Attendance Confirmed ✓
-                    </button>
-                    {showCancelConfirm ? (
-                      <div className="border border-warm-gray/30 p-3 flex flex-col gap-2.5">
-                        <p className="text-sm text-ink">
-                          Are you sure you want to cancel? This will remove your RSVP from the blockchain.
-                        </p>
-                        <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)] leading-snug">
-                          Your RSVP will be deleted from Arkiv immediately.
-                        </p>
-                        <div className="flex gap-2 pt-0.5">
-                          <button
-                            onClick={handleCancelRSVP}
-                            disabled={cancelLoading}
-                            className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
-                          >
-                            {cancelLoading ? 'Cancelling…' : 'Yes, cancel'}
-                          </button>
-                          <button
-                            onClick={() => setShowCancelConfirm(false)}
-                            className="px-3 py-1.5 text-xs text-warm-gray border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors"
-                          >
-                            Keep RSVP
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setShowCancelConfirm(true)}
-                        className="text-xs text-warm-gray underline text-center font-[family-name:var(--font-geist-sans)] hover:text-ink transition-colors"
-                      >
-                        Cancel attendance
-                      </button>
-                    )}
-                  </div>
-                ) : atCapacity ? (
-                  alreadyOnWaitlist ? (
-                    <button
-                      disabled
-                      className="w-full py-3 text-sm font-semibold border cursor-default text-cobalt border-cobalt bg-cobalt/5"
-                    >
-                      You&apos;re on the waitlist
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleWaitlist}
-                      disabled={waitlistLoading}
-                      className="w-full py-3 text-sm font-semibold text-cream bg-cobalt transition-colors disabled:opacity-60 disabled:cursor-wait hover:bg-cobalt-light"
-                    >
-                      {waitlistLoading ? 'Joining…' : 'Join Waitlist'}
-                    </button>
-                  )
-                ) : (
-                  <button
-                    onClick={handleRSVP}
-                    disabled={rsvpLoading || !canRsvp}
-                    className="w-full py-3 text-sm font-semibold bg-orange text-cream hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-wait"
-                  >
-                    {rsvpLoading ? 'Confirming…' : 'Confirm Attendance'}
-                  </button>
-                )}
-
-                {/* Freed-spot notice */}
-                {cancelledWithWaitlist && (
-                  <p className="text-xs text-center text-cobalt font-[family-name:var(--font-geist-sans)] leading-snug">
-                    Your spot has been freed. Waitlisted attendees can now join.
-                  </p>
-                )}
-              </div>
-
-              {/* 2. Community Card */}
-              {event?.community && (
-                <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-4">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-geist-sans)]">
-                    Community
-                  </h3>
+            {/* Community card */}
+            {event?.community && (
+              <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-4">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-ink font-[family-name:var(--font-geist-sans)]">
+                  Community
+                </h3>
+                <div className="flex items-center justify-between">
                   <Link
                     href={`/community/${event.community}`}
                     className="flex items-center gap-3 group"
@@ -1543,227 +1229,502 @@ export default function EventPageClient() {
                       {communityProfile?.name || deslugify(event.community)}
                     </span>
                   </Link>
-                  {communityProfile?.description && (
-                    <p className="text-sm text-warm-gray leading-relaxed font-[family-name:var(--font-geist-sans)]">
-                      {communityProfile.description.length > 100
-                        ? communityProfile.description.slice(0, 100) + '…'
-                        : communityProfile.description}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between gap-3">
-                    <Link
-                      href={`/community/${event.community}`}
-                      className="text-xs font-semibold text-cobalt hover:text-cobalt-light transition-colors"
-                    >
-                      View community →
-                    </Link>
-                    <SubscribeButton slug={event.community} />
-                  </div>
+                  <SubscribeButton slug={event.community} />
                 </div>
+                {communityProfile?.description && (
+                  <p className="text-sm text-ink leading-relaxed font-[family-name:var(--font-geist-sans)]">
+                    {communityProfile.description.length > 100
+                      ? communityProfile.description.slice(0, 100) + '…'
+                      : communityProfile.description}
+                  </p>
+                )}
+                <Link
+                  href={`/community/${event.community}`}
+                  className="text-xs font-semibold text-cobalt hover:text-cobalt-light transition-colors"
+                >
+                  View community →
+                </Link>
+              </div>
+            )}
+
+            {/* Attendance / RSVP */}
+            <div className="border-t border-warm-gray/20 pt-5 flex flex-col gap-4">
+              <div>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-3xl font-bold text-ink font-[family-name:var(--font-kode-mono)]">
+                    {rsvps?.length ?? 0}
+                  </span>
+                  {(event?.capacity ?? 0) > 0 ? (
+                    <span className="text-ink text-sm font-[family-name:var(--font-geist-sans)]">
+                      / {event?.capacity} attending
+                    </span>
+                  ) : (
+                    <span className="text-ink text-sm font-[family-name:var(--font-geist-sans)]">attending</span>
+                  )}
+                </div>
+                {capacityPct !== null && (
+                  <div className="h-1.5 bg-warm-gray/30 overflow-hidden">
+                    <div
+                      className="h-full bg-orange transition-all duration-500"
+                      style={{ width: `${capacityPct}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {(waitlist?.length ?? 0) > 0 && (
+                <p className="text-sm text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                  {waitlist?.length ?? 0} {(waitlist?.length ?? 0) === 1 ? 'person' : 'people'} on the waitlist
+                </p>
               )}
 
-              {/* 3. Organizer Controls */}
-              {isOrganizer && (
-                <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-warm-gray font-[family-name:var(--font-geist-sans)]">
-                    Organizer Controls
-                  </h3>
+              {error && <ErrorMessage message={error} />}
 
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <Link
-                      href={`/event/edit/${id}`}
-                      className="px-4 py-2 text-xs font-semibold border border-warm-gray text-warm-gray hover:border-ink hover:text-ink transition-colors"
-                    >
-                      Edit event
-                    </Link>
-                    <button
-                      onClick={handleOpenScanner}
-                      className="px-4 py-2 text-xs font-semibold border border-warm-gray text-warm-gray hover:border-ink hover:text-ink transition-colors"
-                    >
-                      Scan QR
-                    </button>
-                  </div>
-
-                  {/* Status management */}
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-warm-gray">Status:</span>
-                      <StatusBadge status={displayStatus} />
+              {displayStatus === 'pending' ? (
+                <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-center">
+                  <p className="text-sm text-yellow-700 font-[family-name:var(--font-geist-sans)]">
+                    This event is awaiting approval from the community leader
+                  </p>
+                </div>
+              ) : displayStatus === 'cancelled' ? (
+                <div className="p-4 bg-warm-gray/10 border border-warm-gray/30 text-center">
+                  <p className="text-sm text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                    This event has been cancelled
+                  </p>
+                </div>
+              ) : !isConnected ? (
+                <p className="text-center text-sm font-semibold text-cobalt py-3 font-[family-name:var(--font-geist-sans)]">
+                  Connect wallet to RSVP
+                </p>
+              ) : alreadyRsvpd ? (
+                <div className="flex flex-col gap-2">
+                  <button
+                    disabled
+                    className="w-full py-3 text-sm font-semibold bg-ink/10 text-ink border border-ink/20 cursor-default"
+                  >
+                    Attendance Confirmed ✓
+                  </button>
+                  {showCancelConfirm ? (
+                    <div className="border border-warm-gray/30 p-3 flex flex-col gap-2.5">
+                      <p className="text-sm text-ink">
+                        Are you sure you want to cancel? This will remove your RSVP from the blockchain.
+                      </p>
+                      <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)] leading-snug">
+                        Your RSVP will be deleted from Arkiv immediately.
+                      </p>
+                      <div className="flex gap-2 pt-0.5">
+                        <button
+                          onClick={handleCancelRSVP}
+                          disabled={cancelLoading}
+                          className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
+                        >
+                          {cancelLoading ? 'Cancelling…' : 'Yes, cancel'}
+                        </button>
+                        <button
+                          onClick={() => setShowCancelConfirm(false)}
+                          className="px-3 py-1.5 text-xs text-ink/60 border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors"
+                        >
+                          Keep RSVP
+                        </button>
+                      </div>
                     </div>
-                    {(displayStatus === 'upcoming' || displayStatus === 'live') && (
-                      showCancelEventConfirm ? (
-                        <div className="border border-red-200 p-4 flex flex-col gap-3">
-                          <p className="text-sm font-semibold text-ink">Cancel this event?</p>
-                          <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
-                            Are you sure? This cannot be undone.
-                            {(rsvps?.length ?? 0) > 0 && (
-                              <> All {rsvps.length} RSVP{rsvps.length !== 1 ? 's' : ''} will be marked cancelled.</>
-                            )}
-                          </p>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={handleCancelEvent}
-                              disabled={cancelEventLoading}
-                              className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
-                            >
-                              {cancelEventLoading ? 'Cancelling…' : 'Yes, cancel event'}
-                            </button>
-                            <button
-                              onClick={() => setShowCancelEventConfirm(false)}
-                              disabled={cancelEventLoading}
-                              className="px-3 py-1.5 text-xs text-warm-gray border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors disabled:opacity-40"
-                            >
-                              Keep event
-                            </button>
-                          </div>
-                          {cancelEventStatus && (
-                            <p className="text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
-                              {cancelEventStatus}
-                            </p>
-                          )}
-                        </div>
-                      ) : (
+                  ) : (
+                    <button
+                      onClick={() => setShowCancelConfirm(true)}
+                      className="text-xs text-ink/60 underline text-center font-[family-name:var(--font-geist-sans)] hover:text-ink transition-colors"
+                    >
+                      Cancel attendance
+                    </button>
+                  )}
+                </div>
+              ) : atCapacity ? (
+                alreadyOnWaitlist ? (
+                  <button
+                    disabled
+                    className="w-full py-3 text-sm font-semibold border cursor-default text-cobalt border-cobalt bg-cobalt/5"
+                  >
+                    You&apos;re on the waitlist
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleWaitlist}
+                    disabled={waitlistLoading}
+                    className="w-full py-3 text-sm font-semibold text-cream bg-cobalt transition-colors disabled:opacity-60 disabled:cursor-wait hover:bg-cobalt-light"
+                  >
+                    {waitlistLoading ? 'Joining…' : 'Join Waitlist'}
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={handleRSVP}
+                  disabled={rsvpLoading || !canRsvp}
+                  className="w-full py-3 text-sm font-semibold bg-orange text-cream hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-wait"
+                >
+                  {rsvpLoading ? 'Confirming…' : 'Confirm Attendance'}
+                </button>
+              )}
+
+              {cancelledWithWaitlist && (
+                <p className="text-xs text-center text-cobalt font-[family-name:var(--font-geist-sans)] leading-snug">
+                  Your spot has been freed. Waitlisted attendees can now join.
+                </p>
+              )}
+
+              <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)] leading-snug">
+                Attendance is public and verifiable on-chain.
+              </p>
+            </div>
+
+            {/* Organizer card */}
+            {event?.organizer && (
+              <div className="bg-cream border border-warm-gray/40 p-6 flex flex-col gap-5">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-ink font-[family-name:var(--font-geist-sans)]">
+                  Organizer
+                </h3>
+                <Link
+                  href={`/profile/${event.organizer}`}
+                  className="flex items-center gap-3 group"
+                >
+                  <img
+                    src={`https://effigy.im/a/${event.organizer}.svg`}
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="min-w-0">
+                    <span className="text-sm font-semibold text-ink group-hover:text-cobalt transition-colors block truncate font-[family-name:var(--font-geist-sans)]">
+                      {displayName(event.organizer, names).name}
+                    </span>
+                    {displayName(event.organizer, names).isResolved && (
+                      <span className="text-xs text-ink/60 font-mono block truncate">
+                        {shortAddress(event.organizer)}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+                {isOrganizer && (
+                  <>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <Link
+                        href={`/event/edit/${id}`}
+                        className="px-4 py-2 text-xs font-semibold border border-ink/60 text-ink/60 hover:border-ink hover:text-ink transition-colors"
+                      >
+                        Edit event
+                      </Link>
+                      <button
+                        onClick={handleOpenScanner}
+                        className="px-4 py-2 text-xs font-semibold border border-ink/60 text-ink/60 hover:border-ink hover:text-ink transition-colors"
+                      >
+                        Scan QR
+                      </button>
+                      {(displayStatus === 'upcoming' || displayStatus === 'live') && !showCancelEventConfirm && (
                         <button
                           onClick={() => setShowCancelEventConfirm(true)}
-                          className="self-start px-4 py-1.5 text-xs font-semibold border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
+                          className="px-4 py-1.5 text-xs font-semibold border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
                         >
                           Cancel event
                         </button>
-                      )
-                    )}
-                  </div>
-
-                  {/* Waitlist (organizer view) */}
-                  {atCapacity && (
-                    <div className="border-t border-warm-gray/20 pt-4">
-                      <p className="text-sm font-semibold text-ink mb-3">
-                        Waitlist{(waitlist?.length ?? 0) > 0 ? ` (${waitlist?.length ?? 0})` : ''}
-                      </p>
-                      {(waitlist?.length ?? 0) > 0 ? (
-                        <ul className="space-y-2.5 mb-3">
-                          {(waitlist ?? []).map((entry) => (
-                            <li key={entry?.entityKey} className="flex items-center gap-2.5">
-                              <img
-                                src={`https://effigy.im/a/${entry?.attendee}.svg`}
-                                alt=""
-                                width={20}
-                                height={20}
-                                className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                              <div className="truncate min-w-0">
-                                <span className="text-sm text-ink font-mono truncate block">
-                                  {displayName(entry?.attendee ?? '', names).name}
-                                </span>
-                                {displayName(entry?.attendee ?? '', names).isResolved && (
-                                  <span className="text-sm text-ink/60 font-mono truncate block">
-                                    {shortAddress(entry?.attendee ?? '')}
-                                  </span>
-                                )}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-sm text-warm-gray italic mb-3">No one on the waitlist yet.</p>
                       )}
-                      <p className="text-xs text-warm-gray/70 font-[family-name:var(--font-geist-sans)] leading-snug">
-                        Waitlist members are stored on-chain and expire with the event.
-                      </p>
                     </div>
-                  )}
 
-                  {/* Verify attendance */}
-                  {verifyDone ? (
-                    <p className="text-sm font-medium text-ink">
-                      Event closed. Attendance verified on-chain.
-                    </p>
-                  ) : eventPassed ? (
-                    <>
-                      {!showVerifyPanel ? (
-                        <button
-                          onClick={() => setShowVerifyPanel(true)}
-                          className="px-4 py-2.5 bg-ink text-cream text-sm font-semibold hover:bg-ink/80 transition-colors"
-                        >
-                          Close event &amp; verify attendance
-                        </button>
-                      ) : (
-                        <div className="space-y-4">
-                          <p className="text-sm text-warm-gray">
-                            Select who actually attended:
-                          </p>
-                          {(rsvps?.length ?? 0) === 0 ? (
-                            <p className="text-sm text-warm-gray italic">No RSVPs to verify.</p>
-                          ) : (
-                            <ul className="space-y-2.5">
-                              {(rsvps ?? []).map((rsvp) => {
-                                const addr = rsvp?.attendee ?? '';
-                                const addrLower = addr.toLowerCase();
-                                const checked = checkedAttendees.has(addrLower);
-                                return (
-                                  <li key={rsvp?.entityKey} className="flex items-center gap-3">
-                                    <input
-                                      type="checkbox"
-                                      id={`verify-${addrLower}`}
-                                      checked={checked}
-                                      onChange={(e) => {
-                                        setCheckedAttendees((prev) => {
-                                          const next = new Set(prev);
-                                          if (e.target.checked) next.add(addrLower);
-                                          else next.delete(addrLower);
-                                          return next;
-                                        });
-                                      }}
-                                      className="w-4 h-4 accent-orange shrink-0"
-                                    />
-                                    <label
-                                      htmlFor={`verify-${addrLower}`}
-                                      className="font-mono cursor-pointer"
-                                    >
-                                      <span className="text-sm text-ink block">{displayName(addr, names).name}</span>
-                                      {displayName(addr, names).isResolved && (
-                                        <span className="text-sm text-ink/60 block">{shortAddress(addr)}</span>
-                                      )}
-                                    </label>
-                                  </li>
-                                );
-                              })}
-                            </ul>
+                    {showCancelEventConfirm && (
+                      <div className="border border-red-200 p-4 flex flex-col gap-3">
+                        <p className="text-sm font-semibold text-ink">Cancel this event?</p>
+                        <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                          Are you sure? This cannot be undone.
+                          {(rsvps?.length ?? 0) > 0 && (
+                            <> All {rsvps.length} RSVP{rsvps.length !== 1 ? 's' : ''} will be marked cancelled.</>
                           )}
-                          <div className="flex items-center gap-3 pt-1">
-                            <button
-                              onClick={handleVerifyAttendance}
-                              disabled={verifyLoading || checkedAttendees.size === 0}
-                              className="px-4 py-2.5 bg-orange text-cream text-sm font-semibold hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                              {verifyLoading
-                                ? 'Verifying…'
-                                : `Confirm attendance (${checkedAttendees.size})`}
-                            </button>
-                            <button
-                              onClick={() => setShowVerifyPanel(false)}
-                              className="text-sm text-warm-gray hover:text-ink transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleCancelEvent}
+                            disabled={cancelEventLoading}
+                            className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
+                          >
+                            {cancelEventLoading ? 'Cancelling…' : 'Yes, cancel event'}
+                          </button>
+                          <button
+                            onClick={() => setShowCancelEventConfirm(false)}
+                            disabled={cancelEventLoading}
+                            className="px-3 py-1.5 text-xs text-ink/60 border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors disabled:opacity-40"
+                          >
+                            Keep event
+                          </button>
                         </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-warm-gray/70 italic font-[family-name:var(--font-geist-sans)]">
-                      The &quot;Close event &amp; verify attendance&quot; option will appear after
-                      the event date has passed.
-                    </p>
-                  )}
+                        {cancelEventStatus && (
+                          <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                            {cancelEventStatus}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {atCapacity && (
+                      <div className="border-t border-warm-gray/20 pt-4">
+                        <p className="text-sm font-semibold text-ink mb-3">
+                          Waitlist{(waitlist?.length ?? 0) > 0 ? ` (${waitlist?.length ?? 0})` : ''}
+                        </p>
+                        {(waitlist?.length ?? 0) > 0 ? (
+                          <ul className="space-y-2.5 mb-3">
+                            {(waitlist ?? []).map((entry) => (
+                              <li key={entry?.entityKey} className="flex items-center gap-2.5">
+                                <img
+                                  src={`https://effigy.im/a/${entry?.attendee}.svg`}
+                                  alt=""
+                                  width={20}
+                                  height={20}
+                                  className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                                <div className="truncate min-w-0">
+                                  <span className="text-sm text-ink font-mono truncate block">
+                                    {displayName(entry?.attendee ?? '', names).name}
+                                  </span>
+                                  {displayName(entry?.attendee ?? '', names).isResolved && (
+                                    <span className="text-sm text-ink/60 font-mono truncate block">
+                                      {shortAddress(entry?.attendee ?? '')}
+                                    </span>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm text-ink/60 italic mb-3">No one on the waitlist yet.</p>
+                        )}
+                        <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)] leading-snug">
+                          Waitlist members are stored on-chain and expire with the event.
+                        </p>
+                      </div>
+                    )}
+
+                    {verifyDone ? (
+                      <p className="text-sm font-medium text-ink">
+                        Event closed. Attendance verified on-chain.
+                      </p>
+                    ) : eventPassed ? (
+                      <>
+                        {!showVerifyPanel ? (
+                          <button
+                            onClick={() => setShowVerifyPanel(true)}
+                            className="px-4 py-2.5 bg-ink text-cream text-sm font-semibold hover:bg-ink/80 transition-colors"
+                          >
+                            Close event &amp; verify attendance
+                          </button>
+                        ) : (
+                          <div className="space-y-4">
+                            <p className="text-sm text-ink/60">
+                              Select who actually attended:
+                            </p>
+                            {(rsvps?.length ?? 0) === 0 ? (
+                              <p className="text-sm text-ink/60 italic">No RSVPs to verify.</p>
+                            ) : (
+                              <ul className="space-y-2.5">
+                                {(rsvps ?? []).map((rsvp) => {
+                                  const addr = rsvp?.attendee ?? '';
+                                  const addrLower = addr.toLowerCase();
+                                  const checked = checkedAttendees.has(addrLower);
+                                  return (
+                                    <li key={rsvp?.entityKey} className="flex items-center gap-3">
+                                      <input
+                                        type="checkbox"
+                                        id={`verify-${addrLower}`}
+                                        checked={checked}
+                                        onChange={(e) => {
+                                          setCheckedAttendees((prev) => {
+                                            const next = new Set(prev);
+                                            if (e.target.checked) next.add(addrLower);
+                                            else next.delete(addrLower);
+                                            return next;
+                                          });
+                                        }}
+                                        className="w-4 h-4 accent-orange shrink-0"
+                                      />
+                                      <label
+                                        htmlFor={`verify-${addrLower}`}
+                                        className="font-mono cursor-pointer"
+                                      >
+                                        <span className="text-sm text-ink block">{displayName(addr, names).name}</span>
+                                        {displayName(addr, names).isResolved && (
+                                          <span className="text-sm text-ink/60 block">{shortAddress(addr)}</span>
+                                        )}
+                                      </label>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
+                            <div className="flex items-center gap-3 pt-1">
+                              <button
+                                onClick={handleVerifyAttendance}
+                                disabled={verifyLoading || checkedAttendees.size === 0}
+                                className="px-4 py-2.5 bg-orange text-cream text-sm font-semibold hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {verifyLoading
+                                  ? 'Verifying…'
+                                  : `Confirm attendance (${checkedAttendees.size})`}
+                              </button>
+                              <button
+                                onClick={() => setShowVerifyPanel(false)}
+                                className="text-sm text-ink/60 hover:text-ink transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm text-ink/70 italic font-[family-name:var(--font-geist-sans)]">
+                        The &quot;Close event &amp; verify attendance&quot; option will appear after
+                        the event date has passed.
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── Right column ── */}
+          <div className="flex flex-col gap-8">
+            {/* Event info */}
+            <div className="flex flex-col gap-5">
+              {/* Badges row */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <StatusBadge status={displayStatus} />
+                {event?.category && (
+                  <span className="inline-block px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-cream bg-ink font-[family-name:var(--font-geist-sans)]">
+                    {event.category}
+                  </span>
+                )}
+              </div>
+
+              {/* Title */}
+              <h1 className="text-3xl font-bold text-ink leading-tight font-[family-name:var(--font-kode-mono)]">
+                {event?.title || 'Untitled Event'}
+              </h1>
+
+              {/* Pending review banner */}
+              {displayStatus === 'pending' && (
+                <div className="bg-yellow-500/15 text-yellow-700 border border-yellow-500/30 rounded-lg p-4 flex items-start gap-3 font-[family-name:var(--font-geist-sans)]">
+                  <span className="text-lg leading-none shrink-0">&#9203;</span>
+                  <div>
+                    <p className="text-sm font-semibold">This event is pending review by the community leader</p>
+                    <p className="text-xs text-yellow-700/70 mt-1">It will be visible to everyone once approved.</p>
+                  </div>
                 </div>
               )}
 
+              {/* Date */}
+              {day && (
+                <div className="flex items-center gap-2.5 text-sm">
+                  <svg className="w-5 h-5 shrink-0 text-ink/60" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-ink font-[family-name:var(--font-geist-sans)]">{day}</span>
+                </div>
+              )}
+
+              {/* Time */}
+              {time && (
+                <div className="flex items-center gap-2.5 text-sm">
+                  <svg className="w-5 h-5 shrink-0 text-ink/60" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-ink font-[family-name:var(--font-geist-sans)]">{time}</span>
+                </div>
+              )}
+
+              {/* Location */}
+              {event?.location && (
+                <div className="flex items-center gap-2.5 text-sm">
+                  <svg className="w-5 h-5 shrink-0 text-ink/60" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-ink font-[family-name:var(--font-geist-sans)]">{event.location}</span>
+                </div>
+              )}
+
+              {/* Action buttons: Share + Calendar */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <button
+                  onClick={handleShare}
+                  className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-ink/80 hover:border-ink transition-colors"
+                >
+                  Share event
+                </button>
+                {shareOpen && event && (
+                  <ShareModal event={event} onClose={() => setShareOpen(false)} />
+                )}
+                <button
+                  onClick={() => setCalendarOpen(true)}
+                  className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-ink/80 hover:border-ink transition-colors"
+                >
+                  Add to calendar
+                </button>
+                {calendarOpen && (
+                  <CalendarModal event={event} onClose={() => setCalendarOpen(false)} />
+                )}
+                {alreadyRsvpd && (
+                  <button
+                    onClick={handleViewTicket}
+                    className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-ink/80 hover:border-ink transition-colors"
+                  >
+                    View ticket
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* About section */}
+            <div className="flex flex-col gap-7">
+              <h2 className="text-xl font-semibold text-ink font-[family-name:var(--font-kode-mono)]">
+                About this event
+              </h2>
+              {event?.description ? (
+                <p className="text-ink leading-relaxed whitespace-pre-wrap font-[family-name:var(--font-geist-sans)]">
+                  {event.description}
+                </p>
+              ) : (
+                <p className="text-ink/60 italic font-[family-name:var(--font-geist-sans)]">
+                  No description provided.
+                </p>
+              )}
+
+              {event?.location && (
+                <div className="flex flex-col gap-4">
+                  <h2 className="text-xl font-semibold text-ink font-[family-name:var(--font-kode-mono)]">
+                    Location
+                  </h2>
+                  <p className="text-ink font-[family-name:var(--font-geist-sans)]">
+                    {event.location}
+                  </p>
+                  <iframe
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(event.location)}&output=embed`}
+                    className="w-full border border-warm-gray/30 rounded-lg"
+                    style={{ height: 200, border: 'none' }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Event location map"
+                  />
+                </div>
+              )}
+
+              {event?.date && (
+                <p className="text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
+                  This event page expires on {formatExpiryDate(eventExpiresAt(event.date))}
+                </p>
+              )}
             </div>
           </div>
-
         </div>
       </div>
 

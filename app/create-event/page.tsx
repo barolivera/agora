@@ -7,7 +7,6 @@ import { createWalletClient, custom } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eventExpiresAt, secondsUntilExpiry } from '@/lib/expiration';
-import { ErrorMessage } from '@/app/components/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 import { publicClient, parseCommunity, shortAddress, type ArkivCommunity } from '@/lib/arkiv';
 import { eq } from '@arkiv-network/sdk/query';
@@ -134,7 +133,7 @@ function PreviewCard({
             <span className="text-2xl font-bold leading-none text-ink font-[family-name:var(--font-kode-mono)]">
               {parsedDate.day}
             </span>
-            <span className="text-[9px] font-bold tracking-widest text-warm-gray uppercase mt-0.5">
+            <span className="text-[9px] font-bold tracking-widest text-ink/60 uppercase mt-0.5">
               {parsedDate.month}
             </span>
           </div>
@@ -161,20 +160,20 @@ function PreviewCard({
           {title.trim() ? (
             <span className="text-ink">{title}</span>
           ) : (
-            <span className="text-ink/30 font-normal italic">Your event title</span>
+            <span className="text-ink/50 font-normal italic">Your event title</span>
           )}
         </h3>
 
         <div className="flex items-center gap-1.5 text-sm min-h-[1.25rem]">
           <svg
-            className={`w-3.5 h-3.5 shrink-0 ${location.trim() ? 'text-orange' : 'text-warm-gray/40'}`}
+            className={`w-3.5 h-3.5 shrink-0 ${location.trim() ? 'text-orange' : 'text-ink/60'}`}
             fill="currentColor"
             viewBox="0 0 20 20"
             aria-hidden="true"
           >
             <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
           </svg>
-          <span className={`truncate ${location.trim() ? 'text-warm-gray' : 'text-ink/30 italic'}`}>
+          <span className={`truncate ${location.trim() ? 'text-ink/60' : 'text-ink/50 italic'}`}>
             {location.trim() || 'Location'}
           </span>
         </div>
@@ -191,11 +190,11 @@ function PreviewCard({
             }}
           />
           <div className="truncate min-w-0">
-            <span className="text-xs text-warm-gray font-mono truncate block">
+            <span className="text-xs text-ink/60 font-mono truncate block">
               {displayName(organizer, names).name}
             </span>
             {displayName(organizer, names).isResolved && (
-              <span className="text-xs text-warm-gray/60 font-mono truncate block">
+              <span className="text-xs text-ink/60 font-mono truncate block">
                 {shortAddress(organizer)}
               </span>
             )}
@@ -414,14 +413,14 @@ function CreateEventContent() {
     return (
       <main className="max-w-lg mx-auto py-24 px-6 text-center">
         <div className="w-12 h-12 bg-warm-gray/30 flex items-center justify-center mx-auto mb-5">
-          <svg className="w-6 h-6 text-warm-gray" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
+          <svg className="w-6 h-6 text-ink/60" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18-3a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6m18 0V5.25A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25V6" />
           </svg>
         </div>
         <p className="text-xl font-[family-name:var(--font-kode-mono)] text-ink mb-2">
           Connect your wallet to continue
         </p>
-        <p className="text-sm text-warm-gray">
+        <p className="text-sm text-ink/60">
           You need a wallet to publish events on Arkiv.
         </p>
       </main>
@@ -458,6 +457,7 @@ function CreateEventContent() {
         ? isAutoApproved ? 'approved' : 'pending'
         : 'upcoming';
 
+      // Build payload — core fields only, enrichment added safely below
       const payload: Record<string, unknown> = {
         title,
         description,
@@ -473,25 +473,31 @@ function CreateEventContent() {
       if (coverImageUrl.trim()) {
         payload.coverImageUrl = coverImageUrl.trim();
       }
-      if (lumaUrl.trim()) {
-        payload.lumaUrl = lumaUrl.trim();
-      }
       if (normalizedCommunity) {
         payload.community = normalizedCommunity;
-      }
-      if (tags.length) {
-        payload.tags = tags;
       }
       if (endTime.trim()) {
         payload.endTime = endTime.trim();
       }
+
+      // Enrichment data — never block creation if this fails
+      try {
+        if (lumaUrl.trim()) payload.lumaUrl = lumaUrl.trim();
+        if (tags.length) payload.tags = tags;
+      } catch (enrichErr) {
+        console.warn('[create-event] enrichment data skipped:', enrichErr);
+      }
+
+      // Parse date safely for the attribute value
+      const dateMs = new Date(date).getTime();
+      const dateAttr = isFinite(dateMs) ? dateMs.toString() : Date.now().toString();
 
       const expiryDate = eventExpiresAt(date);
 
       const attributes: { key: string; value: string }[] = [
         { key: 'type', value: 'event' },
         { key: 'organizer', value: address.toLowerCase() },
-        { key: 'date', value: new Date(date).getTime().toString() },
+        { key: 'date', value: dateAttr },
         { key: 'status', value: eventStatus },
       ];
       if (category) {
@@ -510,6 +516,15 @@ function CreateEventContent() {
 
       router.push(`/event/${entityKey}`);
     } catch (err) {
+      console.error('[create-event] submit failed:', err);
+      console.error('[create-event] error type:', typeof err);
+      console.error('[create-event] error message:', err instanceof Error ? err.message : String(err));
+      console.error('[create-event] payload snapshot:', {
+        title, description, date, location, capacity, category,
+        communityTag, normalizedCommunity: normalizeCommunity(communityTag),
+        hasWalletClient: !!wagmiWalletClient,
+        chainId,
+      });
       setError(friendlyError(err));
     } finally {
       setLoading(false);
@@ -526,7 +541,7 @@ function CreateEventContent() {
             <h1 className="text-4xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-2">
               Create your event
             </h1>
-            <p className="text-warm-gray mb-10">
+            <p className="text-ink/60 mb-10">
               Your event lives on Arkiv — owned by you, forever.
             </p>
 
@@ -584,12 +599,6 @@ function CreateEventContent() {
               </div>
             )}
 
-            {error && (
-              <div className="mb-6">
-                <ErrorMessage message={error} onRetry={() => setError('')} />
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-ink mb-1.5">
@@ -604,7 +613,7 @@ function CreateEventContent() {
                   className={inputCls}
                 />
                 {aiData?.translatedTitle && (
-                  <p className="mt-1.5 text-xs text-warm-gray flex items-center gap-1.5 font-[family-name:var(--font-geist-sans)]">
+                  <p className="mt-1.5 text-xs text-ink/60 flex items-center gap-1.5 font-[family-name:var(--font-geist-sans)]">
                     <AIBadge /> ES: {aiData.translatedTitle}
                   </p>
                 )}
@@ -623,16 +632,16 @@ function CreateEventContent() {
                   className={`${inputCls} resize-none`}
                 />
                 {aiData?.summary && (
-                  <p className="mt-1.5 text-xs text-warm-gray flex items-center gap-1.5 font-[family-name:var(--font-geist-sans)]">
+                  <p className="mt-1.5 text-xs text-ink/60 flex items-center gap-1.5 font-[family-name:var(--font-geist-sans)]">
                     <AIBadge /> Resumen: {aiData.summary}
                   </p>
                 )}
                 {aiData?.translatedDescription && (
                   <details className="mt-1.5">
-                    <summary className="text-xs text-warm-gray flex items-center gap-1.5 cursor-pointer font-[family-name:var(--font-geist-sans)]">
+                    <summary className="text-xs text-ink/60 flex items-center gap-1.5 cursor-pointer font-[family-name:var(--font-geist-sans)]">
                       <AIBadge /> Ver traducción al español
                     </summary>
-                    <p className="mt-1 text-xs text-warm-gray/80 pl-5 font-[family-name:var(--font-geist-sans)]">
+                    <p className="mt-1 text-xs text-ink/60 pl-5 font-[family-name:var(--font-geist-sans)]">
                       {aiData.translatedDescription}
                     </p>
                   </details>
@@ -652,7 +661,7 @@ function CreateEventContent() {
                       className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-geist-sans)] flex items-center gap-1 ${
                         category === cat
                           ? 'bg-ink text-cream'
-                          : 'border border-warm-gray/40 text-warm-gray hover:text-ink hover:border-ink/30'
+                          : 'border border-warm-gray/40 text-ink/60 hover:text-ink hover:border-ink/30'
                       }`}
                     >
                       {cat}
@@ -677,11 +686,11 @@ function CreateEventContent() {
                       className={inputCls}
                     />
                   </div>
-                  <span className="pb-3 text-warm-gray font-[family-name:var(--font-geist-sans)]">—</span>
+                  <span className="pb-3 text-ink/60 font-[family-name:var(--font-geist-sans)]">—</span>
                   <div className="w-36">
                     <label className="block text-sm font-medium text-ink mb-1.5">
                       End
-                      <span className="ml-1.5 text-xs font-normal text-warm-gray">(optional)</span>
+                      <span className="ml-1.5 text-xs font-normal text-ink/60">(optional)</span>
                     </label>
                     <input
                       type="time"
@@ -691,7 +700,7 @@ function CreateEventContent() {
                     />
                   </div>
                 </div>
-                <p className="mt-1.5 text-xs text-warm-gray/60 font-[family-name:var(--font-geist-sans)] leading-snug">
+                <p className="mt-1.5 text-xs text-ink/60 font-[family-name:var(--font-geist-sans)] leading-snug">
                   This event will be automatically removed from Agora 30 days after it takes place — just like in real life.
                 </p>
               </div>
@@ -728,7 +737,7 @@ function CreateEventContent() {
               <div>
                 <label className="block text-sm font-medium text-ink mb-1.5">
                   Cover image URL
-                  <span className="ml-2 text-xs font-normal text-warm-gray">(optional)</span>
+                  <span className="ml-2 text-xs font-normal text-ink/60">(optional)</span>
                 </label>
                 <input
                   type="url"
@@ -781,7 +790,7 @@ function CreateEventContent() {
                 )}
                 {aiData?.suggestedCommunities && aiData.suggestedCommunities.length > 0 && (
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-warm-gray flex items-center gap-1 font-[family-name:var(--font-geist-sans)]">
+                    <span className="text-xs text-ink/60 flex items-center gap-1 font-[family-name:var(--font-geist-sans)]">
                       <AIBadge /> Suggested:
                     </span>
                     {aiData.suggestedCommunities.map((comm) => (
@@ -817,7 +826,7 @@ function CreateEventContent() {
                         <button
                           type="button"
                           onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}
-                          className="text-warm-gray hover:text-ink ml-0.5"
+                          className="text-ink/60 hover:text-ink ml-0.5"
                           aria-label={`Remove tag ${tag}`}
                         >
                           &times;
@@ -826,6 +835,12 @@ function CreateEventContent() {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {error && (
+                <p className="text-sm text-red-600 font-[family-name:var(--font-geist-sans)]">
+                  {error}
+                </p>
               )}
 
               <div className="pt-2">
@@ -854,7 +869,7 @@ function CreateEventContent() {
 
           {/* ── Right: live preview ───────────────────────── */}
           <div className="lg:sticky lg:top-6">
-            <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-warm-gray/60 mb-3">
+            <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-ink/60 mb-3">
               Preview
             </p>
             <PreviewCard
@@ -866,7 +881,7 @@ function CreateEventContent() {
               coverImageUrl={coverImageUrl}
               names={names}
             />
-            <p className="mt-3 text-xs text-warm-gray/50 text-center">
+            <p className="mt-3 text-xs text-ink/60 text-center">
               Updates as you type
             </p>
           </div>
@@ -906,7 +921,7 @@ function CreateEventContent() {
                   className={inputCls}
                 />
                 {newCommunityName.trim() && (
-                  <p className="mt-1.5 text-xs text-warm-gray font-[family-name:var(--font-geist-sans)]">
+                  <p className="mt-1.5 text-xs text-ink/60 font-[family-name:var(--font-geist-sans)]">
                     Slug: <span className="font-mono text-cobalt">{slugify(newCommunityName)}</span>
                   </p>
                 )}
@@ -914,7 +929,7 @@ function CreateEventContent() {
               <div>
                 <label className="block text-sm font-medium text-ink mb-1.5">
                   Description
-                  <span className="ml-1.5 text-xs font-normal text-warm-gray">(optional)</span>
+                  <span className="ml-1.5 text-xs font-normal text-ink/60">(optional)</span>
                 </label>
                 <textarea
                   placeholder="What's this community about?"

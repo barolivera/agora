@@ -77,7 +77,7 @@ export default function CommunitiesGrid({ communities }: { communities: Communit
         <p className="text-2xl text-ink font-[family-name:var(--font-kode-mono)] mb-3">
           No communities yet.
         </p>
-        <p className="text-warm-gray text-sm mb-8 max-w-xs leading-relaxed">
+        <p className="text-ink/60 text-sm mb-8 max-w-xs leading-relaxed">
           Create a community or tag an event with a community name to get started.
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
