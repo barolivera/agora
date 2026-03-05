@@ -274,10 +274,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-cream">
 
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="relative bg-[#211f24] overflow-hidden" style={{ minHeight: '605px' }}>
+      <section className="relative bg-cream md:bg-[#211f24] overflow-hidden md:min-h-[605px]">
 
-        {/* Full-bleed background image */}
-        <div className="absolute inset-0" aria-hidden="true">
+        {/* Full-bleed background image — desktop only */}
+        <div className="absolute inset-0 hidden md:block" aria-hidden="true">
           <img
             src="https://www.figma.com/api/mcp/asset/34d3f32d-8ca5-4f14-95f3-7b7793941ec0"
             alt=""
@@ -286,7 +286,7 @@ export default function HomePage() {
         </div>
 
         {/* Content — sits directly on background */}
-        <div className="relative z-10 max-w-6xl mx-auto px-6" style={{ paddingTop: '149px', paddingBottom: '80px' }}>
+        <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 md:pt-[149px] md:pb-[80px]">
           <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-6">
               <h1
@@ -395,8 +395,8 @@ export default function HomePage() {
         )}
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
               <CardSkeleton key={i} index={i} />
             ))}
           </div>
@@ -432,8 +432,8 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredEvents.slice(0, 6).map((event, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {filteredEvents.slice(0, 8).map((event, i) => (
                 <EventCard key={event?.entityKey} event={event} index={i} />
               ))}
             </div>

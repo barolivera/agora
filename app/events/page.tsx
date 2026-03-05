@@ -262,8 +262,8 @@ export default function EventsPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
             <CardSkeleton key={i} index={i} />
           ))}
         </div>
@@ -297,7 +297,7 @@ export default function EventsPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredEvents.map((event, i) => (
             <EventCard key={event?.entityKey} event={event} index={i} showIndependentBadge={feedFilter === 'all'} />
           ))}
