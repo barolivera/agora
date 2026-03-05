@@ -34,12 +34,12 @@ export async function generateMetadata({
 
 // ── Cover section (hero banner) ─────────────────────────────────────────────────
 
-function CoverSection({ coverUrl }: { coverUrl?: string }) {
+function CoverSection({ coverUrl, name }: { coverUrl?: string; name: string }) {
   return (
     <div className="relative z-0 h-[293px] overflow-hidden rounded-b-sm">
       <img
         src={coverUrl || '/default-community-cover.png'}
-        alt=""
+        alt={`${name} cover`}
         className="absolute inset-0 w-full h-full object-cover"
       />
     </div>
@@ -119,7 +119,7 @@ function HeroSection({
     <section className="bg-ink">
       <div className="max-w-6xl mx-auto px-6">
         {/* Cover banner — contained within max-w container */}
-        <CoverSection coverUrl={profile?.coverUrl} />
+        <CoverSection coverUrl={profile?.coverUrl} name={displayName} />
 
         {/* Profile section — logo overlaps cover bottom */}
         <div className="relative z-10 -mt-10 pb-8 flex flex-col gap-6">

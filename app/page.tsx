@@ -266,15 +266,25 @@ export default function HomePage() {
     <div className="min-h-screen bg-cream">
 
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="relative bg-cream md:bg-[#211f24] overflow-hidden md:min-h-[605px]">
+      <section className="relative bg-[#211f24] overflow-hidden">
+
+        {/* Background image */}
+        <div className="absolute inset-0" aria-hidden="true">
+          <div className="absolute inset-0 bg-[#211f24]" />
+          <img
+            src="/hero-bg.png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 md:pt-[149px] md:pb-[80px]">
-          <div className="flex flex-col gap-8">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 md:pt-[149px] md:pb-[134px]">
+          <div className="flex flex-col gap-8 max-w-[743px]">
             <div className="flex flex-col gap-6">
               <h1
                 className="font-bold leading-[1.1] font-[family-name:var(--font-kode-mono)] text-ink"
-                style={{ fontSize: 'clamp(2.5rem, 4.75vw, 4.5rem)', letterSpacing: '-2.4px', maxWidth: '743px' }}
+                style={{ fontSize: 'clamp(2.5rem, 4.75vw, 4.5rem)', letterSpacing: '-2.4px' }}
               >
                 <span className="block">The public square,</span>
                 <span className="block text-orange">decentralized.</span>

@@ -6,7 +6,7 @@ import { useAccount, useWalletClient } from 'wagmi';
 import { createWalletClient, custom, type Hex } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { jsonToPayload } from '@arkiv-network/sdk/utils';
-import { publicClient, type ArkivEvent } from '@/lib/arkiv';
+import { publicClient, cascadeDeleteEvent, type ArkivEvent } from '@/lib/arkiv';
 import { eventExpiresAt, secondsUntilExpiry } from '@/lib/expiration';
 
 export default function PendingEvents({
@@ -90,7 +90,7 @@ export default function PendingEvents({
         transport: custom(wagmiWalletClient as any),
       });
 
-      await arkivWalletClient.deleteEntity({ entityKey: event.entityKey as Hex });
+      await cascadeDeleteEvent(arkivWalletClient, event.entityKey);
       setEvents((prev) => prev.filter((e) => e.entityKey !== event.entityKey));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reject event');

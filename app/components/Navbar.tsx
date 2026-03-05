@@ -37,7 +37,7 @@ export function Navbar() {
             className="flex items-center gap-2 text-2xl font-bold font-[family-name:var(--font-kode-mono)] tracking-tight"
             style={{ color: '#F2EDE4' }}
           >
-            <Image src="/logo.svg" alt="" width={28} height={28} />
+            <Image src="/logo.svg" alt="Agora logo" width={28} height={28} />
             Agora
           </Link>
 
@@ -100,7 +100,7 @@ export function Navbar() {
                     >
                       <img
                         src={`https://effigy.im/a/${account.address}.svg`}
-                        alt=""
+                        alt="Wallet avatar"
                         width={20}
                         height={20}
                         className="rounded-full"

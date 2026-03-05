@@ -7,7 +7,8 @@ import { kaolin } from '@arkiv-network/sdk/chains';
 import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, KAOLIN_CHAIN_ID } from '@/lib/arkiv';
-import { friendlyError } from '@/lib/errorUtils';
+import { friendlyError, isUserRejection } from '@/lib/errorUtils';
+import { useSigningState } from '@/lib/useSigningState';
 
 
 interface Props {
@@ -22,9 +23,9 @@ export default function SubscribeButton({ slug, compact }: Props) {
 
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriptionKey, setSubscriptionKey] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
+  const signing = useSigningState();
 
   useEffect(() => {
     if (!address) {
@@ -69,7 +70,7 @@ export default function SubscribeButton({ slug, compact }: Props) {
       return;
     }
 
-    setLoading(true);
+    signing.start();
     setError('');
 
     try {
@@ -95,6 +96,8 @@ export default function SubscribeButton({ slug, compact }: Props) {
         expiresIn: ExpirationTime.fromDays(365),
       });
 
+      signing.signed();
+
       // Re-fetch to get the entity key
       const result = await publicClient
         .buildQuery()
@@ -105,10 +108,14 @@ export default function SubscribeButton({ slug, compact }: Props) {
       const entity = result?.entities?.[0];
       setIsSubscribed(true);
       setSubscriptionKey(entity?.key ?? null);
+      signing.done();
     } catch (err) {
-      setError(friendlyError(err));
-    } finally {
-      setLoading(false);
+      if (isUserRejection(err)) {
+        signing.cancelled();
+      } else {
+        signing.reset();
+        setError(friendlyError(err));
+      }
     }
   }
 
@@ -119,7 +126,7 @@ export default function SubscribeButton({ slug, compact }: Props) {
       return;
     }
 
-    setLoading(true);
+    signing.start();
     setError('');
 
     try {
@@ -131,16 +138,33 @@ export default function SubscribeButton({ slug, compact }: Props) {
       });
 
       await arkivWalletClient.deleteEntity({ entityKey: subscriptionKey as Hex });
+      signing.signed();
       setIsSubscribed(false);
       setSubscriptionKey(null);
+      signing.done();
     } catch (err) {
-      setError(friendlyError(err));
-    } finally {
-      setLoading(false);
+      if (isUserRejection(err)) {
+        signing.cancelled();
+      } else {
+        signing.reset();
+        setError(friendlyError(err));
+      }
     }
   }
 
   if (!isConnected) return null;
+
+  const buttonLabel = signing.phase === 'waiting'
+    ? 'Waiting for signature…'
+    : signing.phase === 'saving'
+    ? 'Confirmed! Saving…'
+    : signing.phase === 'done'
+    ? 'Done ✓'
+    : isSubscribed
+    ? 'Subscribed ✓'
+    : 'Subscribe';
+
+  const isDisabled = signing.isActive || checking;
 
   const subscribedCls = compact
     ? 'inline-flex items-center px-3 py-1 text-xs font-semibold border border-ink/30 text-ink/80 rounded-full hover:border-ink/50 transition-colors font-[family-name:var(--font-kode-mono)] disabled:opacity-50'
@@ -155,19 +179,36 @@ export default function SubscribeButton({ slug, compact }: Props) {
       {isSubscribed ? (
         <button
           onClick={handleUnsubscribe}
-          disabled={loading || checking}
+          disabled={isDisabled}
           className={subscribedCls}
         >
-          {loading ? '…' : 'Subscribed ✓'}
+          {(signing.phase === 'waiting' || signing.phase === 'saving') && (
+            <svg className="animate-spin -ml-0.5 mr-1.5 h-3 w-3" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          {buttonLabel}
         </button>
       ) : (
         <button
           onClick={handleSubscribe}
-          disabled={loading || checking}
+          disabled={isDisabled}
           className={unsubscribedCls}
         >
-          {loading ? '…' : 'Subscribe'}
+          {(signing.phase === 'waiting' || signing.phase === 'saving') && (
+            <svg className="animate-spin -ml-0.5 mr-1.5 h-3 w-3" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          {buttonLabel}
         </button>
+      )}
+      {signing.phase === 'cancelled' && (
+        <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
+          Transaction cancelled. No worries — try again when ready.
+        </p>
       )}
       {!compact && error && <p className="text-xs text-red-400">{error}</p>}
     </div>

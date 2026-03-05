@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "SEED_PRIVATE_KEY=your_key_here tsx scripts/seed-events.ts"
+    "seed": "tsx scripts/seed-events.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

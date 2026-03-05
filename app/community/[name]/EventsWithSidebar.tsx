@@ -68,7 +68,7 @@ function EventCard({ event }: { event: ArkivEvent }) {
         {event?.coverImageUrl ? (
           <img
             src={event.coverImageUrl}
-            alt=""
+            alt={`${event.title} cover`}
             className="w-full h-full object-cover"
           />
         ) : (

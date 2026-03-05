@@ -37,3 +37,15 @@ export function friendlyError(err: unknown): string {
 
   return 'Something went wrong. Please try again.';
 }
+
+/** Returns true if the error is a wallet user-rejection (MetaMask cancel, etc.) */
+export function isUserRejection(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return (
+    msg.includes('user rejected') ||
+    msg.includes('user denied') ||
+    msg.includes('rejected the request') ||
+    msg.includes('transaction was rejected') ||
+    msg.includes('action_rejected')
+  );
+}

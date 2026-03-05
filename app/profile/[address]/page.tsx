@@ -24,6 +24,7 @@ import {
   type ArkivRSVP,
 } from '@/lib/arkiv';
 import { getEventStatus } from '@/lib/expiration';
+import { deslugify } from '@/lib/utils';
 
 const GRADIENTS: [string, string][] = [
   ['#E8491C', '#C8C0B4'],
@@ -60,7 +61,7 @@ function EventThumbnail({ event }: { event: ArkivEvent }) {
     return (
       <img
         src={event.coverImageUrl}
-        alt=""
+        alt={`${event.title} cover`}
         className="w-full h-full object-cover"
         onError={() => setImgError(true)}
       />
@@ -118,7 +119,7 @@ function SmallEventCard({ event }: { event: ArkivEvent }) {
 }
 
 function CommunityCard({ slug, community }: { slug: string; community?: ArkivCommunity }) {
-  const name = community?.name || slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const name = community?.name || deslugify(slug);
   const logo = community?.logoUrl;
   return (
     <Link
@@ -126,7 +127,7 @@ function CommunityCard({ slug, community }: { slug: string; community?: ArkivCom
       className="flex items-center gap-3 p-3 border border-warm-gray/20 hover:border-warm-gray/40 transition-colors group"
     >
       {logo ? (
-        <img src={logo} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+        <img src={logo} alt={`${name} logo`} className="w-10 h-10 rounded-full object-cover shrink-0" />
       ) : (
         <div className="w-10 h-10 rounded-full bg-cobalt/10 flex items-center justify-center shrink-0">
           <span className="text-cobalt font-bold text-sm font-[family-name:var(--font-kode-mono)]">

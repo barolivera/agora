@@ -91,7 +91,7 @@ function PreviewCard({
         {hasImage && (
           <img
             src={coverImageUrl}
-            alt=""
+            alt={`${title || 'Event'} cover`}
             className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
@@ -154,7 +154,7 @@ function PreviewCard({
         <div className="flex items-center gap-2 pt-3 border-t border-warm-gray/40">
           <img
             src={`https://effigy.im/a/${organizer}.svg`}
-            alt=""
+            alt="Organizer avatar"
             width={20}
             height={20}
             className="rounded-full ring-1 ring-warm-gray/30 shrink-0"
@@ -892,6 +892,9 @@ function CreateEventContent() {
         >
           <div
             className="bg-cream rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Create a community"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-xl font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-6">

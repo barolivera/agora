@@ -44,7 +44,7 @@ export function EventCard({
         {event?.coverImageUrl && (
           <img
             src={event.coverImageUrl}
-            alt=""
+            alt={`${event.title} cover`}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           />
         )}

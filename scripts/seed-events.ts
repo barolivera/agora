@@ -1,4 +1,4 @@
-// Run with: SEED_PRIVATE_KEY=0x... npm run seed
+// Run with: npm run seed (set SEED_PRIVATE_KEY in .env.local)
 // Get your private key from Rabby: Settings → My Wallet → Export Private Key
 // Make sure the wallet has testnet ETH from kaolin.hoodi.arkiv.network/faucet
 
