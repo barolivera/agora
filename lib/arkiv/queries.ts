@@ -1,8 +1,8 @@
 import { createPublicClient, http, type Hex } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { and, eq } from '@arkiv-network/sdk/query';
-import type { ArkivEvent, ArkivRSVP, ArkivAttendance, ArkivWaitlist, ArkivProfile } from './types';
-import { parseEvent, parseRSVP, parseAttendance, parseWaitlist, parseProfile } from './parsers';
+import type { ArkivEvent, ArkivRSVP, ArkivAttendance, ArkivWaitlist, ArkivApproval, ArkivProfile } from './types';
+import { parseEvent, parseRSVP, parseAttendance, parseWaitlist, parseApproval, parseProfile } from './parsers';
 
 export const KAOLIN_CHAIN_ID = 60138453025;
 
@@ -79,6 +79,61 @@ export async function fetchEventsByStatus(status: string): Promise<ArkivEvent[]>
     .limit(500)
     .fetch();
   return result?.entities?.map(parseEvent) ?? [];
+}
+
+// ── Approval helpers ────────────────────────────────────────────────────────
+
+export async function fetchApprovalsByEventIds(eventIds: string[]): Promise<Map<string, ArkivApproval>> {
+  if (eventIds.length === 0) return new Map();
+  const result = await publicClient
+    .buildQuery()
+    .where(eq('type', 'approval'))
+    .withPayload(true)
+    .limit(500)
+    .fetch();
+  const approvals = result?.entities?.map(parseApproval) ?? [];
+  const map = new Map<string, ArkivApproval>();
+  for (const a of approvals) {
+    if (eventIds.includes(a.eventId)) {
+      map.set(a.eventId, a);
+    }
+  }
+  return map;
+}
+
+export async function fetchApprovalsByCommunity(communitySlug: string): Promise<ArkivApproval[]> {
+  const result = await publicClient
+    .buildQuery()
+    .where(and([eq('type', 'approval'), eq('community', communitySlug)]))
+    .withPayload(true)
+    .limit(500)
+    .fetch();
+  return result?.entities?.map(parseApproval) ?? [];
+}
+
+/**
+ * Determines whether an event is visible publicly.
+ * An event is approved if:
+ * 1. It has no community (independent event) — always visible
+ * 2. It has an approval entity with status="approved"
+ * 3. The event organizer is the community creator (auto-approved)
+ */
+export function isEventApproved(
+  event: ArkivEvent,
+  approvals: Map<string, ArkivApproval>,
+  communityCreators?: Map<string, string>,
+): boolean {
+  // No community → independent event, always visible
+  if (!event.community) return true;
+  // Has an approval entity
+  const approval = approvals.get(event.entityKey);
+  if (approval) return approval.status === 'approved';
+  // Auto-approved: organizer is the community creator
+  if (communityCreators) {
+    const creator = communityCreators.get(event.community);
+    if (creator && event.organizer.toLowerCase() === creator.toLowerCase()) return true;
+  }
+  return false;
 }
 
 // ── Profile display name helpers ────────────────────────────────────────────

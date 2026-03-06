@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { eq } from '@arkiv-network/sdk/query';
-import { publicClient, parseEvent, parseCommunity, type ArkivEvent, type ArkivCommunity } from '@/lib/arkiv';
+import { publicClient, parseEvent, parseCommunity, parseApproval, isEventApproved, type ArkivEvent, type ArkivCommunity, type ArkivApproval } from '@/lib/arkiv';
 import { getEventStatus } from '@/lib/expiration';
 import { EventCard, CardSkeleton } from '@/app/components/EventCard';
 import { ErrorMessage } from '@/app/components/ErrorMessage';
@@ -123,6 +123,8 @@ function CommunityCard({ entry }: { entry: CommunityEntry }) {
 
 export default function HomePage() {
   const [events, setEvents] = useState<ArkivEvent[]>([]);
+  const [approvals, setApprovals] = useState<Map<string, ArkivApproval>>(new Map());
+  const [communityCreators, setCommunityCreators] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [homeCommunities, setHomeCommunities] = useState<CommunityEntry[]>([]);
@@ -135,40 +137,20 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    async function fetchRecentEvents() {
+    async function fetchData() {
       try {
-        const result = await publicClient
-          .buildQuery()
-          .where(eq('type', 'event'))
-          .withPayload(true)
-          .limit(50)
-          .fetch();
-
-        const entities = result?.entities;
-        if (!entities) {
-          setEvents([]);
-          return;
-        }
-        setEvents(entities.map(parseEvent));
-      } catch (err) {
-        setError(friendlyError(err));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchRecentEvents();
-  }, []);
-
-  useEffect(() => {
-    async function fetchHomeCommunities() {
-      try {
-        const [eventsResult, profilesResult] = await Promise.all([
+        const [eventsResult, approvalsResult, communitiesResult] = await Promise.all([
           publicClient
             .buildQuery()
             .where(eq('type', 'event'))
             .withPayload(true)
-            .limit(200)
+            .limit(50)
+            .fetch(),
+          publicClient
+            .buildQuery()
+            .where(eq('type', 'approval'))
+            .withPayload(true)
+            .limit(500)
             .fetch()
             .catch(() => null),
           publicClient
@@ -180,53 +162,76 @@ export default function HomePage() {
             .catch(() => null),
         ]);
 
-        const evts = eventsResult?.entities?.map(parseEvent) ?? [];
+        const entities = eventsResult?.entities;
+        if (!entities) {
+          setEvents([]);
+          return;
+        }
+        setEvents(entities.map(parseEvent));
+
+        // Build approval map
+        const approvalMap = new Map<string, ArkivApproval>();
+        for (const entity of approvalsResult?.entities ?? []) {
+          const a = parseApproval(entity);
+          approvalMap.set(a.eventId, a);
+        }
+        setApprovals(approvalMap);
+
+        // Build community creators map
+        const creatorsMap = new Map<string, string>();
+        for (const entity of communitiesResult?.entities ?? []) {
+          const c = parseCommunity(entity);
+          if (c.slug && c.createdBy && !creatorsMap.has(c.slug)) {
+            creatorsMap.set(c.slug, c.createdBy);
+          }
+        }
+        setCommunityCreators(creatorsMap);
+
+        // Also build home communities
+        const evts = entities.map(parseEvent);
         const groups = new Map<string, number>();
         for (const evt of evts) {
           if (evt?.community) {
             groups.set(evt.community, (groups.get(evt.community) ?? 0) + 1);
           }
         }
-
         const profilesBySlug = new Map<string, ArkivCommunity>();
-        for (const entity of profilesResult?.entities ?? []) {
+        for (const entity of communitiesResult?.entities ?? []) {
           const profile = parseCommunity(entity);
           if (profile.slug && !profilesBySlug.has(profile.slug)) {
             profilesBySlug.set(profile.slug, profile);
           }
         }
-
         const allSlugs = new Set([...groups.keys(), ...profilesBySlug.keys()]);
-        const result = Array.from(allSlugs)
+        const communityEntries = Array.from(allSlugs)
           .map((slug) => ({
             slug,
             count: groups.get(slug) ?? 0,
             profile: profilesBySlug.get(slug),
           }))
           .sort((a, b) => b.count - a.count);
-
-        setHomeCommunities(result.slice(0, 3));
-      } catch {
-        // render empty state
+        setHomeCommunities(communityEntries.slice(0, 3));
+      } catch (err) {
+        setError(friendlyError(err));
       } finally {
+        setLoading(false);
         setHomeCommunitiesLoading(false);
       }
     }
 
-    fetchHomeCommunities();
+    fetchData();
   }, []);
 
   // Derived: filtered + sorted events (client-side)
   const filteredEvents = (() => {
     let result = [...(events ?? [])];
 
-    // Always filter out junk: must have valid community tag + valid date + not pending approval
-    const beforeCount = result.length;
+    // Always filter out junk: must have valid community tag + valid date + approved
     result = result.filter((e) => {
       const hasCommunity = e?.community && e.community.trim() !== '';
       const hasDate = e?.date && e.date.trim() !== '';
-      const notPending = e?.status !== 'pending';
-      return hasCommunity && hasDate && notPending;
+      const approved = isEventApproved(e, approvals, communityCreators);
+      return hasCommunity && hasDate && approved;
     });
     if (statusFilter !== 'all') {
       result = result.filter((e) => {

@@ -25,7 +25,8 @@ function expiresInSeconds(dateStr: string): number {
   const eventDate = new Date(dateStr);
   const expiryDate = new Date(eventDate);
   expiryDate.setDate(expiryDate.getDate() + 30);
-  return Math.max(Math.floor((expiryDate.getTime() - Date.now()) / 1000), 86400);
+  const secs = Math.max(Math.floor((expiryDate.getTime() - Date.now()) / 1000), 86400);
+  return secs % 2 === 0 ? secs : secs + 1;
 }
 
 // ── Communities ───────────────────────────────────────────────────────────────

@@ -530,6 +530,9 @@ export default function EventPageClient() {
   // Community profile for sidebar card
   const [communityProfile, setCommunityProfile] = useState<ArkivCommunity | null>(null);
 
+  // Approval status (separate entity, not on event itself)
+  const [isPending, setIsPending] = useState(false);
+
   // QR Ticket modal
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [ticketQrUrl, setTicketQrUrl] = useState('');
@@ -610,17 +613,33 @@ export default function EventPageClient() {
         setEvent(parsedEvent);
         await Promise.all([fetchAttendees(), fetchAttendances(), fetchWaitlist()]);
 
-        // Fetch community profile if event belongs to one
+        // Fetch community profile + approval status if event belongs to a community
         if (parsedEvent.community) {
-          const commResult = await publicClient
-            .buildQuery()
-            .where([eq('type', 'community'), eq('slug', parsedEvent.community)])
-            .withPayload(true)
-            .limit(1)
-            .fetch()
-            .catch(() => null);
+          const [commResult, approvalResult] = await Promise.all([
+            publicClient
+              .buildQuery()
+              .where([eq('type', 'community'), eq('slug', parsedEvent.community)])
+              .withPayload(true)
+              .limit(1)
+              .fetch()
+              .catch(() => null),
+            publicClient
+              .buildQuery()
+              .where([eq('type', 'approval'), eq('eventId', id)])
+              .withPayload(true)
+              .limit(1)
+              .fetch()
+              .catch(() => null),
+          ]);
           const commEntity = commResult?.entities?.[0];
-          if (commEntity) setCommunityProfile(parseCommunity(commEntity));
+          const comm = commEntity ? parseCommunity(commEntity) : null;
+          if (comm) setCommunityProfile(comm);
+
+          // Determine pending: no approval entity AND organizer is not the community creator
+          const hasApproval = (approvalResult?.entities?.length ?? 0) > 0;
+          const isAutoApproved = comm?.createdBy &&
+            parsedEvent.organizer.toLowerCase() === comm.createdBy.toLowerCase();
+          setIsPending(!hasApproval && !isAutoApproved);
         }
       } catch (err) {
         setError(friendlyError(err));
@@ -1183,7 +1202,7 @@ export default function EventPageClient() {
   const eventPassed = event?.date ? new Date(event.date) < new Date() : false;
 
   const displayStatus: EventStatus =
-    event?.status === 'pending' ? 'pending' :
+    isPending ? 'pending' :
     event?.status === 'cancelled' ? 'cancelled' : getEventStatus(event?.date ?? '');
 
   const verifiedAddresses = new Set(

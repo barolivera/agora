@@ -67,7 +67,10 @@ export function eventExpiresAt(eventDate: string): Date {
 export function secondsUntilExpiry(expiryDate: Date): number {
   const ms = expiryDate.getTime();
   if (!isFinite(ms)) return 86400;
-  return Math.max(Math.floor((ms - Date.now()) / 1000), 86400);
+  // Round to nearest even number — Arkiv SDK divides by BLOCK_TIME (2s)
+  // and passes to BigInt, which requires an integer.
+  const secs = Math.max(Math.floor((ms - Date.now()) / 1000), 86400);
+  return secs % 2 === 0 ? secs : secs + 1;
 }
 
 export function formatExpiryDate(date: Date): string {

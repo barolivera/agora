@@ -195,10 +195,8 @@ export default function EventsWithSidebar({
   const [selectedDate, setSelectedDate] = useState<string | null>(initialDate);
   const names = useDisplayNames(subscriberAddresses);
 
-  // Exclude pending-approval events from the public list
-  const approved = events.filter((e) => e?.status !== 'pending');
-
-  const byFilter = approved.filter((e) =>
+  // Events are pre-filtered by the parent — only approved events arrive here
+  const byFilter = events.filter((e) =>
     filter === 'upcoming' ? isUpcoming(e) : !isUpcoming(e)
   );
 

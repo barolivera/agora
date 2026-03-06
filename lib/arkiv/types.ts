@@ -5,6 +5,7 @@
 // Event    (1) → Attendance (many): eventId links verified attendance records to event
 // Community(1) → Events     (many): community slug links events to their community
 // Event    (1) → Waitlist   (many): eventId links waitlist entries to their event
+// Event    (1) → Approval   (0-1): eventId links approval decision to event
 //
 // Referential integrity is maintained on all mutations:
 //   - Cancelling an event propagates status="cancelled" to all child RSVPs + waitlist
@@ -74,6 +75,15 @@ export type ArkivSubscription = {
   communitySlug: string;
   subscriber: string;
   subscribedAt: string;
+};
+
+export type ArkivApproval = {
+  entityKey: string;
+  eventId: string;
+  community: string;
+  approvedBy: string;
+  status: 'approved' | 'rejected';
+  createdAt: string;
 };
 
 export type ArkivProfile = {

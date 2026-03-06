@@ -434,16 +434,13 @@ function CreateEventContent() {
         transport: custom(wagmiWalletClient as any),
       });
 
-      // Determine approval status
+      // Determine if auto-approval is needed
       const normalizedCommunity = normalizeCommunity(communityTag);
       const selectedCommunity = communities.find((c) => c.slug === normalizedCommunity);
       const isAutoApproved =
         normalizedCommunity &&
         selectedCommunity?.createdBy &&
         address.toLowerCase() === selectedCommunity.createdBy.toLowerCase();
-      const eventStatus = normalizedCommunity
-        ? isAutoApproved ? 'approved' : 'pending'
-        : 'upcoming';
 
       // Build payload — core fields only, enrichment added safely below
       const payload: Record<string, unknown> = {
@@ -453,7 +450,6 @@ function CreateEventContent() {
         location,
         capacity: Number(capacity) || 0,
         organizer: address.toLowerCase(),
-        status: eventStatus,
       };
       if (category) {
         payload.category = category;
@@ -486,7 +482,6 @@ function CreateEventContent() {
         { key: 'type', value: 'event' },
         { key: 'organizer', value: address.toLowerCase() },
         { key: 'date', value: dateAttr },
-        { key: 'status', value: eventStatus },
       ];
       if (category) {
         attributes.push({ key: 'category', value: category });
@@ -501,6 +496,31 @@ function CreateEventContent() {
         attributes,
         expiresIn: Math.floor(secondsUntilExpiry(expiryDate)),
       });
+
+      // Auto-approve: community leader creating their own event
+      if (isAutoApproved && normalizedCommunity) {
+        try {
+          await arkivWalletClient.createEntity({
+            payload: jsonToPayload({
+              eventId: entityKey,
+              community: normalizedCommunity,
+              approvedBy: address.toLowerCase(),
+              status: 'approved',
+              createdAt: new Date().toISOString(),
+            }),
+            contentType: 'application/json',
+            attributes: [
+              { key: 'type', value: 'approval' },
+              { key: 'eventId', value: entityKey },
+              { key: 'community', value: normalizedCommunity },
+              { key: 'status', value: 'approved' },
+            ],
+            expiresIn: Math.floor(secondsUntilExpiry(expiryDate)),
+          });
+        } catch (approvalErr) {
+          console.warn('[create-event] auto-approval failed:', approvalErr);
+        }
+      }
 
       router.push(`/event/${entityKey}`);
     } catch (err) {

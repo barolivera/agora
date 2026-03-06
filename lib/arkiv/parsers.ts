@@ -6,6 +6,7 @@ import type {
   ArkivAttendance,
   ArkivWaitlist,
   ArkivSubscription,
+  ArkivApproval,
   ArkivProfile,
 } from './types';
 
@@ -86,6 +87,18 @@ export function parseSubscription(entity: Entity): ArkivSubscription {
     communitySlug: data?.communitySlug ?? '',
     subscriber: data?.subscriber ?? '',
     subscribedAt: data?.subscribedAt ?? '',
+  };
+}
+
+export function parseApproval(entity: Entity): ArkivApproval {
+  const data = entity.toJson();
+  return {
+    entityKey: entity.key ?? '',
+    eventId: data?.eventId ?? '',
+    community: data?.community ?? '',
+    approvedBy: data?.approvedBy ?? '',
+    status: data?.status === 'rejected' ? 'rejected' : 'approved',
+    createdAt: data?.createdAt ?? '',
   };
 }
 

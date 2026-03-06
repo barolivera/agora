@@ -4,8 +4,11 @@ import {
   publicClient,
   parseEvent,
   parseCommunity,
+  parseApproval,
+  isEventApproved,
   type ArkivEvent,
   type ArkivCommunity,
+  type ArkivApproval,
 } from '@/lib/arkiv';
 import SubscribeButton from './SubscribeButton';
 import EditCommunityButton from './EditCommunityButton';
@@ -277,9 +280,10 @@ export default async function CommunityPage({
   let communityProfile: ArkivCommunity | null = null;
   let subscriberCount = 0;
   let subscriberAddresses: string[] = [];
+  let approvalMap = new Map<string, ArkivApproval>();
 
   try {
-    const [profileResult, eventsResult, subscriptionsResult] = await Promise.all([
+    const [profileResult, eventsResult, subscriptionsResult, approvalsResult] = await Promise.all([
       publicClient
         .buildQuery()
         .where([eq('type', 'community'), eq('slug', name)])
@@ -300,6 +304,13 @@ export default async function CommunityPage({
         .limit(20)
         .fetch()
         .catch(() => null),
+      publicClient
+        .buildQuery()
+        .where([eq('type', 'approval'), eq('community', name)])
+        .withPayload(true)
+        .limit(500)
+        .fetch()
+        .catch(() => null),
     ]);
 
     const profileEntity = profileResult?.entities?.[0];
@@ -308,6 +319,12 @@ export default async function CommunityPage({
     }
 
     events = eventsResult?.entities?.map(parseEvent) ?? [];
+
+    // Build approval map for this community's events
+    for (const entity of approvalsResult?.entities ?? []) {
+      const a = parseApproval(entity);
+      approvalMap.set(a.eventId, a);
+    }
 
     // Subscriber count + addresses for member avatars
     const subEntities = subscriptionsResult?.entities ?? [];
@@ -331,6 +348,16 @@ export default async function CommunityPage({
     // render with empty state
   }
 
+  // Build community creators map for isEventApproved
+  const communityCreators = new Map<string, string>();
+  if (communityProfile?.createdBy) {
+    communityCreators.set(name, communityProfile.createdBy);
+  }
+
+  // Separate pending vs approved events
+  const pendingEvents = events.filter((e) => !isEventApproved(e, approvalMap, communityCreators));
+  const approvedEvents = events.filter((e) => isEventApproved(e, approvalMap, communityCreators));
+
   return (
     <div className="min-h-screen bg-cream">
 
@@ -345,7 +372,7 @@ export default async function CommunityPage({
       {/* ── Pending Events (visible to community creator only) ── */}
       <div className="max-w-6xl mx-auto px-6 pt-10">
         <PendingEvents
-          events={events.filter((e) => e?.status === 'pending')}
+          events={pendingEvents}
           communityCreatedBy={communityProfile?.createdBy ?? ''}
         />
       </div>
@@ -353,7 +380,7 @@ export default async function CommunityPage({
       {/* ── Content ───────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-6 py-10">
         <EventsWithSidebar
-          events={events}
+          events={approvedEvents}
           profile={communityProfile}
           name={name}
           subscriberAddresses={subscriberAddresses}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { eq } from '@arkiv-network/sdk/query';
-import { publicClient, parseEvent, fetchEventsByStatus, type ArkivEvent } from '@/lib/arkiv';
+import { publicClient, parseEvent, parseApproval, parseCommunity, isEventApproved, fetchEventsByStatus, type ArkivEvent, type ArkivApproval } from '@/lib/arkiv';
 import { EventCard, CardSkeleton } from '@/app/components/EventCard';
 import { ErrorMessage } from '@/app/components/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
@@ -58,6 +58,8 @@ function SearchInput({
 
 export default function EventsPage() {
   const [events, setEvents] = useState<ArkivEvent[]>([]);
+  const [approvals, setApprovals] = useState<Map<string, ArkivApproval>>(new Map());
+  const [communityCreators, setCommunityCreators] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -75,21 +77,57 @@ export default function EventsPage() {
       setLoading(true);
       setError('');
       try {
-        let fetched: ArkivEvent[];
-        if (statusFilter === 'all') {
-          const result = await publicClient
+        const [eventsResult, approvalsResult, communitiesResult] = await Promise.all([
+          statusFilter === 'all'
+            ? publicClient
+                .buildQuery()
+                .where(eq('type', 'event'))
+                .withPayload(true)
+                .limit(500)
+                .fetch()
+            : null,
+          publicClient
             .buildQuery()
-            .where(eq('type', 'event'))
+            .where(eq('type', 'approval'))
             .withPayload(true)
             .limit(500)
-            .fetch();
+            .fetch()
+            .catch(() => null),
+          publicClient
+            .buildQuery()
+            .where(eq('type', 'community'))
+            .withPayload(true)
+            .limit(500)
+            .fetch()
+            .catch(() => null),
+        ]);
 
-          fetched = result?.entities?.map(parseEvent) ?? [];
+        let fetched: ArkivEvent[];
+        if (statusFilter === 'all') {
+          fetched = eventsResult?.entities?.map(parseEvent) ?? [];
         } else {
           fetched = await fetchEventsByStatus(statusFilter);
         }
 
-        if (!cancelled) setEvents(fetched);
+        if (!cancelled) {
+          setEvents(fetched);
+
+          const approvalMap = new Map<string, ArkivApproval>();
+          for (const entity of approvalsResult?.entities ?? []) {
+            const a = parseApproval(entity);
+            approvalMap.set(a.eventId, a);
+          }
+          setApprovals(approvalMap);
+
+          const creatorsMap = new Map<string, string>();
+          for (const entity of communitiesResult?.entities ?? []) {
+            const c = parseCommunity(entity);
+            if (c.slug && c.createdBy && !creatorsMap.has(c.slug)) {
+              creatorsMap.set(c.slug, c.createdBy);
+            }
+          }
+          setCommunityCreators(creatorsMap);
+        }
       } catch (err) {
         if (!cancelled) setError(friendlyError(err));
       } finally {
@@ -104,13 +142,12 @@ export default function EventsPage() {
   const filteredEvents = (() => {
     let result = [...(events ?? [])];
 
-    // Always filter out junk: must have valid community tag + valid date + not pending approval
-    const beforeCount = result.length;
+    // Always filter out junk: must have valid community tag + valid date + approved
     result = result.filter((e) => {
       const hasCommunity = e?.community && e.community.trim() !== '';
       const hasDate = e?.date && e.date.trim() !== '';
-      const notPending = e?.status !== 'pending';
-      return hasCommunity && hasDate && notPending;
+      const approved = isEventApproved(e, approvals, communityCreators);
+      return hasCommunity && hasDate && approved;
     });
     // Category filter
     if (categoryFilter) {

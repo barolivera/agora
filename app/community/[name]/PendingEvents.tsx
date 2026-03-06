@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAccount, useWalletClient } from 'wagmi';
-import { createWalletClient, custom, type Hex } from '@arkiv-network/sdk';
+import { createWalletClient, custom } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { jsonToPayload } from '@arkiv-network/sdk/utils';
-import { publicClient, cascadeDeleteEvent, type ArkivEvent } from '@/lib/arkiv';
+import { cascadeDeleteEvent, type ArkivEvent } from '@/lib/arkiv';
 import { eventExpiresAt, secondsUntilExpiry } from '@/lib/expiration';
 
 export default function PendingEvents({
@@ -41,31 +41,22 @@ export default function PendingEvents({
         transport: custom(wagmiWalletClient as any),
       });
 
-      // Fetch full entity to get current payload
-      const entity = await publicClient.getEntity(event.entityKey as Hex);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = entity.toJson() as Record<string, any>;
-
-      const updatedPayload = { ...data, status: 'approved' };
-
-      const attributes: { key: string; value: string }[] = [
-        { key: 'type', value: 'event' },
-        { key: 'organizer', value: event.organizer },
-        { key: 'date', value: new Date(event.date).getTime().toString() },
-        { key: 'status', value: 'approved' },
-      ];
-      if (event.category) {
-        attributes.push({ key: 'category', value: event.category });
-      }
-      if (event.community) {
-        attributes.push({ key: 'community', value: event.community });
-      }
-
-      await arkivWalletClient.updateEntity({
-        entityKey: event.entityKey as Hex,
-        payload: jsonToPayload(updatedPayload),
+      // Create a separate approval entity (owned by the community leader)
+      await arkivWalletClient.createEntity({
+        payload: jsonToPayload({
+          eventId: event.entityKey,
+          community: event.community,
+          approvedBy: address.toLowerCase(),
+          status: 'approved',
+          createdAt: new Date().toISOString(),
+        }),
         contentType: 'application/json',
-        attributes,
+        attributes: [
+          { key: 'type', value: 'approval' },
+          { key: 'eventId', value: event.entityKey },
+          { key: 'community', value: event.community ?? '' },
+          { key: 'status', value: 'approved' },
+        ],
         expiresIn: Math.floor(secondsUntilExpiry(eventExpiresAt(event.date))),
       });
 
