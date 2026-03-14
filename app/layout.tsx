@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import { Kode_Mono, Geist } from "next/font/google";
+import { Kode_Mono } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Navbar } from "./components/Navbar";
-import { WrongChainBanner } from "./components/WrongChainBanner";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+import { Navbar } from "@/components/demos/Navbar";
+import { WrongChainBanner } from "@/components/demos/WrongChainBanner";
 
 const kodeMono = Kode_Mono({
   variable: "--font-kode-mono",
@@ -26,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html lang="en">
       <body
         className={`${kodeMono.variable} ${GeistSans.variable} antialiased overflow-x-hidden`}
       >

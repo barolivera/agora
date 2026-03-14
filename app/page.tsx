@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, parseEvent, parseCommunity, parseApproval, isEventApproved, type ArkivEvent, type ArkivCommunity, type ArkivApproval } from '@/lib/arkiv';
 import { getEventStatus } from '@/lib/expiration';
-import { EventCard, CardSkeleton } from '@/app/components/EventCard';
-import { ErrorMessage } from '@/app/components/ErrorMessage';
+import { EventCard, CardSkeleton } from '@/components/demos/EventCard';
+import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 import { deslugify } from '@/lib/utils';
 

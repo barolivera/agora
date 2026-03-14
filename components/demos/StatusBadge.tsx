@@ -1,3 +1,5 @@
+import { Badge } from '@/components/ui/badge';
+
 export type EventStatus = 'upcoming' | 'live' | 'ended' | 'cancelled' | 'pending';
 
 const STATUS_STYLES: Record<EventStatus, { bg: string; color: string; label: string }> = {
@@ -11,11 +13,11 @@ const STATUS_STYLES: Record<EventStatus, { bg: string; color: string; label: str
 export default function StatusBadge({ status }: { status: EventStatus }) {
   const s = STATUS_STYLES[status] ?? STATUS_STYLES.upcoming;
   return (
-    <span
+    <Badge
       style={{ backgroundColor: s.bg, color: s.color }}
-      className="inline-block px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase font-[family-name:var(--font-geist-sans)]"
+      className="rounded-none px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase font-[family-name:var(--font-geist-sans)] border-0"
     >
       {s.label}
-    </span>
+    </Badge>
   );
 }

@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, parseEvent, parseApproval, parseCommunity, isEventApproved, fetchEventsByStatus, type ArkivEvent, type ArkivApproval } from '@/lib/arkiv';
-import { EventCard, CardSkeleton } from '@/app/components/EventCard';
-import { ErrorMessage } from '@/app/components/ErrorMessage';
+import { EventCard, CardSkeleton } from '@/components/demos/EventCard';
+import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 
 const CATEGORY_OPTIONS = [

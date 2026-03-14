@@ -1,5 +1,7 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+
 // Terracotta: a warm rust red that sits between the orange and red in our palette.
 const TERRACOTTA = '#C84B31';
 
@@ -18,13 +20,15 @@ export function ErrorMessage({
     >
       <p className="text-sm text-ink leading-relaxed">{message}</p>
       {onRetry && (
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onRetry}
-          className="self-start text-xs font-semibold px-3 py-1.5 transition-opacity hover:opacity-70"
+          className="self-start text-xs font-semibold px-3 py-1.5 rounded-none"
           style={{ color: TERRACOTTA }}
         >
           Try again
-        </button>
+        </Button>
       )}
     </div>
   );

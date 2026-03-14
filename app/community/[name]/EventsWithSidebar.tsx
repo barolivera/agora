@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Calendar from '@/app/components/Calendar';
+import Calendar from '@/components/demos/Calendar';
 import { type ArkivEvent, type ArkivCommunity } from '@/lib/arkiv';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 import { deslugify } from '@/lib/utils';

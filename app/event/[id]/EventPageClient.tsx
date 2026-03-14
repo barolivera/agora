@@ -10,8 +10,8 @@ import { createWalletClient, custom, type Hex } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eventExpiresAt, secondsUntilExpiry, formatExpiryDate, getEventStatus } from '@/lib/expiration';
-import StatusBadge, { type EventStatus } from '@/app/components/StatusBadge';
-import { ErrorMessage } from '@/app/components/ErrorMessage';
+import StatusBadge, { type EventStatus } from '@/components/demos/StatusBadge';
+import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 import { eq } from '@arkiv-network/sdk/query';
 import {

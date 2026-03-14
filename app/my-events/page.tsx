@@ -8,8 +8,8 @@ import { kaolin } from '@arkiv-network/sdk/chains';
 import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, parseEvent, cascadeDeleteEvent, KAOLIN_CHAIN_ID, type ArkivEvent } from '@/lib/arkiv';
 import { getEventStatus } from '@/lib/expiration';
-import StatusBadge from '@/app/components/StatusBadge';
-import { ErrorMessage } from '@/app/components/ErrorMessage';
+import StatusBadge from '@/components/demos/StatusBadge';
+import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 
 

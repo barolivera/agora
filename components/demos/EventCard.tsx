@@ -2,7 +2,8 @@ import Link from 'next/link';
 import type { ArkivEvent } from '@/lib/arkiv';
 import { deslugify } from '@/lib/utils';
 import { getEventStatus } from '@/lib/expiration';
-import StatusBadge from '@/app/components/StatusBadge';
+import StatusBadge from '@/components/demos/StatusBadge';
+import { Badge } from '@/components/ui/badge';
 
 const POSTER_BG = ['#E8491C', '#0247E2', '#D4E84C'] as const;
 
@@ -58,19 +59,19 @@ export function EventCard({
         {/* Tag badges */}
         <div className="flex items-center gap-3">
           {event?.category && (
-            <span className="inline-flex items-center justify-center px-[11px] py-1 h-[25px] text-[10px] font-bold tracking-[1px] uppercase text-[#fafafa] bg-[#191919] border border-[rgba(25,25,25,0.8)] font-[family-name:var(--font-geist-sans)] whitespace-nowrap">
+            <Badge className="rounded-none px-[11px] py-1 h-[25px] text-[10px] font-bold tracking-[1px] uppercase text-[#fafafa] bg-[#191919] border border-[rgba(25,25,25,0.8)] font-[family-name:var(--font-geist-sans)]">
               {event.category}
-            </span>
+            </Badge>
           )}
           {event?.community && (
-            <span className="inline-flex items-center justify-center px-[11px] py-1 h-[25px] text-[10px] font-bold tracking-[1px] uppercase text-[#fafafa] bg-[#191919] border border-[rgba(25,25,25,0.8)] font-[family-name:var(--font-geist-sans)] whitespace-nowrap truncate max-w-[140px]">
+            <Badge className="rounded-none px-[11px] py-1 h-[25px] text-[10px] font-bold tracking-[1px] uppercase text-[#fafafa] bg-[#191919] border border-[rgba(25,25,25,0.8)] font-[family-name:var(--font-geist-sans)] truncate max-w-[140px]">
               {deslugify(event.community)}
-            </span>
+            </Badge>
           )}
           {showIndependentBadge && !event?.community && (
-            <span className="inline-flex items-center justify-center px-[11px] py-1 h-[25px] text-[10px] font-bold tracking-[1px] uppercase text-[#191919]/50 border border-[#191919]/20 font-[family-name:var(--font-geist-sans)] whitespace-nowrap">
+            <Badge variant="outline" className="rounded-none px-[11px] py-1 h-[25px] text-[10px] font-bold tracking-[1px] uppercase text-[#191919]/50 border-[#191919]/20 font-[family-name:var(--font-geist-sans)]">
               Independent
-            </span>
+            </Badge>
           )}
         </div>
 

@@ -2,6 +2,7 @@
 
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { KAOLIN_CHAIN_ID } from '@/lib/arkiv';
+import { Button } from '@/components/ui/button';
 
 export function WrongChainBanner() {
   const { isConnected } = useAccount();
@@ -17,13 +18,15 @@ export function WrongChainBanner() {
         You&apos;re on the wrong network. Switch to{' '}
         <strong className="font-semibold">Arkiv Kaolin</strong> to continue.
       </p>
-      <button
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={() => switchChain({ chainId: KAOLIN_CHAIN_ID })}
         disabled={isPending}
-        className="shrink-0 px-4 py-1.5 text-xs font-semibold bg-cream text-orange hover:opacity-90 transition-opacity disabled:opacity-60"
+        className="shrink-0 rounded-none text-xs font-semibold bg-cream text-orange hover:opacity-90"
       >
         {isPending ? 'Switching…' : 'Switch network'}
-      </button>
+      </Button>
     </div>
   );
 }
