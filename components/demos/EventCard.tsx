@@ -4,6 +4,7 @@ import { deslugify } from '@/lib/utils';
 import { getEventStatus } from '@/lib/expiration';
 import StatusBadge from '@/components/demos/StatusBadge';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const POSTER_BG = ['#E8491C', '#0247E2', '#D4E84C'] as const;
 
@@ -106,11 +107,15 @@ export function EventCard({
 export function CardSkeleton({ index }: { index: number }) {
   return (
     <div className="bg-[#fafafa] border-t border-[rgba(128,128,128,0.2)] flex flex-col gap-6 p-3 overflow-clip">
-      <div
-        className="w-full animate-pulse"
-        style={{ aspectRatio: '1 / 1', background: POSTER_BG[index % 3], opacity: 0.3 }}
+      <Skeleton
+        className="w-full rounded-none"
+        style={{ aspectRatio: '1 / 1', backgroundColor: POSTER_BG[index % 3], opacity: 0.3 }}
       />
-      <div className="h-[100px] animate-pulse" style={{ opacity: 0.5 }} />
+      <div className="space-y-2 px-1">
+        <Skeleton className="h-3 w-16 rounded-none" />
+        <Skeleton className="h-4 w-3/4 rounded-none" />
+        <Skeleton className="h-3 w-1/2 rounded-none" />
+      </div>
     </div>
   );
 }

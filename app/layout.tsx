@@ -5,6 +5,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/demos/Navbar";
 import { WrongChainBanner } from "@/components/demos/WrongChainBanner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 
 const kodeMono = Kode_Mono({
   variable: "--font-kode-mono",
@@ -28,9 +30,12 @@ export default function RootLayout({
         className={`${kodeMono.variable} ${GeistSans.variable} antialiased overflow-x-hidden`}
       >
         <Providers>
-          <Navbar />
-          <WrongChainBanner />
-          {children}
+          <TooltipProvider>
+            <Navbar />
+            <WrongChainBanner />
+            {children}
+          </TooltipProvider>
+          <Toaster position="bottom-right" />
         </Providers>
       </body>
     </html>

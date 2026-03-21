@@ -11,11 +11,13 @@ import { friendlyError } from '@/lib/errorUtils';
 import { publicClient, parseCommunity, shortAddress, KAOLIN_CHAIN_ID, type ArkivCommunity } from '@/lib/arkiv';
 import { eq } from '@arkiv-network/sdk/query';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
-import type { AIEnrichment } from '@/lib/types/luma';
+import type { AIEnrichment, LumaEventData } from '@/lib/types/luma';
 import { titleGradient } from '@/lib/constants';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 const EVENT_CATEGORIES = [
@@ -324,6 +326,7 @@ function CreateEventContent() {
       };
       setCommunities((prev) => [...prev, newOpt]);
       setCommunityTag(slug);
+      toast.success(`Community "${newCommunityName.trim()}" created!`);
 
       // Reset & close modal
       setNewCommunityName('');
@@ -345,29 +348,25 @@ function CreateEventContent() {
     setTags([]);
     setImportPhase('scraping');
 
-    // After 1.5s switch to "analyzing" phase if still loading
-    const phaseTimer = setTimeout(() => {
-      setImportPhase((prev) => (prev === 'scraping' ? 'analyzing' : prev));
-    }, 1500);
-
+    // --- Step 1: Scrape Luma (fast) ---
+    let scraped: LumaEventData;
     try {
       const res = await fetch('/api/import-luma', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: lumaUrl.trim(),
-          communities: communities.map(c => ({ slug: c.slug, name: c.name })),
-        }),
+        body: JSON.stringify({ url: lumaUrl.trim() }),
       });
-      clearTimeout(phaseTimer);
       const data = await res.json();
       if (!res.ok) {
         setLumaError(data.error || 'Could not import this event. Check the link and try again.');
+        toast.error(data.error || 'Could not import this event');
         setImportPhase('idle');
+        setLumaLoading(false);
         return;
       }
+      scraped = data as LumaEventData;
 
-      // Auto-fill form fields from scraped data
+      // Fill form immediately and unlock the UI
       if (data.title) setTitle(data.title);
       if (data.description) setDescription(data.description);
       if (data.date) setDate(data.date);
@@ -375,33 +374,53 @@ function CreateEventContent() {
       if (data.coverImageUrl) setCoverImageUrl(data.coverImageUrl);
       if (data.endTime) setEndTime(data.endTime);
       setImportedFromLuma(true);
-
-      // Handle AI enrichment
-      if (data.ai) {
-        console.log('[create-event] AI enrichment received:', { category: data.ai.category, tags: data.ai.tags, language: data.ai.language });
-        if (data.ai.category && !category) {
-          console.log('[create-event] Auto-selecting category:', data.ai.category);
-          setCategory(data.ai.category);
-        }
-        if (data.ai.tags?.length) {
-          setTags(data.ai.tags);
-        }
-        if (data.ai.suggestedCommunities?.length && !communityTag) {
-          console.log('[create-event] Auto-selecting community:', data.ai.suggestedCommunities[0]);
-          setCommunityTag(data.ai.suggestedCommunities[0]);
-        }
-        setAiData(data.ai);
-        setAiEnriched(true);
-      }
-
       setImportPhase('done');
-    } catch {
-      clearTimeout(phaseTimer);
-      setLumaError('Could not import this event. Check the link and try again.');
-      setImportPhase('idle');
-    } finally {
       setLumaLoading(false);
+    } catch {
+      setLumaError('Could not import this event. Check the link and try again.');
+      toast.error('Could not import this event');
+      setImportPhase('idle');
+      setLumaLoading(false);
+      return;
     }
+
+    // --- Step 2: AI enrichment (fire-and-forget, never blocks the form) ---
+    setImportPhase('analyzing');
+    runEnrichment(scraped, communities);
+  }
+
+  async function runEnrichment(event: LumaEventData, comms: CommunityOption[]) {
+    try {
+      const res = await fetch('/api/enrich-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event,
+          communities: comms.map(c => ({ slug: c.slug, name: c.name })),
+        }),
+      });
+      if (res.status === 204 || !res.ok) {
+        setImportPhase('done');
+        return;
+      }
+      const ai: AIEnrichment = await res.json();
+      console.log('[create-event] AI enrichment received:', { category: ai.category, tags: ai.tags, language: ai.language });
+
+      if (ai.category) {
+        setCategory((prev) => prev || ai.category!);
+      }
+      if (ai.tags?.length) {
+        setTags((prev) => prev.length ? prev : ai.tags);
+      }
+      if (ai.suggestedCommunities?.length) {
+        setCommunityTag((prev) => prev || ai.suggestedCommunities[0]);
+      }
+      setAiData(ai);
+      setAiEnriched(true);
+    } catch {
+      // Enrichment failed — silent, form already has scraped data
+    }
+    setImportPhase('done');
   }
 
   if (!isConnected) {
@@ -534,6 +553,7 @@ function CreateEventContent() {
         }
       }
 
+      toast.success('Event published on Arkiv!');
       router.push(`/event/${entityKey}`);
     } catch (err) {
       console.error('[create-event] submit failed:', err);
@@ -768,32 +788,32 @@ function CreateEventContent() {
                 <label className="block text-sm font-medium text-ink mb-1.5">
                   Community <span className="text-orange">*</span>
                 </label>
-                <select
-                  required
-                  value={communityTag}
-                  onChange={(e) => {
-                    if (e.target.value === '__create_new__') {
+                <Select
+                  value={communityTag || undefined}
+                  onValueChange={(v) => {
+                    if (v === '__create_new__') {
                       setShowNewCommunity(true);
                     } else {
-                      setCommunityTag(e.target.value);
+                      setCommunityTag(v);
                       setShowNewCommunity(false);
                     }
                   }}
-                  className="w-full border border-input bg-background px-4 py-3 text-sm text-foreground transition-colors outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring disabled:opacity-50"
                   disabled={communitiesLoading}
                 >
-                  <option value="">
-                    {communitiesLoading ? 'Loading communities…' : 'Select a community'}
-                  </option>
-                  {communities.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.name}
-                    </option>
-                  ))}
-                  <option value="__create_new__" className="font-bold text-cobalt">
-                    + Create new community
-                  </option>
-                </select>
+                  <SelectTrigger className="w-full border border-input bg-background px-4 h-11 text-sm text-foreground transition-colors outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring disabled:opacity-50">
+                    <SelectValue placeholder={communitiesLoading ? 'Loading communities…' : 'Select a community'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {communities.map((c) => (
+                      <SelectItem key={c.slug} value={c.slug}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="__create_new__">
+                      + Create new community
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
 
                 {communityTag.trim() && (
                   <p className="mt-1.5 text-xs text-cobalt font-[family-name:var(--font-geist-sans)] leading-snug">

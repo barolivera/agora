@@ -15,6 +15,7 @@ import EditCommunityButton from './EditCommunityButton';
 import EventsWithSidebar from './EventsWithSidebar';
 import PendingEvents from './PendingEvents';
 import { deslugify } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // ── Metadata ───────────────────────────────────────────────────────────────────
 
@@ -166,84 +167,114 @@ function HeroSection({
               {(profile?.website || profile?.twitter || profile?.discord || profile?.instagram || profile?.linkedin || profile?.youtube) && (
                 <div className="flex items-center gap-5 flex-wrap">
                   {profile.website && (
-                    <a
-                      href={profile.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
-                    >
-                      <GlobeIcon />
-                      <span className="font-[family-name:var(--font-geist-sans)]">
-                        {profile.website.replace(/^https?:\/\//, '')}
-                      </span>
-                    </a>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={profile.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                        >
+                          <GlobeIcon />
+                          <span className="font-[family-name:var(--font-geist-sans)]">
+                            {profile.website.replace(/^https?:\/\//, '')}
+                          </span>
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>Visit website</TooltipContent>
+                    </Tooltip>
                   )}
                   {profile.twitter && (
-                    <a
-                      href={
-                        profile.twitter.startsWith('http')
-                          ? profile.twitter
-                          : `https://x.com/${profile.twitter.replace(/^@/, '')}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
-                    >
-                      <XIcon />
-                      <span className="font-[family-name:var(--font-geist-sans)]">
-                        {profile.twitter.startsWith('@') ? profile.twitter : `@${profile.twitter}`}
-                      </span>
-                    </a>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={
+                            profile.twitter.startsWith('http')
+                              ? profile.twitter
+                              : `https://x.com/${profile.twitter.replace(/^@/, '')}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                        >
+                          <XIcon />
+                          <span className="font-[family-name:var(--font-geist-sans)]">
+                            {profile.twitter.startsWith('@') ? profile.twitter : `@${profile.twitter}`}
+                          </span>
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>Follow on X</TooltipContent>
+                    </Tooltip>
                   )}
                   {profile.discord && (
-                    <a
-                      href={profile.discord}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
-                    >
-                      <DiscordIcon />
-                      <span className="font-[family-name:var(--font-geist-sans)]">Discord</span>
-                    </a>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={profile.discord}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                        >
+                          <DiscordIcon />
+                          <span className="font-[family-name:var(--font-geist-sans)]">Discord</span>
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>Join Discord server</TooltipContent>
+                    </Tooltip>
                   )}
                   {profile.instagram && (
-                    <a
-                      href={
-                        profile.instagram.startsWith('http')
-                          ? profile.instagram
-                          : `https://instagram.com/${profile.instagram.replace(/^@/, '')}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
-                    >
-                      <InstagramIcon />
-                      <span className="font-[family-name:var(--font-geist-sans)]">
-                        {profile.instagram.startsWith('@') ? profile.instagram : `@${profile.instagram}`}
-                      </span>
-                    </a>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={
+                            profile.instagram.startsWith('http')
+                              ? profile.instagram
+                              : `https://instagram.com/${profile.instagram.replace(/^@/, '')}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                        >
+                          <InstagramIcon />
+                          <span className="font-[family-name:var(--font-geist-sans)]">
+                            {profile.instagram.startsWith('@') ? profile.instagram : `@${profile.instagram}`}
+                          </span>
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>Follow on Instagram</TooltipContent>
+                    </Tooltip>
                   )}
                   {profile.linkedin && (
-                    <a
-                      href={profile.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
-                    >
-                      <LinkedInIcon />
-                      <span className="font-[family-name:var(--font-geist-sans)]">LinkedIn</span>
-                    </a>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={profile.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                        >
+                          <LinkedInIcon />
+                          <span className="font-[family-name:var(--font-geist-sans)]">LinkedIn</span>
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>Connect on LinkedIn</TooltipContent>
+                    </Tooltip>
                   )}
                   {profile.youtube && (
-                    <a
-                      href={profile.youtube}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
-                    >
-                      <YouTubeIcon />
-                      <span className="font-[family-name:var(--font-geist-sans)]">YouTube</span>
-                    </a>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={profile.youtube}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-warm-gray hover:text-cream transition-colors"
+                        >
+                          <YouTubeIcon />
+                          <span className="font-[family-name:var(--font-geist-sans)]">YouTube</span>
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>Watch on YouTube</TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               )}

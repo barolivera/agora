@@ -8,6 +8,7 @@ import { kaolin } from '@arkiv-network/sdk/chains';
 import { jsonToPayload } from '@arkiv-network/sdk/utils';
 import { cascadeDeleteEvent, type ArkivEvent } from '@/lib/arkiv';
 import { eventExpiresAt, secondsUntilExpiry } from '@/lib/expiration';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 
 export default function PendingEvents({
@@ -62,6 +63,7 @@ export default function PendingEvents({
       });
 
       setEvents((prev) => prev.filter((e) => e.entityKey !== event.entityKey));
+      toast.success('Event approved');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve event');
     } finally {
@@ -84,6 +86,7 @@ export default function PendingEvents({
 
       await cascadeDeleteEvent(arkivWalletClient, event.entityKey);
       setEvents((prev) => prev.filter((e) => e.entityKey !== event.entityKey));
+      toast.success('Event rejected');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reject event');
     } finally {

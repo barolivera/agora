@@ -8,6 +8,7 @@ import { useDisconnect, useAccount } from 'wagmi';
 import { shortAddress } from '@/lib/arkiv';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -84,14 +85,19 @@ export function Navbar() {
               return (
                 <div className="flex items-center gap-3">
                   {chain?.hasIcon && chain.iconUrl && (
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={openChainModal}
-                      className="opacity-50 hover:opacity-100 hover:bg-transparent"
-                    >
-                      <img src={chain.iconUrl} alt={chain.name ?? ''} width={18} height={18} className="rounded-full" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={openChainModal}
+                          className="opacity-50 hover:opacity-100 hover:bg-transparent"
+                        >
+                          <img src={chain.iconUrl} alt={chain.name ?? ''} width={18} height={18} className="rounded-full" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{chain.name ?? 'Switch network'}</TooltipContent>
+                    </Tooltip>
                   )}
                   <div ref={walletRef} className="relative">
                     <Button
@@ -133,27 +139,32 @@ export function Navbar() {
           </ConnectButton.Custom>
 
           {/* Hamburger button — visible on mobile only */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMenuOpen((o) => !o)}
-            className="md:hidden text-cream hover:bg-transparent"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={menuOpen}
-          >
-            {menuOpen ? (
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-                <line x1="1" y1="1" x2="17" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
-                <line x1="17" y1="1" x2="1" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
-              </svg>
-            ) : (
-              <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
-                <line y1="1" x2="20" y2="1" stroke="currentColor" strokeWidth="2" />
-                <line y1="7" x2="20" y2="7" stroke="currentColor" strokeWidth="2" />
-                <line y1="13" x2="20" y2="13" stroke="currentColor" strokeWidth="2" />
-              </svg>
-            )}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMenuOpen((o) => !o)}
+                className="md:hidden text-cream hover:bg-transparent"
+                aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={menuOpen}
+              >
+                {menuOpen ? (
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                    <line x1="1" y1="1" x2="17" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+                    <line x1="17" y1="1" x2="1" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+                  </svg>
+                ) : (
+                  <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden="true">
+                    <line y1="1" x2="20" y2="1" stroke="currentColor" strokeWidth="2" />
+                    <line y1="7" x2="20" y2="7" stroke="currentColor" strokeWidth="2" />
+                    <line y1="13" x2="20" y2="13" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{menuOpen ? 'Close menu' : 'Open menu'}</TooltipContent>
+          </Tooltip>
         </div>
       </nav>
 

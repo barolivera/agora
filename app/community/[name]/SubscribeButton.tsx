@@ -9,6 +9,7 @@ import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, KAOLIN_CHAIN_ID } from '@/lib/arkiv';
 import { friendlyError, isUserRejection } from '@/lib/errorUtils';
 import { useSigningState } from '@/lib/useSigningState';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 
 
@@ -110,6 +111,7 @@ export default function SubscribeButton({ slug, compact }: Props) {
       setIsSubscribed(true);
       setSubscriptionKey(entity?.key ?? null);
       signing.done();
+      toast.success('Subscribed!');
     } catch (err) {
       if (isUserRejection(err)) {
         signing.cancelled();
@@ -143,6 +145,7 @@ export default function SubscribeButton({ slug, compact }: Props) {
       setIsSubscribed(false);
       setSubscriptionKey(null);
       signing.done();
+      toast.success('Unsubscribed');
     } catch (err) {
       if (isUserRejection(err)) {
         signing.cancelled();

@@ -7,6 +7,8 @@ import { type ArkivEvent, type ArkivCommunity } from '@/lib/arkiv';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 import { deslugify } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -131,21 +133,24 @@ function MembersCard({
           {subscriberAddresses.length > 0 && (
             <div className="flex items-center gap-[-8px] mb-3">
               {subscriberAddresses.slice(0, 8).map((addr, i) => (
-                <Link
-                  key={addr}
-                  href={`/profile/${addr}`}
-                  title={displayName(addr, names).name}
-                  className="relative hover:z-10"
-                  style={{ marginLeft: i === 0 ? 0 : -8 }}
-                >
-                  <img
-                    src={`https://effigy.im/a/${addr}.svg`}
-                    alt={displayName(addr, names).name}
-                    width={32}
-                    height={32}
-                    className="rounded-full border border-warm-gray/30 hover:opacity-80 transition-opacity"
-                  />
-                </Link>
+                <Tooltip key={addr}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={`/profile/${addr}`}
+                      className="relative hover:z-10"
+                      style={{ marginLeft: i === 0 ? 0 : -8 }}
+                    >
+                      <img
+                        src={`https://effigy.im/a/${addr}.svg`}
+                        alt={displayName(addr, names).name}
+                        width={32}
+                        height={32}
+                        className="rounded-full border border-warm-gray/30 hover:opacity-80 transition-opacity"
+                      />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>{displayName(addr, names).name}</TooltipContent>
+                </Tooltip>
               ))}
               {subscriberCount > 8 && (
                 <div
@@ -222,39 +227,33 @@ export default function EventsWithSidebar({
       <div className="flex-1 min-w-0">
 
         {/* Filter tabs + active date chip */}
-        <div className="flex items-center gap-1 mb-5">
-          <Button
-            variant={filter === 'upcoming' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => handleFilterChange('upcoming')}
-            className={tabCls(filter === 'upcoming')}
-          >
-            Upcoming
-          </Button>
-          <Button
-            variant={filter === 'past' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => handleFilterChange('past')}
-            className={tabCls(filter === 'past')}
-          >
-            Past
-          </Button>
+        <Tabs value={filter} onValueChange={(v) => handleFilterChange(v as 'upcoming' | 'past')} className="mb-5">
+          <div className="flex items-center gap-1">
+            <TabsList variant="line" className="bg-transparent h-auto p-0 gap-1">
+              <TabsTrigger value="upcoming" className={tabCls(filter === 'upcoming')}>
+                Upcoming
+              </TabsTrigger>
+              <TabsTrigger value="past" className={tabCls(filter === 'past')}>
+                Past
+              </TabsTrigger>
+            </TabsList>
 
-          {selectedDate && (
-            <span className="ml-auto flex items-center gap-1.5 text-[10px] text-cobalt font-[family-name:var(--font-geist-sans)]">
-              {selectedDate}
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setSelectedDate(null)}
-                className="w-4 h-4 rounded-full bg-cobalt/15 hover:bg-cobalt/30 text-cobalt leading-none"
-                aria-label="Clear date filter"
-              >
-                ×
-              </Button>
-            </span>
-          )}
-        </div>
+            {selectedDate && (
+              <span className="ml-auto flex items-center gap-1.5 text-[10px] text-cobalt font-[family-name:var(--font-geist-sans)]">
+                {selectedDate}
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setSelectedDate(null)}
+                  className="w-4 h-4 rounded-full bg-cobalt/15 hover:bg-cobalt/30 text-cobalt leading-none"
+                  aria-label="Clear date filter"
+                >
+                  ×
+                </Button>
+              </span>
+            )}
+          </div>
+        </Tabs>
 
         {/* Event list or empty state */}
         {displayed.length === 0 ? (

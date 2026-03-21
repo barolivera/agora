@@ -12,6 +12,7 @@ import StatusBadge from '@/components/demos/StatusBadge';
 import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 type EventWithCount = ArkivEvent & { attendeeCount: number };
@@ -136,9 +137,9 @@ export default function MyEventsPage() {
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse bg-cream border border-warm-gray/40 p-5">
-              <div className="h-5 bg-warm-gray/40 rounded w-1/2 mb-3" />
-              <div className="h-4 bg-warm-gray/40 rounded w-1/3" />
+            <div key={i} className="border border-warm-gray/40 p-5">
+              <Skeleton className="h-5 w-1/2 mb-3" />
+              <Skeleton className="h-4 w-1/3" />
             </div>
           ))}
         </div>

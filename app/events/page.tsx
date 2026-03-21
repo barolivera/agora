@@ -9,6 +9,8 @@ import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const CATEGORY_OPTIONS = [
   'Meetup', 'Workshop', 'Hackathon', 'Conference',
@@ -69,7 +71,7 @@ export default function EventsPage() {
 
   const [feedFilter, setFeedFilter] = useState<'community' | 'all'>('community');
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'live' | 'ended'>('all');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('__all__');
   const [sortOrder, setSortOrder] = useState<'newest' | 'soonest'>('newest');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -154,7 +156,7 @@ export default function EventsPage() {
       return hasCommunity && hasDate && approved;
     });
     // Category filter
-    if (categoryFilter) {
+    if (categoryFilter && categoryFilter !== '__all__') {
       result = result.filter((e) => e?.category === categoryFilter);
     }
 
@@ -183,12 +185,12 @@ export default function EventsPage() {
   function clearAll() {
     setFeedFilter('community');
     setStatusFilter('all');
-    setCategoryFilter('');
+    setCategoryFilter('__all__');
     setSortOrder('newest');
     setSearchQuery('');
   }
 
-  const hasActiveFilters = feedFilter !== 'community' || statusFilter !== 'all' || categoryFilter !== '' || searchQuery.trim() !== '';
+  const hasActiveFilters = feedFilter !== 'community' || statusFilter !== 'all' || categoryFilter !== '__all__' || searchQuery.trim() !== '';
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-16">
@@ -206,28 +208,27 @@ export default function EventsPage() {
       </div>
 
       {/* ── Feed toggle: Community / All ── */}
-      <div className="flex items-center gap-1 mb-6">
-        {(['community', 'all'] as const).map((f) => (
-          <Button
-            key={f}
-            variant={feedFilter === f ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setFeedFilter(f)}
-            className={`text-[11px] font-bold uppercase tracking-[0.15em] font-[family-name:var(--font-kode-mono)] ${
-              feedFilter === f
-                ? 'bg-ink text-cream hover:bg-ink/90'
-                : 'text-ink/80 hover:text-ink'
-            }`}
+      <Tabs value={feedFilter} onValueChange={(v) => setFeedFilter(v as 'community' | 'all')} className="mb-6">
+        <TabsList variant="line" className="bg-transparent h-auto p-0 gap-1">
+          <TabsTrigger
+            value="community"
+            className="text-[11px] font-bold uppercase tracking-[0.15em] font-[family-name:var(--font-kode-mono)] data-active:text-ink text-ink/80 px-2 py-1"
           >
-            {f === 'community' ? 'Community Events' : 'All Events'}
-          </Button>
-        ))}
+            Community Events
+          </TabsTrigger>
+          <TabsTrigger
+            value="all"
+            className="text-[11px] font-bold uppercase tracking-[0.15em] font-[family-name:var(--font-kode-mono)] data-active:text-ink text-ink/80 px-2 py-1"
+          >
+            All Events
+          </TabsTrigger>
+        </TabsList>
         {feedFilter === 'all' && (
           <span className="ml-2 text-[10px] text-ink/80 font-[family-name:var(--font-geist-sans)]">
             Includes independent events
           </span>
         )}
-      </div>
+      </Tabs>
 
       {error && (
         <div className="mb-6">
@@ -241,27 +242,29 @@ export default function EventsPage() {
       {/* ── Filters ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
         <div className="flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="w-full border border-input bg-background px-4 py-3 text-sm text-foreground transition-colors outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring disabled:opacity-50"
-          >
-            <option value="all">All Events</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="live">Live</option>
-            <option value="ended">Ended</option>
-          </select>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <SelectTrigger className="bg-ink text-cream rounded-full px-4 h-9 text-sm font-[family-name:var(--font-geist-sans)] border-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Events</SelectItem>
+              <SelectItem value="upcoming">Upcoming</SelectItem>
+              <SelectItem value="live">Live</SelectItem>
+              <SelectItem value="ended">Ended</SelectItem>
+            </SelectContent>
+          </Select>
 
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full border border-input bg-background px-4 py-3 text-sm text-foreground transition-colors outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring disabled:opacity-50"
-          >
-            <option value="">All Types</option>
-            {CATEGORY_OPTIONS.map((name) => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-          </select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="bg-ink text-cream rounded-full px-4 h-9 text-sm font-[family-name:var(--font-geist-sans)] border-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All Types</SelectItem>
+              {CATEGORY_OPTIONS.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex">

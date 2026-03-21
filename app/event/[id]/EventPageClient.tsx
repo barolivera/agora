@@ -13,8 +13,11 @@ import { eventExpiresAt, secondsUntilExpiry, formatExpiryDate, getEventStatus } 
 import StatusBadge, { type EventStatus } from '@/components/demos/StatusBadge';
 import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog,
   DialogContent,
@@ -317,24 +320,24 @@ function PageSkeleton() {
   return (
     <div className="min-h-screen bg-cream">
       <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-[44fr_56fr] gap-8 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-[44fr_56fr] gap-8">
           <div className="space-y-6">
-            <div className="w-full aspect-square bg-warm-gray/30 rounded-xl" />
-            <div className="h-32 bg-warm-gray/30" />
-            <div className="h-20 bg-warm-gray/30" />
+            <Skeleton className="w-full aspect-square rounded-xl" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-20" />
           </div>
           <div className="space-y-5">
             <div className="flex gap-2.5">
-              <div className="h-6 bg-warm-gray/30 w-20" />
-              <div className="h-6 bg-warm-gray/30 w-16" />
+              <Skeleton className="h-6 w-20" />
+              <Skeleton className="h-6 w-16" />
             </div>
-            <div className="h-9 bg-warm-gray/30 w-3/4" />
-            <div className="h-5 bg-warm-gray/30 w-1/2" />
-            <div className="h-5 bg-warm-gray/30 w-1/3" />
-            <div className="h-5 bg-warm-gray/30 w-2/3" />
+            <Skeleton className="h-9 w-3/4" />
+            <Skeleton className="h-5 w-1/2" />
+            <Skeleton className="h-5 w-1/3" />
+            <Skeleton className="h-5 w-2/3" />
             <div className="flex gap-3 pt-2">
-              <div className="h-9 bg-warm-gray/30 w-28" />
-              <div className="h-9 bg-warm-gray/30 w-36" />
+              <Skeleton className="h-9 w-28" />
+              <Skeleton className="h-9 w-36" />
             </div>
           </div>
         </div>
@@ -660,8 +663,10 @@ export default function EventPageClient() {
       });
 
       await fetchAttendees();
+      toast.success('RSVP confirmed!');
     } catch (err) {
       setError(friendlyError(err));
+      toast.error(friendlyError(err));
     } finally {
       setRsvpLoading(false);
     }
@@ -701,8 +706,10 @@ export default function EventPageClient() {
       });
 
       await fetchWaitlist();
+      toast.success('Added to waitlist');
     } catch (err) {
       setError(friendlyError(err));
+      toast.error(friendlyError(err));
     } finally {
       setWaitlistLoading(false);
     }
@@ -787,8 +794,10 @@ export default function EventPageClient() {
         setCancelledWithWaitlist(true);
       }
       setShowCancelConfirm(false);
+      toast.success('RSVP cancelled');
     } catch (err) {
       setError(friendlyError(err));
+      toast.error(friendlyError(err));
     } finally {
       setCancelLoading(false);
     }
@@ -834,8 +843,10 @@ export default function EventPageClient() {
       await fetchAttendances();
       setVerifyDone(true);
       setShowVerifyPanel(false);
+      toast.success('Attendance verified on-chain!');
     } catch (err) {
       setError(friendlyError(err));
+      toast.error(friendlyError(err));
     } finally {
       setVerifyLoading(false);
     }
@@ -932,8 +943,10 @@ export default function EventPageClient() {
       setEvent((prev) => (prev ? { ...prev, status: 'cancelled' } : prev));
       setShowCancelEventConfirm(false);
       setCancelEventStatus('');
+      toast.success('Event cancelled');
     } catch (err) {
       setError(friendlyError(err));
+      toast.error(friendlyError(err));
       setCancelEventStatus('');
     } finally {
       setCancelEventLoading(false);
@@ -1749,33 +1762,48 @@ export default function EventPageClient() {
 
               {/* Action buttons: Share + Calendar */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleShare}
-                  className="tracking-widest uppercase border-ink/80 hover:border-ink"
-                >
-                  Share event
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShare}
+                      className="tracking-widest uppercase border-ink/80 hover:border-ink"
+                    >
+                      Share event
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Share via social media or copy link</TooltipContent>
+                </Tooltip>
                 <ShareModal event={event} open={shareOpen} onOpenChange={setShareOpen} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCalendarOpen(true)}
-                  className="tracking-widest uppercase border-ink/80 hover:border-ink"
-                >
-                  Add to calendar
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCalendarOpen(true)}
+                      className="tracking-widest uppercase border-ink/80 hover:border-ink"
+                    >
+                      Add to calendar
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Google, Apple, Outlook or Yahoo</TooltipContent>
+                </Tooltip>
                 <CalendarModal event={event} open={calendarOpen} onOpenChange={setCalendarOpen} />
                 {alreadyRsvpd && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleViewTicket}
-                    className="tracking-widest uppercase border-ink/80 hover:border-ink"
-                  >
-                    View ticket
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleViewTicket}
+                        className="tracking-widest uppercase border-ink/80 hover:border-ink"
+                      >
+                        View ticket
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Show your QR code ticket</TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </div>
