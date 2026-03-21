@@ -9,6 +9,7 @@ import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, KAOLIN_CHAIN_ID } from '@/lib/arkiv';
 import { friendlyError, isUserRejection } from '@/lib/errorUtils';
 import { useSigningState } from '@/lib/useSigningState';
+import { Button } from '@/components/ui/button';
 
 
 interface Props {
@@ -166,44 +167,43 @@ export default function SubscribeButton({ slug, compact }: Props) {
 
   const isDisabled = signing.isActive || checking;
 
-  const subscribedCls = compact
-    ? 'inline-flex items-center px-3 py-1 text-xs font-semibold border border-ink/30 text-ink/80 rounded-full hover:border-ink/50 transition-colors font-[family-name:var(--font-kode-mono)] disabled:opacity-50'
-    : 'inline-flex items-center px-4 py-2 text-xs font-semibold border border-cobalt text-cobalt hover:bg-cobalt/10 transition-colors tracking-wide uppercase disabled:opacity-50';
-
-  const unsubscribedCls = compact
-    ? 'inline-flex items-center px-3 py-1 text-xs font-semibold border border-ink/30 text-ink/80 rounded-full hover:border-ink/50 hover:text-ink transition-colors font-[family-name:var(--font-kode-mono)] disabled:opacity-50'
-    : 'inline-flex items-center px-4 py-2 text-xs font-semibold bg-cobalt text-cream hover:bg-cobalt-light transition-colors tracking-wide uppercase disabled:opacity-50';
+  const spinner = (signing.phase === 'waiting' || signing.phase === 'saving') ? (
+    <svg className="animate-spin -ml-0.5 mr-1.5 h-3 w-3" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  ) : null;
 
   return (
     <div className="flex flex-col gap-1">
       {isSubscribed ? (
-        <button
+        <Button
+          variant="outline"
+          size={compact ? 'xs' : 'sm'}
           onClick={handleUnsubscribe}
           disabled={isDisabled}
-          className={subscribedCls}
+          className={compact
+            ? 'rounded-full border-ink/30 text-ink/80 hover:border-ink/50 font-[family-name:var(--font-kode-mono)]'
+            : 'border-cobalt text-cobalt hover:bg-cobalt/10 tracking-wide uppercase'
+          }
         >
-          {(signing.phase === 'waiting' || signing.phase === 'saving') && (
-            <svg className="animate-spin -ml-0.5 mr-1.5 h-3 w-3" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          )}
+          {spinner}
           {buttonLabel}
-        </button>
+        </Button>
       ) : (
-        <button
+        <Button
+          variant="secondary"
+          size={compact ? 'xs' : 'sm'}
           onClick={handleSubscribe}
           disabled={isDisabled}
-          className={unsubscribedCls}
+          className={compact
+            ? 'rounded-full border-ink/30 text-ink/80 hover:border-ink/50 hover:text-ink bg-transparent font-[family-name:var(--font-kode-mono)]'
+            : 'tracking-wide uppercase'
+          }
         >
-          {(signing.phase === 'waiting' || signing.phase === 'saving') && (
-            <svg className="animate-spin -ml-0.5 mr-1.5 h-3 w-3" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          )}
+          {spinner}
           {buttonLabel}
-        </button>
+        </Button>
       )}
       {signing.phase === 'cancelled' && (
         <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">

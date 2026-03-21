@@ -13,6 +13,14 @@ import { eventExpiresAt, secondsUntilExpiry, formatExpiryDate, getEventStatus } 
 import StatusBadge, { type EventStatus } from '@/components/demos/StatusBadge';
 import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { eq } from '@arkiv-network/sdk/query';
 import {
   publicClient,
@@ -152,10 +160,12 @@ function downloadIcs(event: ArkivEvent) {
 
 function ShareModal({
   event,
-  onClose,
+  open,
+  onOpenChange,
 }: {
   event: ArkivEvent;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
   const [linkCopied, setLinkCopied] = useState(false);
   const eventUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -199,34 +209,15 @@ function ShareModal({
   ];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70"
-      onClick={onClose}
-    >
-      <div
-        className="bg-ink border border-warm-gray/20 w-full max-w-sm mx-4 p-6"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Share this event"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-sm font-bold uppercase tracking-[0.15em] text-cream font-[family-name:var(--font-kode-mono)]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-ink border-warm-gray/20 text-cream" showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle className="text-sm font-bold uppercase tracking-[0.15em] text-cream font-[family-name:var(--font-kode-mono)]">
             Share this event
-          </h2>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center text-warm-gray hover:text-cream transition-colors"
-            aria-label="Close"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
-        <div className="flex flex-col gap-2 mb-4">
+        <div className="flex flex-col gap-2">
           {socials.map((s) => (
             <a
               key={s.label}
@@ -239,9 +230,10 @@ function ShareModal({
               {s.label}
             </a>
           ))}
-          <button
+          <Button
+            variant="outline"
             onClick={copyLink}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-geist-sans)]"
+            className="justify-start gap-3 h-auto px-4 py-3 text-sm text-cream border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 bg-transparent"
           >
             <span className="shrink-0 text-warm-gray">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -250,7 +242,7 @@ function ShareModal({
               </svg>
             </span>
             {linkCopied ? 'Copied!' : 'Copy link'}
-          </button>
+          </Button>
         </div>
 
         <input
@@ -260,17 +252,19 @@ function ShareModal({
           onClick={copyLink}
           className="w-full px-3 py-2 text-xs text-warm-gray bg-ink border border-warm-gray/20 cursor-pointer hover:border-cream/40 transition-colors font-[family-name:var(--font-kode-mono)] truncate"
         />
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 function CalendarModal({
   event,
-  onClose,
+  open,
+  onOpenChange,
 }: {
   event: ArkivEvent;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
   const options = [
     { label: 'Google Calendar', href: googleCalendarUrl(event), external: true },
@@ -280,32 +274,13 @@ function CalendarModal({
   ];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70"
-      onClick={onClose}
-    >
-      <div
-        className="bg-ink border border-warm-gray/20 w-full max-w-sm mx-4 p-6"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Add to calendar"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-sm font-bold uppercase tracking-[0.15em] text-cream font-[family-name:var(--font-kode-mono)]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-ink border-warm-gray/20 text-cream" showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle className="text-sm font-bold uppercase tracking-[0.15em] text-cream font-[family-name:var(--font-kode-mono)]">
             Add to calendar
-          </h2>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center text-warm-gray hover:text-cream transition-colors"
-            aria-label="Close"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
         <div className="flex flex-col gap-2">
           {options.map((opt) =>
             opt.external ? (
@@ -314,24 +289,25 @@ function CalendarModal({
                 href={opt.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={onClose}
+                onClick={() => onOpenChange(false)}
                 className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-geist-sans)] text-center"
               >
                 {opt.label}
               </a>
             ) : (
-              <button
+              <Button
                 key={opt.label}
-                onClick={() => { opt.action?.(); onClose(); }}
-                className="w-full px-4 py-3 text-sm text-cream border border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 transition-colors font-[family-name:var(--font-geist-sans)] text-center"
+                variant="outline"
+                onClick={() => { opt.action?.(); onOpenChange(false); }}
+                className="w-full h-auto px-4 py-3 text-sm text-cream border-warm-gray/20 hover:border-cream/40 hover:bg-cream/5 bg-transparent text-center"
               >
                 {opt.label}
-              </button>
+              </Button>
             )
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -547,19 +523,17 @@ export default function EventPageClient() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Close overlay modals on Escape
+  // Close overlay modals on Escape (Dialog modals handle their own)
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== 'Escape') return;
       if (showScanner) { setShowScanner(false); return; }
       if (showTicketModal) { setShowTicketModal(false); return; }
       if (showAttendeesModal) { setShowAttendeesModal(false); return; }
-      if (calendarOpen) { setCalendarOpen(false); return; }
-      if (shareOpen) { setShareOpen(false); return; }
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [showScanner, showTicketModal, showAttendeesModal, calendarOpen, shareOpen]);
+  }, [showScanner, showTicketModal, showAttendeesModal]);
 
   // Collect all addresses to resolve display names in one batch
   const allAddresses = [
@@ -1388,16 +1362,20 @@ export default function EventPageClient() {
                 </p>
               ) : alreadyRsvpd ? (
                 <div className="flex flex-col gap-2">
-                  <button
+                  <Button
+                    variant="outline"
+                    size="lg"
                     disabled
-                    className="w-full py-3 text-sm font-semibold bg-ink/10 text-ink border border-ink/20 cursor-default"
+                    className="w-full bg-ink/10 text-ink border-ink/20 cursor-default"
                   >
                     Attendance Confirmed ✓
-                  </button>
+                  </Button>
                   {event && (
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => downloadIcs(event)}
-                      className="w-full py-2.5 text-xs font-semibold border border-cobalt/30 text-cobalt hover:bg-cobalt/5 transition-colors flex items-center justify-center gap-2"
+                      className="w-full border-cobalt/30 text-cobalt hover:bg-cobalt/5"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -1406,7 +1384,7 @@ export default function EventPageClient() {
                         <line x1="3" y1="10" x2="21" y2="10" />
                       </svg>
                       Add to Calendar
-                    </button>
+                    </Button>
                   )}
                   {showCancelConfirm ? (
                     <div className="border border-warm-gray/30 p-3 flex flex-col gap-2.5">
@@ -1417,55 +1395,64 @@ export default function EventPageClient() {
                         Your RSVP will be deleted from Arkiv immediately.
                       </p>
                       <div className="flex gap-2 pt-0.5">
-                        <button
+                        <Button
+                          variant="destructive"
+                          size="xs"
                           onClick={handleCancelRSVP}
                           disabled={cancelLoading}
-                          className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
                         >
                           {cancelLoading ? 'Cancelling…' : 'Yes, cancel'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="xs"
                           onClick={() => setShowCancelConfirm(false)}
-                          className="px-3 py-1.5 text-xs text-ink/80 border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors"
+                          className="text-ink/80 border-warm-gray/40 hover:text-ink hover:border-warm-gray"
                         >
                           Keep RSVP
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ) : (
-                    <button
+                    <Button
+                      variant="link"
                       onClick={() => setShowCancelConfirm(true)}
-                      className="text-xs text-ink/80 underline text-center font-[family-name:var(--font-geist-sans)] hover:text-ink transition-colors"
+                      className="text-xs text-ink/80 hover:text-ink mx-auto"
                     >
                       Cancel attendance
-                    </button>
+                    </Button>
                   )}
                 </div>
               ) : atCapacity ? (
                 alreadyOnWaitlist ? (
-                  <button
+                  <Button
+                    variant="outline"
+                    size="lg"
                     disabled
-                    className="w-full py-3 text-sm font-semibold border cursor-default text-cobalt border-cobalt bg-cobalt/5"
+                    className="w-full text-cobalt border-cobalt bg-cobalt/5 cursor-default"
                   >
                     You&apos;re on the waitlist
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="lg"
                     onClick={handleWaitlist}
                     disabled={waitlistLoading}
-                    className="w-full py-3 text-sm font-semibold text-cream bg-cobalt transition-colors disabled:opacity-60 disabled:cursor-wait hover:bg-cobalt-light"
+                    className="w-full"
                   >
                     {waitlistLoading ? 'Joining…' : 'Join Waitlist'}
-                  </button>
+                  </Button>
                 )
               ) : (
-                <button
+                <Button
+                  size="lg"
                   onClick={handleRSVP}
                   disabled={rsvpLoading || !canRsvp}
-                  className="w-full py-3 text-sm font-semibold bg-orange text-cream hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-wait"
+                  className="w-full"
                 >
                   {rsvpLoading ? 'Confirming…' : 'Confirm Attendance'}
-                </button>
+                </Button>
               )}
 
               {cancelledWithWaitlist && (
@@ -1513,25 +1500,25 @@ export default function EventPageClient() {
                 {isOrganizer && (
                   <>
                     <div className="flex items-center gap-3 flex-wrap">
-                      <Link
-                        href={`/event/edit/${id}`}
-                        className="px-4 py-2 text-xs font-semibold border border-ink/60 text-ink/80 hover:border-ink hover:text-ink transition-colors"
-                      >
-                        Edit event
-                      </Link>
-                      <button
+                      <Button asChild variant="outline" size="sm" className="border-ink/60 text-ink/80 hover:border-ink hover:text-ink">
+                        <Link href={`/event/edit/${id}`}>Edit event</Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={handleOpenScanner}
-                        className="px-4 py-2 text-xs font-semibold border border-ink/60 text-ink/80 hover:border-ink hover:text-ink transition-colors"
+                        className="border-ink/60 text-ink/80 hover:border-ink hover:text-ink"
                       >
                         Scan QR
-                      </button>
+                      </Button>
                       {(displayStatus === 'upcoming' || displayStatus === 'live') && !showCancelEventConfirm && (
-                        <button
+                        <Button
+                          variant="destructive"
+                          size="xs"
                           onClick={() => setShowCancelEventConfirm(true)}
-                          className="px-4 py-1.5 text-xs font-semibold border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
                         >
                           Cancel event
-                        </button>
+                        </Button>
                       )}
                     </div>
 
@@ -1545,20 +1532,23 @@ export default function EventPageClient() {
                           )}
                         </p>
                         <div className="flex gap-2">
-                          <button
+                          <Button
+                            variant="destructive"
+                            size="xs"
                             onClick={handleCancelEvent}
                             disabled={cancelEventLoading}
-                            className="px-3 py-1.5 bg-red-600 text-cream text-xs font-semibold disabled:opacity-60 hover:bg-red-700 transition-colors"
                           >
                             {cancelEventLoading ? 'Cancelling…' : 'Yes, cancel event'}
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="xs"
                             onClick={() => setShowCancelEventConfirm(false)}
                             disabled={cancelEventLoading}
-                            className="px-3 py-1.5 text-xs text-ink/80 border border-warm-gray/40 hover:text-ink hover:border-warm-gray transition-colors disabled:opacity-40"
+                            className="text-ink/80 border-warm-gray/40 hover:text-ink hover:border-warm-gray"
                           >
                             Keep event
-                          </button>
+                          </Button>
                         </div>
                         {cancelEventStatus && (
                           <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
@@ -1616,12 +1606,12 @@ export default function EventPageClient() {
                     ) : eventPassed ? (
                       <>
                         {!showVerifyPanel ? (
-                          <button
+                          <Button
                             onClick={() => setShowVerifyPanel(true)}
-                            className="px-4 py-2.5 bg-ink text-cream text-sm font-semibold hover:bg-ink/80 transition-colors"
+                            className="bg-ink text-cream hover:bg-ink/80"
                           >
                             Close event &amp; verify attendance
-                          </button>
+                          </Button>
                         ) : (
                           <div className="space-y-4">
                             <p className="text-sm text-ink/80">
@@ -1666,21 +1656,21 @@ export default function EventPageClient() {
                               </ul>
                             )}
                             <div className="flex items-center gap-3 pt-1">
-                              <button
+                              <Button
                                 onClick={handleVerifyAttendance}
                                 disabled={verifyLoading || checkedAttendees.size === 0}
-                                className="px-4 py-2.5 bg-orange text-cream text-sm font-semibold hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                               >
                                 {verifyLoading
                                   ? 'Verifying…'
                                   : `Confirm attendance (${checkedAttendees.size})`}
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                variant="ghost"
                                 onClick={() => setShowVerifyPanel(false)}
-                                className="text-sm text-ink/80 hover:text-ink transition-colors"
+                                className="text-ink/80 hover:text-ink"
                               >
                                 Cancel
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -1705,9 +1695,9 @@ export default function EventPageClient() {
               <div className="flex items-center gap-2.5 flex-wrap">
                 <StatusBadge status={displayStatus} />
                 {event?.category && (
-                  <span className="inline-block px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-cream bg-ink font-[family-name:var(--font-geist-sans)]">
+                  <Badge className="rounded-none px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-cream bg-ink border-0 font-[family-name:var(--font-geist-sans)]">
                     {event.category}
-                  </span>
+                  </Badge>
                 )}
               </div>
 
@@ -1759,31 +1749,33 @@ export default function EventPageClient() {
 
               {/* Action buttons: Share + Calendar */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleShare}
-                  className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-ink/80 hover:border-ink transition-colors"
+                  className="tracking-widest uppercase border-ink/80 hover:border-ink"
                 >
                   Share event
-                </button>
-                {shareOpen && event && (
-                  <ShareModal event={event} onClose={() => setShareOpen(false)} />
-                )}
-                <button
+                </Button>
+                <ShareModal event={event} open={shareOpen} onOpenChange={setShareOpen} />
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCalendarOpen(true)}
-                  className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-ink/80 hover:border-ink transition-colors"
+                  className="tracking-widest uppercase border-ink/80 hover:border-ink"
                 >
                   Add to calendar
-                </button>
-                {calendarOpen && (
-                  <CalendarModal event={event} onClose={() => setCalendarOpen(false)} />
-                )}
+                </Button>
+                <CalendarModal event={event} open={calendarOpen} onOpenChange={setCalendarOpen} />
                 {alreadyRsvpd && (
-                  <button
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={handleViewTicket}
-                    className="px-4 py-2 text-xs font-semibold text-ink tracking-widest uppercase border border-ink/80 hover:border-ink transition-colors"
+                    className="tracking-widest uppercase border-ink/80 hover:border-ink"
                   >
                     View ticket
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -1837,16 +1829,18 @@ export default function EventPageClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 backdrop-blur-sm p-4">
           <div className="relative w-[340px] bg-ink p-6 flex flex-col items-center" role="dialog" aria-modal="true" aria-label="Event ticket">
             {/* Close */}
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleCloseTicket}
-              className="absolute top-3 right-3 text-cream/60 hover:text-cream transition-colors"
+              className="absolute top-3 right-3 text-cream/60 hover:text-cream hover:bg-transparent"
               aria-label="Close ticket"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                 <line x1="4" y1="4" x2="16" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
                 <line x1="16" y1="4" x2="4" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
               </svg>
-            </button>
+            </Button>
 
             {/* QR Code */}
             <div className="w-[200px] h-[200px] flex items-center justify-center mb-4">
@@ -1892,16 +1886,18 @@ export default function EventPageClient() {
       {showScanner && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-ink/90 p-4" role="dialog" aria-modal="true" aria-label="QR scanner">
           {/* Close */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleCloseScanner}
-            className="absolute top-4 right-4 text-cream/60 hover:text-cream transition-colors z-10"
+            className="absolute top-4 right-4 text-cream/60 hover:text-cream hover:bg-transparent z-10"
             aria-label="Close scanner"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
               <line x1="20" y1="4" x2="4" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
             </svg>
-          </button>
+          </Button>
 
           <p className="text-cream/80 text-sm font-[family-name:var(--font-geist-sans)] mb-4">
             Point your camera at an attendee&apos;s QR ticket
@@ -1942,16 +1938,17 @@ export default function EventPageClient() {
                 <p className={`text-sm font-semibold ${scanResult.success ? 'text-green-400' : 'text-orange'}`}>
                   {scanResult.success ? '✓ ' : ''}{scanResult.message}
                 </p>
-                <button
+                <Button
+                  variant="link"
                   onClick={() => {
                     setScanResult(null);
                     setScanError('');
                     startScanning();
                   }}
-                  className="text-xs text-cream/60 underline hover:text-cream transition-colors font-[family-name:var(--font-geist-sans)]"
+                  className="text-xs text-cream/60 hover:text-cream"
                 >
                   Scan next attendee
-                </button>
+                </Button>
               </div>
             ) : scanError ? (
               <p className="text-sm text-orange font-[family-name:var(--font-geist-sans)]">
@@ -1980,16 +1977,18 @@ export default function EventPageClient() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={() => setShowAttendeesModal(false)}
-              className="absolute top-4 right-4 text-ink/40 hover:text-ink transition-colors"
+              className="absolute top-4 right-4 text-ink/40 hover:text-ink"
               aria-label="Close"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
                 <line x1="20" y1="4" x2="4" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
               </svg>
-            </button>
+            </Button>
 
             {/* Attending section */}
             <h3 className="text-lg font-bold text-ink font-[family-name:var(--font-kode-mono)] mb-4">

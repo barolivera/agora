@@ -8,7 +8,9 @@ import { kaolin } from '@arkiv-network/sdk/chains';
 import { jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eventExpiresAt, secondsUntilExpiry } from '@/lib/expiration';
 import { publicClient } from '@/lib/arkiv';
-import { inputCls } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 const COMMUNITY_SUGGESTIONS = [
   'SheFi',
@@ -221,13 +223,12 @@ export default function EditEventPage() {
             <label className="block text-sm font-medium text-ink mb-1.5">
               Title <span className="text-orange">*</span>
             </label>
-            <input
+            <Input
               type="text"
               required
               placeholder="e.g. ETH Athens Summer Meetup"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className={inputCls}
             />
           </div>
 
@@ -235,13 +236,12 @@ export default function EditEventPage() {
             <label className="block text-sm font-medium text-ink mb-1.5">
               Description <span className="text-orange">*</span>
             </label>
-            <textarea
+            <Textarea
               required
               placeholder="Tell people what to expect…"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className={`${inputCls} resize-none`}
             />
           </div>
 
@@ -251,9 +251,10 @@ export default function EditEventPage() {
             </label>
             <div className="flex flex-wrap gap-2">
               {EVENT_CATEGORIES.map((cat) => (
-                <button
+                <Button
                   key={cat}
                   type="button"
+                  variant="ghost"
                   onClick={() => setCategory(cat)}
                   className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-geist-sans)] ${
                     category === cat
@@ -262,7 +263,7 @@ export default function EditEventPage() {
                   }`}
                 >
                   {cat}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -272,12 +273,11 @@ export default function EditEventPage() {
               <label className="block text-sm font-medium text-ink mb-1.5">
                 Date &amp; time <span className="text-orange">*</span>
               </label>
-              <input
+              <Input
                 type="datetime-local"
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className={inputCls}
               />
             </div>
 
@@ -285,14 +285,13 @@ export default function EditEventPage() {
               <label className="block text-sm font-medium text-ink mb-1.5">
                 Capacity <span className="text-orange">*</span>
               </label>
-              <input
+              <Input
                 type="number"
                 required
                 min={1}
                 placeholder="50"
                 value={capacity}
                 onChange={(e) => setCapacity(e.target.value)}
-                className={inputCls}
               />
             </div>
           </div>
@@ -301,13 +300,12 @@ export default function EditEventPage() {
             <label className="block text-sm font-medium text-ink mb-1.5">
               Location <span className="text-orange">*</span>
             </label>
-            <input
+            <Input
               type="text"
               required
               placeholder="e.g. Monastiraki Square, Athens"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className={inputCls}
             />
           </div>
 
@@ -316,12 +314,11 @@ export default function EditEventPage() {
               Cover image URL
               <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
-            <input
+            <Input
               type="url"
               placeholder="https://…"
               value={coverImageUrl}
               onChange={(e) => setCoverImageUrl(e.target.value)}
-              className={inputCls}
             />
           </div>
 
@@ -330,13 +327,12 @@ export default function EditEventPage() {
               Community tag
               <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
-            <input
+            <Input
               type="text"
               list="community-suggestions-edit"
               placeholder="e.g. SheFi, ETHArgentina, Developer DAO"
               value={communityTag}
               onChange={(e) => setCommunityTag(e.target.value)}
-              className={inputCls}
             />
             <datalist id="community-suggestions-edit">
               {COMMUNITY_SUGGESTIONS.map((s) => (
@@ -354,10 +350,10 @@ export default function EditEventPage() {
           </div>
 
           <div className="pt-2 flex items-center gap-4">
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-orange text-cream py-3.5 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed hover:bg-orange-light transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-3.5 text-sm font-semibold flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -370,14 +366,15 @@ export default function EditEventPage() {
               ) : (
                 'Save changes'
               )}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => router.push(`/event/${id}`)}
               className="px-5 py-3.5 text-sm text-ink/80 hover:text-ink transition-colors border border-warm-gray/40 hover:border-warm-gray"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </form>
       </div>

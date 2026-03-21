@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -53,23 +54,27 @@ export default function Calendar({
     <div className="border border-warm-gray/20 p-4">
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-3">
-        <button
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={prevMonth}
-          className="w-6 h-6 flex items-center justify-center text-ink/80 hover:text-ink transition-colors text-lg leading-none"
+          className="text-ink/80 hover:text-ink text-lg leading-none"
           aria-label="Previous month"
         >
           ‹
-        </button>
+        </Button>
         <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink/80 font-[family-name:var(--font-kode-mono)]">
           {MESES[viewMonth]} {viewYear}
         </span>
-        <button
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={nextMonth}
-          className="w-6 h-6 flex items-center justify-center text-ink/80 hover:text-ink transition-colors text-lg leading-none"
+          className="text-ink/80 hover:text-ink text-lg leading-none"
           aria-label="Next month"
         >
           ›
-        </button>
+        </Button>
       </div>
 
       {/* Day-of-week headers */}

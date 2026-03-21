@@ -143,7 +143,7 @@ function extractFromNextData(html: string): Partial<LumaEventData> {
 
 export async function POST(request: Request) {
   try {
-    const { url } = await request.json();
+    const { url, communities: rawCommunities } = await request.json();
 
     if (!url || typeof url !== 'string') {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
@@ -210,10 +210,19 @@ export async function POST(request: Request) {
 
     try {
       const { enrichEventWithAI } = await import('@/lib/ai/enrichEvent');
-      ai = await enrichEventWithAI(merged);
+      const communityHints = Array.isArray(rawCommunities)
+        ? rawCommunities.filter((c: unknown) =>
+            typeof c === 'object' && c !== null &&
+            typeof (c as Record<string, unknown>).slug === 'string' &&
+            typeof (c as Record<string, unknown>).name === 'string'
+          )
+        : [];
+      ai = await enrichEventWithAI(merged, communityHints);
     } catch (err) {
-      console.error('[import-luma] AI enrichment failed:', err);
-      aiError = 'AI enrichment unavailable — event imported without suggestions.';
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const status = (err as { status?: number }).status;
+      console.error(`[import-luma] AI enrichment failed: ${errMsg}`, status ? `(HTTP ${status})` : '');
+      aiError = `AI enrichment unavailable — event imported without suggestions. (${errMsg})`;
     }
 
     const result: LumaImportResponse = { ...merged, ai, aiError };

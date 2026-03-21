@@ -1,15 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 export default function PastEventsToggle({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
     <div>
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-ink/80 hover:text-ink transition-colors font-[family-name:var(--font-kode-mono)]"
+        className="text-xs tracking-[0.15em] uppercase text-ink/80 hover:text-ink font-[family-name:var(--font-kode-mono)] px-0"
       >
         <svg
           className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
@@ -24,7 +27,7 @@ export default function PastEventsToggle({ children }: { children: React.ReactNo
           <polyline points="9 18 15 12 9 6" />
         </svg>
         {open ? 'Hide past events' : 'Show past events'}
-      </button>
+      </Button>
       {open && children}
     </div>
   );

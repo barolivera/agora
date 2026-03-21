@@ -23,6 +23,7 @@ import {
   type ArkivAttendance,
   type ArkivRSVP,
 } from '@/lib/arkiv';
+import { Button } from '@/components/ui/button';
 import { getEventStatus } from '@/lib/expiration';
 import { deslugify } from '@/lib/utils';
 
@@ -495,9 +496,10 @@ export default function PublicProfilePage() {
                   </h1>
 
                   {/* Wallet address — clickable to copy */}
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={copyAddress}
-                    className="text-warm-gray font-mono text-sm mt-1.5 hover:text-cream transition-colors inline-flex items-center gap-1.5 group"
+                    className="text-warm-gray font-mono text-sm mt-1.5 hover:text-cream h-auto p-0 gap-1.5 group"
                   >
                     {shortAddress(address)}
                     <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -505,7 +507,7 @@ export default function PublicProfilePage() {
                       <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                     </svg>
                     {copied && <span className="text-[#D4E84C] text-xs font-[family-name:var(--font-geist-sans)]">Copied!</span>}
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Edit profile — owner only */}

@@ -11,6 +11,7 @@ import { getEventStatus } from '@/lib/expiration';
 import StatusBadge from '@/components/demos/StatusBadge';
 import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
+import { Button } from '@/components/ui/button';
 
 
 type EventWithCount = ArkivEvent & { attendeeCount: number };
@@ -207,27 +208,32 @@ export default function MyEventsPage() {
                           Delete this event and all its RSVPs and attendance records?
                         </p>
                         <div className="flex items-center gap-2">
-                          <button
+                          <Button
+                            variant="destructive"
+                            size="xs"
                             onClick={() => handleDelete(event)}
-                            className="px-3 py-1 text-xs font-semibold text-cream bg-red-600 hover:bg-red-700 transition-colors"
                           >
                             Yes, delete
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="xs"
                             onClick={() => setConfirmDeleteId(null)}
-                            className="text-xs text-ink/80 hover:text-ink transition-colors"
+                            className="text-ink/80 hover:text-ink"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     ) : (
-                      <button
+                      <Button
+                        variant="link"
+                        size="xs"
                         onClick={() => setConfirmDeleteId(event.entityKey)}
-                        className="mt-3 text-xs font-semibold text-red-500 hover:text-red-700 transition-colors font-[family-name:var(--font-geist-sans)]"
+                        className="mt-3 text-red-500 hover:text-red-700 font-[family-name:var(--font-geist-sans)]"
                       >
                         Delete event + data
-                      </button>
+                      </Button>
                     )}
                   </div>
                 )}

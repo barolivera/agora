@@ -10,7 +10,9 @@ import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eq } from '@arkiv-network/sdk/query';
 import { publicClient, parseCommunity, type ArkivCommunity } from '@/lib/arkiv';
 import { deslugify } from '@/lib/utils';
-import { inputCls } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -244,13 +246,12 @@ export default function EditCommunityPage() {
             <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Community name <span className="text-orange">*</span>
             </label>
-            <input
+            <Input
               type="text"
               required
               maxLength={80}
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
-              className={inputCls}
             />
           </div>
 
@@ -259,13 +260,12 @@ export default function EditCommunityPage() {
             <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Description <span className="text-orange">*</span>
             </label>
-            <textarea
+            <Textarea
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               maxLength={500}
-              className={`${inputCls} resize-none`}
             />
           </div>
 
@@ -274,13 +274,12 @@ export default function EditCommunityPage() {
             <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Location
             </label>
-            <input
+            <Input
               type="text"
               placeholder="City, Country"
               maxLength={80}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className={inputCls}
             />
           </div>
 
@@ -289,12 +288,11 @@ export default function EditCommunityPage() {
             <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Logo URL
             </label>
-            <input
+            <Input
               type="url"
               placeholder="https://…"
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
-              className={inputCls}
             />
             {logoUrl.trim() && (
               <div className="mt-1">
@@ -317,12 +315,11 @@ export default function EditCommunityPage() {
             <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Cover image URL
             </label>
-            <input
+            <Input
               type="url"
               placeholder="https://… (recommended: 1200×400px)"
               value={coverUrl}
               onChange={(e) => setCoverUrl(e.target.value)}
-              className={inputCls}
             />
           </div>
 
@@ -337,12 +334,11 @@ export default function EditCommunityPage() {
                 <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   Website
                 </label>
-                <input
+                <Input
                   type="url"
                   placeholder="https://…"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
-                  className={inputCls}
                 />
               </div>
 
@@ -351,13 +347,12 @@ export default function EditCommunityPage() {
                 <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   Twitter / X
                 </label>
-                <input
+                <Input
                   type="text"
                   placeholder="@handle"
                   maxLength={100}
                   value={twitter}
                   onChange={(e) => setTwitter(e.target.value)}
-                  className={inputCls}
                 />
               </div>
 
@@ -366,13 +361,12 @@ export default function EditCommunityPage() {
                 <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   Instagram
                 </label>
-                <input
+                <Input
                   type="text"
                   placeholder="@handle"
                   maxLength={100}
                   value={instagram}
                   onChange={(e) => setInstagram(e.target.value)}
-                  className={inputCls}
                 />
               </div>
 
@@ -381,13 +375,12 @@ export default function EditCommunityPage() {
                 <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   LinkedIn
                 </label>
-                <input
+                <Input
                   type="url"
                   placeholder="https://linkedin.com/in/…"
                   maxLength={200}
                   value={linkedin}
                   onChange={(e) => setLinkedin(e.target.value)}
-                  className={inputCls}
                 />
               </div>
 
@@ -396,13 +389,12 @@ export default function EditCommunityPage() {
                 <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   YouTube
                 </label>
-                <input
+                <Input
                   type="url"
                   placeholder="https://youtube.com/@…"
                   maxLength={200}
                   value={youtube}
                   onChange={(e) => setYoutube(e.target.value)}
-                  className={inputCls}
                 />
               </div>
 
@@ -411,12 +403,11 @@ export default function EditCommunityPage() {
                 <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   Discord invite URL
                 </label>
-                <input
+                <Input
                   type="url"
                   placeholder="https://discord.gg/…"
                   value={discord}
                   onChange={(e) => setDiscord(e.target.value)}
-                  className={inputCls}
                 />
               </div>
             </div>
@@ -431,10 +422,10 @@ export default function EditCommunityPage() {
 
           {/* Actions */}
           <div className="flex items-center gap-5 pt-2">
-            <button
+            <Button
               type="submit"
               disabled={saving || saved}
-              className="px-6 py-3 bg-orange text-cream text-sm font-semibold hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+              size="lg"
             >
               {saved ? (
                 'Community saved on-chain ✓'
@@ -449,7 +440,7 @@ export default function EditCommunityPage() {
               ) : (
                 'Save changes'
               )}
-            </button>
+            </Button>
             <Link
               href={`/community/${name}`}
               className="text-sm text-ink/80 hover:text-ink transition-colors"

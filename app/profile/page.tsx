@@ -9,6 +9,8 @@ import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { eq } from '@arkiv-network/sdk/query';
 import Link from 'next/link';
 import { publicClient, parseProfile, type ArkivProfile } from '@/lib/arkiv';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -151,9 +153,6 @@ export default function EditProfilePage() {
     );
   }
 
-  const inputClass =
-    'border border-warm-gray/50 bg-cream px-4 py-3 text-sm text-ink placeholder:text-ink/50 focus:outline-none focus:border-ink transition-colors w-full';
-
   return (
     <main className="min-h-screen bg-cream">
       <div className="max-w-xl mx-auto px-6 py-16">
@@ -172,13 +171,12 @@ export default function EditProfilePage() {
             <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Display name
             </label>
-            <input
+            <Input
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               placeholder="Your name or alias"
               maxLength={50}
-              className={inputClass}
             />
           </div>
 
@@ -193,7 +191,7 @@ export default function EditProfilePage() {
               placeholder="A short description about yourself"
               rows={3}
               maxLength={300}
-              className={`${inputClass} resize-none`}
+              className="w-full border border-input bg-background px-4 py-3 text-sm text-foreground transition-colors outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/40 focus:border-ring disabled:opacity-50 resize-none"
             />
           </div>
 
@@ -202,13 +200,12 @@ export default function EditProfilePage() {
             <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Location
             </label>
-            <input
+            <Input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="City, Country"
               maxLength={80}
-              className={inputClass}
             />
           </div>
 
@@ -217,12 +214,11 @@ export default function EditProfilePage() {
             <label className="text-xs font-semibold text-ink uppercase tracking-widest">
               Avatar URL
             </label>
-            <input
+            <Input
               type="url"
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://…"
-              className={inputClass}
+              placeholder="https://..."
             />
             <p className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
               Leave blank to use your Ethereum identicon
@@ -239,39 +235,36 @@ export default function EditProfilePage() {
                 <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   𝕏 Twitter / X
                 </label>
-                <input
+                <Input
                   type="text"
                   value={twitter}
                   onChange={(e) => setTwitter(e.target.value)}
                   placeholder="@handle"
                   maxLength={100}
-                  className={inputClass}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   💬 Discord
                 </label>
-                <input
+                <Input
                   type="text"
                   value={discord}
                   onChange={(e) => setDiscord(e.target.value)}
                   placeholder="username or server invite"
                   maxLength={100}
-                  className={inputClass}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
                   🟣 Farcaster
                 </label>
-                <input
+                <Input
                   type="text"
                   value={farcaster}
                   onChange={(e) => setFarcaster(e.target.value)}
                   placeholder="@handle"
                   maxLength={100}
-                  className={inputClass}
                 />
               </div>
             </div>
@@ -286,13 +279,14 @@ export default function EditProfilePage() {
 
           {/* Actions */}
           <div className="flex items-center gap-5 pt-2">
-            <button
+            <Button
               type="submit"
               disabled={saving || saved}
-              className="px-6 py-3 bg-orange text-cream text-sm font-semibold hover:bg-orange-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              size="lg"
+              className="bg-orange text-cream hover:bg-orange-light"
             >
               {saved ? 'Profile saved on-chain ✓' : saving ? 'Saving…' : 'Save profile'}
-            </button>
+            </Button>
             {existingProfile && address && (
               <Link
                 href={`/profile/${address}`}

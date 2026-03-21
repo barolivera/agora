@@ -17,10 +17,3 @@ export function titleGradient(title: string): string {
   const [from, to] = CARD_GRADIENTS[Math.abs(hash) % CARD_GRADIENTS.length];
   return `linear-gradient(135deg, ${from}, ${to})`;
 }
-
-// ── Shared input class ───────────────────────────────────────────────────────
-
-export const inputCls =
-  'w-full border border-warm-gray/50 px-4 py-3 text-sm bg-cream text-ink ' +
-  'placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40 ' +
-  'focus:border-cobalt transition-colors';

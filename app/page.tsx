@@ -9,6 +9,8 @@ import { EventCard, CardSkeleton } from '@/components/demos/EventCard';
 import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
 import { deslugify } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const CATEGORY_OPTIONS = [
   'Meetup', 'Workshop', 'Hackathon', 'Conference',
@@ -33,26 +35,28 @@ function SearchInput({
           <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
         </svg>
       </span>
-      <input
+      <Input
         ref={inputRef}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search events by title or location..."
-        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-ink/80 text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-geist-sans)] focus:outline-none focus:border-ink"
+        className="pl-9 pr-9 placeholder:text-ink/80"
       />
       {value && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           onClick={() => { onChange(''); inputRef.current?.focus(); }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/80 hover:text-ink transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/80 hover:text-ink"
           aria-label="Clear search"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
             <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
           </svg>
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -302,18 +306,12 @@ export default function HomePage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-[13px]">
-              <Link
-                href="/create-event"
-                className="bg-orange text-cream flex items-center justify-center h-[50px] w-[163px] text-sm font-semibold hover:bg-orange-light transition-colors font-[family-name:var(--font-geist-sans)] whitespace-nowrap"
-              >
-                Create an event
-              </Link>
-              <a
-                href="#events"
-                className="border-2 border-ink text-ink flex items-center justify-center h-[50px] w-[156px] text-sm font-semibold hover:bg-ink hover:text-cream transition-colors font-[family-name:var(--font-geist-sans)] whitespace-nowrap"
-              >
-                Explore events
-              </a>
+              <Button asChild size="lg" className="h-[50px] w-[163px]">
+                <Link href="/create-event">Create an event</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-[50px] w-[156px] border-2 border-ink hover:bg-ink hover:text-cream">
+                <a href="#events">Explore events</a>
+              </Button>
             </div>
           </div>
         </div>
@@ -374,19 +372,21 @@ export default function HomePage() {
 
               <div className="flex">
                 {(['newest', 'soonest'] as const).map((s) => (
-                  <button
+                  <Button
                     key={s}
+                    variant={sortOrder === s ? 'default' : 'outline'}
+                    size="sm"
                     onClick={() => setSortOrder(s)}
-                    className={`px-4 py-2 text-sm transition-all duration-200 font-[family-name:var(--font-geist-sans)] ${
-                      s === 'newest' ? 'rounded-l-full' : 'rounded-r-full'
+                    className={`font-[family-name:var(--font-geist-sans)] ${
+                      s === 'newest' ? 'rounded-l-full rounded-r-none' : 'rounded-r-full rounded-l-none'
                     } ${
                       sortOrder === s
-                        ? 'bg-ink text-cream'
-                        : 'bg-transparent border border-ink/20 text-ink/80 hover:text-ink hover:border-ink/40'
+                        ? 'bg-ink text-cream hover:bg-ink/90'
+                        : 'border-ink/20 text-ink/80 hover:text-ink hover:border-ink/40'
                     }`}
                   >
                     {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </button>
+                  </Button>
                 ))}
             </div>
           </div>
@@ -407,12 +407,9 @@ export default function HomePage() {
             <p className="text-ink/80 text-sm mb-8 max-w-xs leading-relaxed">
               No events yet — be the first to gather your community.
             </p>
-            <Link
-              href="/create-event"
-              className="bg-orange text-cream px-6 py-3 text-sm font-semibold hover:bg-orange-light transition-colors"
-            >
-              Create an event
-            </Link>
+            <Button asChild size="lg">
+              <Link href="/create-event">Create an event</Link>
+            </Button>
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="flex flex-col items-center text-center py-20 border border-dashed border-warm-gray/50">
@@ -421,12 +418,13 @@ export default function HomePage() {
                 ? 'No events match your search.'
                 : 'No events match your filters.'}
             </p>
-            <button
+            <Button
+              variant="link"
               onClick={() => { setStatusFilter('all'); setCategoryFilter(''); setSortOrder('newest'); setSearchQuery(''); }}
-              className="text-xs font-semibold text-cobalt underline underline-offset-2 hover:text-cobalt-light transition-colors font-[family-name:var(--font-geist-sans)]"
+              className="text-xs text-cobalt hover:text-cobalt-light"
             >
               Clear {searchQuery.trim() ? 'search' : 'filters'}
-            </button>
+            </Button>
           </div>
         ) : (
           <>
@@ -459,12 +457,9 @@ export default function HomePage() {
             ))}
           </div>
           <div className="text-center">
-            <Link
-              href="/community"
-              className="inline-block px-6 py-3 border border-cobalt text-cobalt text-sm font-semibold hover:bg-cobalt hover:text-cream transition-colors"
-            >
-              View all communities →
-            </Link>
+            <Button asChild variant="outline" size="lg" className="border-cobalt text-cobalt hover:bg-cobalt hover:text-cream">
+              <Link href="/community">View all communities →</Link>
+            </Button>
           </div>
         </section>
       )}

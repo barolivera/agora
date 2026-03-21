@@ -7,7 +7,9 @@ import { createWalletClient, custom } from '@arkiv-network/sdk';
 import { kaolin } from '@arkiv-network/sdk/chains';
 import { ExpirationTime, jsonToPayload } from '@arkiv-network/sdk/utils';
 import { deslugify } from '@/lib/utils';
-import { inputCls } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -133,13 +135,12 @@ function CreateCommunityForm() {
             <label className="block text-sm font-medium text-ink mb-1.5">
               Community name <span className="text-orange">*</span>
             </label>
-            <input
+            <Input
               type="text"
               required
               placeholder="e.g. ETH Argentina"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className={inputCls}
             />
             {slug && (
               <p className="mt-1.5 text-xs text-cobalt font-[family-name:var(--font-geist-sans)]">
@@ -154,13 +155,12 @@ function CreateCommunityForm() {
             <label className="block text-sm font-medium text-ink mb-1.5">
               Description <span className="text-orange">*</span>
             </label>
-            <textarea
+            <Textarea
               required
               placeholder="Tell the world what your community is about…"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className={`${inputCls} resize-none`}
             />
           </div>
 
@@ -170,12 +170,11 @@ function CreateCommunityForm() {
               Logo URL
               <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
-            <input
+            <Input
               type="url"
               placeholder="https://…"
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
-              className={inputCls}
             />
             {logoUrl.trim() && (
               <div className="mt-2">
@@ -199,12 +198,11 @@ function CreateCommunityForm() {
               Cover image URL
               <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
-            <input
+            <Input
               type="url"
               placeholder="https://… (recommended: 1200×400px)"
               value={coverUrl}
               onChange={(e) => setCoverUrl(e.target.value)}
-              className={inputCls}
             />
           </div>
 
@@ -214,12 +212,11 @@ function CreateCommunityForm() {
               Website
               <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
-            <input
+            <Input
               type="url"
               placeholder="https://…"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
-              className={inputCls}
             />
           </div>
 
@@ -229,12 +226,11 @@ function CreateCommunityForm() {
               Twitter / X
               <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
-            <input
+            <Input
               type="text"
               placeholder="@ethargentina"
               value={twitter}
               onChange={(e) => setTwitter(e.target.value)}
-              className={inputCls}
             />
           </div>
 
@@ -244,20 +240,19 @@ function CreateCommunityForm() {
               Discord invite URL
               <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
             </label>
-            <input
+            <Input
               type="url"
               placeholder="https://discord.gg/…"
               value={discord}
               onChange={(e) => setDiscord(e.target.value)}
-              className={inputCls}
             />
           </div>
 
           <div className="pt-2">
-            <button
+            <Button
               type="submit"
               disabled={loading || !slug}
-              className="w-full bg-orange text-cream py-3.5 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed hover:bg-orange-light transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3.5"
             >
               {loading ? (
                 <>
@@ -270,7 +265,7 @@ function CreateCommunityForm() {
               ) : (
                 'Create community'
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -8,6 +8,7 @@ import { kaolin } from '@arkiv-network/sdk/chains';
 import { jsonToPayload } from '@arkiv-network/sdk/utils';
 import { cascadeDeleteEvent, type ArkivEvent } from '@/lib/arkiv';
 import { eventExpiresAt, secondsUntilExpiry } from '@/lib/expiration';
+import { Button } from '@/components/ui/button';
 
 export default function PendingEvents({
   events: initialEvents,
@@ -133,20 +134,22 @@ export default function PendingEvents({
 
               {/* Action buttons */}
               <div className="flex items-center gap-2 shrink-0">
-                <button
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => handleApprove(event)}
                   disabled={isProcessing}
-                  className="px-4 py-2 text-xs font-semibold bg-cobalt text-cream hover:bg-cobalt-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? '…' : 'Approve'}
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleReject(event)}
                   disabled={isProcessing}
-                  className="px-4 py-2 text-xs font-semibold border border-warm-gray/40 text-ink/80 hover:text-ink hover:border-ink/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Reject
-                </button>
+                </Button>
               </div>
             </div>
           );

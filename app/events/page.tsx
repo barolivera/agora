@@ -7,6 +7,8 @@ import { publicClient, parseEvent, parseApproval, parseCommunity, isEventApprove
 import { EventCard, CardSkeleton } from '@/components/demos/EventCard';
 import { ErrorMessage } from '@/components/demos/ErrorMessage';
 import { friendlyError } from '@/lib/errorUtils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const CATEGORY_OPTIONS = [
   'Meetup', 'Workshop', 'Hackathon', 'Conference',
@@ -30,27 +32,29 @@ function SearchInput({
           <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
         </svg>
       </span>
-      <input
+      <Input
         ref={inputRef}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search events by title or location..."
-        className="w-full bg-cream border border-warm-gray text-ink placeholder:text-ink/80 text-sm pl-9 pr-9 py-2.5 font-[family-name:var(--font-geist-sans)] focus:outline-none focus:border-ink"
+        className="pl-9 pr-9 font-[family-name:var(--font-geist-sans)]"
       />
       {/* Clear button */}
       {value && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           onClick={() => { onChange(''); inputRef.current?.focus(); }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/80 hover:text-ink transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/80 hover:text-ink"
           aria-label="Clear search"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
             <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
           </svg>
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -204,17 +208,19 @@ export default function EventsPage() {
       {/* ── Feed toggle: Community / All ── */}
       <div className="flex items-center gap-1 mb-6">
         {(['community', 'all'] as const).map((f) => (
-          <button
+          <Button
             key={f}
+            variant={feedFilter === f ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => setFeedFilter(f)}
-            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-colors font-[family-name:var(--font-kode-mono)] ${
+            className={`text-[11px] font-bold uppercase tracking-[0.15em] font-[family-name:var(--font-kode-mono)] ${
               feedFilter === f
-                ? 'bg-ink text-cream'
+                ? 'bg-ink text-cream hover:bg-ink/90'
                 : 'text-ink/80 hover:text-ink'
             }`}
           >
             {f === 'community' ? 'Community Events' : 'All Events'}
-          </button>
+          </Button>
         ))}
         {feedFilter === 'all' && (
           <span className="ml-2 text-[10px] text-ink/80 font-[family-name:var(--font-geist-sans)]">
@@ -238,8 +244,7 @@ export default function EventsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="bg-ink text-cream rounded-full px-4 py-2 text-sm font-[family-name:var(--font-geist-sans)] appearance-none cursor-pointer pr-8 focus:outline-none"
-            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23F2EDE4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+            className="w-full border border-input bg-background px-4 py-3 text-sm text-foreground transition-colors outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring disabled:opacity-50"
           >
             <option value="all">All Events</option>
             <option value="upcoming">Upcoming</option>
@@ -250,8 +255,7 @@ export default function EventsPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-ink text-cream rounded-full px-4 py-2 text-sm font-[family-name:var(--font-geist-sans)] appearance-none cursor-pointer pr-8 focus:outline-none"
-            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23F2EDE4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+            className="w-full border border-input bg-background px-4 py-3 text-sm text-foreground transition-colors outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring disabled:opacity-50"
           >
             <option value="">All Types</option>
             {CATEGORY_OPTIONS.map((name) => (
@@ -262,19 +266,21 @@ export default function EventsPage() {
 
         <div className="flex">
           {(['newest', 'soonest'] as const).map((s) => (
-            <button
+            <Button
               key={s}
+              variant={sortOrder === s ? 'default' : 'outline'}
+              size="default"
               onClick={() => setSortOrder(s)}
-              className={`px-4 py-2 text-sm transition-all duration-200 font-[family-name:var(--font-geist-sans)] ${
-                s === 'newest' ? 'rounded-l-full' : 'rounded-r-full'
+              className={`font-[family-name:var(--font-geist-sans)] ${
+                s === 'newest' ? 'rounded-l-full rounded-r-none' : 'rounded-r-full rounded-l-none'
               } ${
                 sortOrder === s
-                  ? 'bg-ink text-cream'
-                  : 'bg-transparent border border-ink/20 text-ink/80 hover:text-ink hover:border-ink/40'
+                  ? 'bg-ink text-cream hover:bg-ink/90'
+                  : 'bg-transparent border-ink/20 text-ink/80 hover:text-ink hover:border-ink/40'
               }`}
             >
               {s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -307,12 +313,13 @@ export default function EventsPage() {
               ? 'No events match your search.'
               : 'No events match your filters.'}
           </p>
-          <button
+          <Button
+            variant="link"
             onClick={clearAll}
-            className="text-xs font-semibold text-cobalt underline underline-offset-2 hover:text-cobalt-light transition-colors font-[family-name:var(--font-geist-sans)]"
+            className="text-xs font-semibold text-cobalt hover:text-cobalt-light font-[family-name:var(--font-geist-sans)]"
           >
             Clear {searchQuery.trim() ? 'search' : 'filters'}
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

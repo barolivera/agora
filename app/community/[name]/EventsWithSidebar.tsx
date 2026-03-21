@@ -6,6 +6,7 @@ import Calendar from '@/components/demos/Calendar';
 import { type ArkivEvent, type ArkivCommunity } from '@/lib/arkiv';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 import { deslugify } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -222,29 +223,35 @@ export default function EventsWithSidebar({
 
         {/* Filter tabs + active date chip */}
         <div className="flex items-center gap-1 mb-5">
-          <button
+          <Button
+            variant={filter === 'upcoming' ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => handleFilterChange('upcoming')}
             className={tabCls(filter === 'upcoming')}
           >
             Upcoming
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={filter === 'past' ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => handleFilterChange('past')}
             className={tabCls(filter === 'past')}
           >
             Past
-          </button>
+          </Button>
 
           {selectedDate && (
             <span className="ml-auto flex items-center gap-1.5 text-[10px] text-cobalt font-[family-name:var(--font-geist-sans)]">
               {selectedDate}
-              <button
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => setSelectedDate(null)}
-                className="w-4 h-4 rounded-full bg-cobalt/15 hover:bg-cobalt/30 flex items-center justify-center text-cobalt leading-none"
+                className="w-4 h-4 rounded-full bg-cobalt/15 hover:bg-cobalt/30 text-cobalt leading-none"
                 aria-label="Clear date filter"
               >
                 ×
-              </button>
+              </Button>
             </span>
           )}
         </div>
@@ -257,12 +264,13 @@ export default function EventsWithSidebar({
                 <p className="text-lg text-ink font-[family-name:var(--font-kode-mono)] mb-2">
                   No events on this date.
                 </p>
-                <button
+                <Button
+                  variant="link"
                   onClick={() => setSelectedDate(null)}
-                  className="text-sm text-cobalt hover:text-cobalt-light transition-colors font-[family-name:var(--font-geist-sans)]"
+                  className="text-sm text-cobalt hover:text-cobalt-light font-[family-name:var(--font-geist-sans)]"
                 >
                   View all events
-                </button>
+                </Button>
               </>
             ) : filter === 'upcoming' ? (
               <>

@@ -12,7 +12,10 @@ import { publicClient, parseCommunity, shortAddress, KAOLIN_CHAIN_ID, type Arkiv
 import { eq } from '@arkiv-network/sdk/query';
 import { useDisplayNames, displayName } from '@/lib/useDisplayNames';
 import type { AIEnrichment } from '@/lib/types/luma';
-import { titleGradient, inputCls } from '@/lib/constants';
+import { titleGradient } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 
 const EVENT_CATEGORIES = [
@@ -351,7 +354,10 @@ function CreateEventContent() {
       const res = await fetch('/api/import-luma', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: lumaUrl.trim() }),
+        body: JSON.stringify({
+          url: lumaUrl.trim(),
+          communities: communities.map(c => ({ slug: c.slug, name: c.name })),
+        }),
       });
       clearTimeout(phaseTimer);
       const data = await res.json();
@@ -372,11 +378,17 @@ function CreateEventContent() {
 
       // Handle AI enrichment
       if (data.ai) {
+        console.log('[create-event] AI enrichment received:', { category: data.ai.category, tags: data.ai.tags, language: data.ai.language });
         if (data.ai.category && !category) {
+          console.log('[create-event] Auto-selecting category:', data.ai.category);
           setCategory(data.ai.category);
         }
         if (data.ai.tags?.length) {
           setTags(data.ai.tags);
+        }
+        if (data.ai.suggestedCommunities?.length && !communityTag) {
+          console.log('[create-event] Auto-selecting community:', data.ai.suggestedCommunities[0]);
+          setCommunityTag(data.ai.suggestedCommunities[0]);
         }
         setAiData(data.ai);
         setAiEnriched(true);
@@ -564,19 +576,19 @@ function CreateEventContent() {
                 </span>
               </div>
               <div className="flex gap-2">
-                <input
+                <Input
                   type="url"
                   placeholder="Paste a lu.ma or luma.com event link..."
                   value={lumaUrl}
                   onChange={(e) => { setLumaUrl(e.target.value); setLumaError(''); }}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleLumaImport(); } }}
-                  className={`${inputCls} flex-1`}
+                  className="flex-1"
                 />
-                <button
+                <Button
                   type="button"
+                  size="lg"
                   onClick={handleLumaImport}
                   disabled={lumaLoading || !lumaUrl.trim()}
-                  className="px-5 py-3 bg-orange text-cream text-sm font-semibold whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-light transition-colors flex items-center gap-2"
                 >
                   {lumaLoading ? (
                     <>
@@ -589,7 +601,7 @@ function CreateEventContent() {
                   ) : (
                     'Import'
                   )}
-                </button>
+                </Button>
               </div>
               {lumaError && (
                 <p className="mt-2 text-sm text-red-600">{lumaError}</p>
@@ -612,13 +624,12 @@ function CreateEventContent() {
                 <label className="block text-sm font-medium text-ink mb-1.5">
                   Title <span className="text-orange">*</span>
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   placeholder="e.g. ETH Athens Summer Meetup"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className={inputCls}
                 />
                 {aiData?.translatedTitle && (
                   <p className="mt-1.5 text-xs text-ink/80 flex items-center gap-1.5 font-[family-name:var(--font-geist-sans)]">
@@ -631,13 +642,12 @@ function CreateEventContent() {
                 <label className="block text-sm font-medium text-ink mb-1.5">
                   Description <span className="text-orange">*</span>
                 </label>
-                <textarea
+                <Textarea
                   required
                   placeholder="Tell people what to expect…"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className={`${inputCls} resize-none`}
                 />
                 {aiData?.summary && (
                   <p className="mt-1.5 text-xs text-ink/80 flex items-center gap-1.5 font-[family-name:var(--font-geist-sans)]">
@@ -662,19 +672,21 @@ function CreateEventContent() {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {EVENT_CATEGORIES.map((cat) => (
-                    <button
+                    <Button
                       key={cat}
                       type="button"
+                      variant={category === cat ? 'default' : 'outline'}
+                      size="xs"
                       onClick={() => setCategory(cat)}
-                      className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors font-[family-name:var(--font-geist-sans)] flex items-center gap-1 ${
+                      className={`text-[11px] uppercase tracking-wide font-[family-name:var(--font-geist-sans)] ${
                         category === cat
-                          ? 'bg-ink text-cream'
-                          : 'border border-warm-gray/40 text-ink/80 hover:text-ink hover:border-ink/30'
+                          ? 'bg-ink text-cream hover:bg-ink/90'
+                          : 'border-warm-gray/40 text-ink/80 hover:text-ink hover:border-ink/30'
                       }`}
                     >
                       {cat}
                       {aiData?.category === cat && <AIBadge />}
-                    </button>
+                    </Button>
                   ))}
                 </div>
                 <input type="hidden" name="category" value={category} required />
@@ -686,13 +698,12 @@ function CreateEventContent() {
                     <label className="block text-sm font-medium text-ink mb-1.5">
                       Start <span className="text-orange">*</span>
                     </label>
-                    <input
+                    <Input
                       type="datetime-local"
                       required
                       value={date}
                       min={new Date().toISOString().slice(0, 16)}
                       onChange={(e) => setDate(e.target.value)}
-                      className={inputCls}
                     />
                   </div>
                   <span className="pb-3 text-ink/80 font-[family-name:var(--font-geist-sans)]">—</span>
@@ -701,11 +712,10 @@ function CreateEventContent() {
                       End
                       <span className="ml-1.5 text-xs font-normal text-ink/80">(optional)</span>
                     </label>
-                    <input
+                    <Input
                       type="time"
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
-                      className={inputCls}
                     />
                   </div>
                 </div>
@@ -718,14 +728,13 @@ function CreateEventContent() {
                 <label className="block text-sm font-medium text-ink mb-1.5">
                   Capacity <span className="text-orange">*</span>
                 </label>
-                <input
+                <Input
                   type="number"
                   required
                   min={1}
                   placeholder="50"
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
-                  className={inputCls}
                 />
               </div>
 
@@ -733,13 +742,12 @@ function CreateEventContent() {
                 <label className="block text-sm font-medium text-ink mb-1.5">
                   Location <span className="text-orange">*</span>
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   placeholder="e.g. Monastiraki Square, Athens"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className={inputCls}
                 />
               </div>
 
@@ -748,12 +756,11 @@ function CreateEventContent() {
                   Cover image URL
                   <span className="ml-2 text-xs font-normal text-ink/80">(optional)</span>
                 </label>
-                <input
+                <Input
                   type="url"
                   placeholder="https://…"
                   value={coverImageUrl}
                   onChange={(e) => setCoverImageUrl(e.target.value)}
-                  className={inputCls}
                 />
               </div>
 
@@ -767,13 +774,12 @@ function CreateEventContent() {
                   onChange={(e) => {
                     if (e.target.value === '__create_new__') {
                       setShowNewCommunity(true);
-                      // Keep previous selection so the <select> doesn't go blank
                     } else {
                       setCommunityTag(e.target.value);
                       setShowNewCommunity(false);
                     }
                   }}
-                  className={inputCls}
+                  className="w-full border border-input bg-background px-4 py-3 text-sm text-foreground transition-colors outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring disabled:opacity-50"
                   disabled={communitiesLoading}
                 >
                   <option value="">
@@ -802,20 +808,23 @@ function CreateEventContent() {
                     <span className="text-xs text-ink/80 flex items-center gap-1 font-[family-name:var(--font-geist-sans)]">
                       <AIBadge /> Suggested:
                     </span>
-                    {aiData.suggestedCommunities.map((comm) => (
-                      <button
-                        key={comm}
+                    {aiData.suggestedCommunities.map((slug) => {
+                      const display = communities.find(c => c.slug === slug)?.name ?? slug;
+                      return (
+                      <Button
+                        key={slug}
                         type="button"
-                        onClick={() => setCommunityTag(comm)}
-                        className={`px-2.5 py-1 text-xs font-medium transition-colors font-[family-name:var(--font-geist-sans)] ${
-                          communityTag === comm
-                            ? 'bg-cobalt text-cream'
-                            : 'bg-cobalt/10 text-cobalt hover:bg-cobalt/20'
+                        variant={communityTag === slug ? 'secondary' : 'outline'}
+                        size="xs"
+                        onClick={() => setCommunityTag(slug)}
+                        className={`font-[family-name:var(--font-geist-sans)] ${
+                          communityTag !== slug ? 'bg-cobalt/10 text-cobalt hover:bg-cobalt/20 border-0' : ''
                         }`}
                       >
-                        {comm}
-                      </button>
-                    ))}
+                        {display}
+                      </Button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -832,14 +841,16 @@ function CreateEventContent() {
                         className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-warm-gray/20 text-ink font-[family-name:var(--font-geist-sans)]"
                       >
                         {tag}
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon-xs"
                           onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}
-                          className="text-ink/80 hover:text-ink ml-0.5"
+                          className="text-ink/80 hover:text-ink h-4 w-4"
                           aria-label={`Remove tag ${tag}`}
                         >
                           &times;
-                        </button>
+                        </Button>
                       </span>
                     ))}
                   </div>
@@ -853,10 +864,11 @@ function CreateEventContent() {
               )}
 
               <div className="pt-2">
-                <button
+                <Button
                   type="submit"
+                  size="lg"
                   disabled={loading}
-                  className="w-full bg-orange text-cream py-3.5 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed hover:bg-orange-light transition-colors flex items-center justify-center gap-2"
+                  className="w-full"
                 >
                   {loading ? (
                     <>
@@ -871,7 +883,7 @@ function CreateEventContent() {
                   ) : (
                     'Publish event'
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -925,12 +937,11 @@ function CreateEventContent() {
                 <label className="block text-sm font-medium text-ink mb-1.5">
                   Name <span className="text-orange">*</span>
                 </label>
-                <input
+                <Input
                   type="text"
                   placeholder="e.g. Ethereum BA"
                   value={newCommunityName}
                   onChange={(e) => setNewCommunityName(e.target.value)}
-                  className={inputCls}
                 />
                 {newCommunityName.trim() && (
                   <p className="mt-1.5 text-xs text-ink/80 font-[family-name:var(--font-geist-sans)]">
@@ -943,23 +954,21 @@ function CreateEventContent() {
                   Description
                   <span className="ml-1.5 text-xs font-normal text-ink/80">(optional)</span>
                 </label>
-                <textarea
+                <Textarea
                   placeholder="What's this community about?"
                   value={newCommunityBio}
                   onChange={(e) => setNewCommunityBio(e.target.value)}
                   rows={3}
-                  className={`${inputCls} resize-none`}
                 />
               </div>
               {newCommunityError && (
                 <p className="text-sm text-red-600">{newCommunityError}</p>
               )}
               <div className="flex items-center gap-3 pt-2">
-                <button
+                <Button
                   type="button"
                   onClick={handleCreateCommunity}
                   disabled={creatingCommunity || !newCommunityName.trim()}
-                  className="bg-orange text-cream px-5 py-2.5 text-sm font-semibold rounded-lg hover:bg-orange-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {creatingCommunity ? (
                     <>
@@ -972,9 +981,10 @@ function CreateEventContent() {
                   ) : (
                     'Create & Select'
                   )}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => {
                     setShowNewCommunity(false);
                     setNewCommunityName('');
@@ -982,10 +992,10 @@ function CreateEventContent() {
                     setNewCommunityError('');
                     setCommunityTag('');
                   }}
-                  className="px-5 py-2.5 text-sm text-ink/80 hover:text-ink transition-colors"
+                  className="text-ink/80 hover:text-ink"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           </div>
